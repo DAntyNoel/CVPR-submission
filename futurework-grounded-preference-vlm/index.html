@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Idea 01 - 像素证据约束的 VLM 偏好优化</title>
+  <style>
+    :root { --ink:#17202a; --muted:#5d6b7a; --line:#d8dee6; --bg:#f7f8fa; --panel:#fff; --accent:#0f766e; --soft:#e6f5f2; }
+    *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.62;color:var(--ink);background:var(--bg)}
+    header{padding:48px 7vw 30px;background:linear-gradient(120deg,#ffffff,#eef7f5);border-bottom:1px solid var(--line)}
+    main{max-width:980px;margin:0 auto;padding:30px 22px 70px} h1{margin:0 0 10px;font-size:clamp(30px,4vw,48px);line-height:1.08;letter-spacing:0} h2{margin:34px 0 12px;font-size:24px} h3{margin:20px 0 8px;font-size:19px}
+    p{margin:0 0 13px}.lede{max-width:820px;color:var(--muted);font-size:18px}.pill{display:inline-block;margin:14px 8px 0 0;border:1px solid var(--line);border-radius:999px;padding:5px 10px;background:rgba(255,255,255,.78);font-size:14px;color:#334155}
+    .box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px;margin:16px 0}.claim{background:var(--soft);border-color:#b7ddd6}.risk{background:#fffaf0;border-color:#efd6a9}.nav{font-size:14px;margin-bottom:14px} a{color:#0b5cad;text-decoration:none} a:hover{text-decoration:underline}
+    ul{padding-left:22px} li{margin:7px 0} table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}td,th{padding:11px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:#eef2f6}tr:last-child td{border-bottom:0}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav"><a href="../index.html">返回总览</a></div>
+    <h1>像素证据约束的 VLM 偏好优化</h1>
+    <p class="lede">把 VLM/MLLM 的偏好学习从“回答文本更像人类喜欢的答案”推进到“答案中的每个关键断言都能被图像区域、对象关系或 3D/空间证据支撑”。</p>
+    <span class="pill">关键词：VLM alignment</span>
+    <span class="pill">偏好优化</span>
+    <span class="pill">幻觉缓解</span>
+    <span class="pill">细粒度 grounding</span>
+  </header>
+  <main>
+    <section class="box claim">
+      <h2>一句话选题</h2>
+      <p>提出 Grounded Preference Optimization：训练一个能同时奖励“回答有用性”和“视觉证据一致性”的偏好目标，让 MLLM 在开放式问答、描述、3D 场景理解中减少无证据幻觉。</p>
+    </section>
+
+    <section>
+      <h2>为什么现在值得做</h2>
+      <p>CVPR 2025 已经出现多篇直接围绕 MLLM 偏好、奖励和幻觉的论文：VisionArena 提供真实用户 VLM 对话偏好；VL-RewardBench 关注视觉语言生成奖励模型；Task Preference Optimization 把任务偏好用于 MLLM 视觉任务对齐；DPO hallucination 工作强调 on-policy 数据；Critic-V 用 VLM critic 捕捉多模态推理错误。</p>
+      <p>这些 work 说明“视觉后训练”正在进入 CVPR 主流，但大多数偏好信号仍偏文本级、答案级。模型可能学会说得更顺，却没有被强迫说明“哪个像素/对象/关系支持了这个断言”。</p>
+    </section>
+
+    <section>
+      <h2>前人未完全解决的问题</h2>
+      <ul>
+        <li><strong>奖励粒度不够。</strong> 现有偏好数据通常比较两个完整回答，难以区分“格式好但看错图”和“表达一般但视觉事实正确”。</li>
+        <li><strong>视觉证据没有闭环。</strong> reward model 或 critic 常常只读图和文本，不要求输出可验证的区域、对象或关系链。</li>
+        <li><strong>3D/空间场景更明显。</strong> 2D 图像中的对象幻觉已经难，3D 场景理解还涉及方位、遮挡、尺度、可达性，单纯文本偏好更容易失真。</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>方法草图</h2>
+      <table>
+        <tr><th>模块</th><th>设计</th></tr>
+        <tr>
+          <td>证据抽取</td>
+          <td>让模型对关键名词、属性、关系生成 evidence spans：2D box/mask、3D object id、temporal segment 或 scene graph edge。</td>
+        </tr>
+        <tr>
+          <td>偏好构造</td>
+          <td>正样本不仅答案正确，还要证据可定位；负样本覆盖对象替换、属性错配、关系反转、无图像依据的常识补全。</td>
+        </tr>
+        <tr>
+          <td>训练目标</td>
+          <td>组合 DPO/IPO 类偏好损失、grounding consistency loss、answer helpfulness reward。关键是把“看得准”从辅助标注变成优化主目标。</td>
+        </tr>
+        <tr>
+          <td>critic</td>
+          <td>训练一个轻量 visual-evidence critic，对答案断言逐条打分，作为在线数据筛选与自训练门控。</td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>评测路线</h2>
+      <ul>
+        <li>开放式 VQA/描述：比较 hallucination rate、object/attribute/relation F1、回答偏好胜率。</li>
+        <li>细粒度 grounding：用 RefCOCO/Visual Genome/GQA 或自建 object-claim 数据测证据定位一致性。</li>
+        <li>3D 场景理解：在 ScanQA、3D VQA 或 CVPR 2025 相关 3D VLU benchmark 上测空间关系与对象指代。</li>
+        <li>奖励泛化：在 VL-RewardBench 上看 reward model 是否偏向漂亮文本而非视觉真实。</li>
+      </ul>
+    </section>
+
+    <section class="box risk">
+      <h2>最小可行实验</h2>
+      <p>先选一个开源 MLLM，如 LLaVA 系列或 Qwen2.5-VL 系列；用 5k-20k 图像问答对自动构造对象/属性/关系负样本；让 GPT-4o 或强 VLM 生成 evidence labels，再用人工抽样清洗 500 条。第一版只比较 SFT、DPO、Grounded-DPO 三种训练。</p>
+    </section>
+
+    <section>
+      <h2>投稿卖点</h2>
+      <ul>
+        <li>不是又一个偏好数据集，而是把视觉证据纳入偏好优化目标。</li>
+        <li>能连接 CVPR 近两年的 VLM hallucination、reward benchmark、3D VLU、visual critic 四条线。</li>
+        <li>如果实验稳定，可以形成清楚的主张：多模态对齐不能只对齐输出文本，还要对齐“回答所依赖的视觉证据”。</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>相关来源</h2>
+      <ul>
+        <li><a href="https://openaccess.thecvf.com/content/CVPR2025/html/Chou_VisionArena_230k_Real_World_User-VLM_Conversations_with_Preference_Labels_CVPR_2025_paper.html">VisionArena: 230k Real World User-VLM Conversations with Preference Labels</a></li>
+        <li><a href="https://openaccess.thecvf.com/content/CVPR2025/html/Li_VL-RewardBench_A_Challenging_Benchmark_for_Vision-Language_Generative_Reward_Models_CVPR_2025_paper.html">VL-RewardBench: A Challenging Benchmark for Vision-Language Generative Reward Models</a></li>
+        <li><a href="https://openaccess.thecvf.com/content/CVPR2025/html/Yan_Task_Preference_Optimization_Improving_Multimodal_Large_Language_Models_with_Vision_CVPR_2025_paper.html">Task Preference Optimization</a></li>
+        <li><a href="https://openaccess.thecvf.com/content/CVPR2025/html/Yang_Mitigating_Hallucinations_in_Large_Vision-Language_Models_via_DPO_On-Policy_Data_CVPR_2025_paper.html">Mitigating Hallucinations in Large Vision-Language Models via DPO</a></li>
+        <li><a href="https://openaccess.thecvf.com/content/CVPR2025/html/Zhang_Critic-V_VLM_Critics_Help_Catch_VLM_Errors_in_Multimodal_Reasoning_CVPR_2025_paper.html">Critic-V</a></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
