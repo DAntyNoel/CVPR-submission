@@ -18,9 +18,11 @@ unset https_proxy
 unset all_proxy
 export HF_ENDPOINT=https://hf-mirror.com
 export HF_HOME=/home/fhshao/CVPR-submission/.cache/hf
+export TRITON_CACHE_DIR=/tmp/triton-${SLURM_JOB_ID:-cvpr_ans_dpo}
 export PYTHONPATH=/home/fhshao/CVPR-submission/LLaMA-Factory/src
+export PATH=/home/fhshao/miniconda3/envs/verl0.6/bin:$PATH
 export FORCE_TORCHRUN=1
+mkdir -p "$TRITON_CACHE_DIR"
 
-/home/fhshao/miniconda3/envs/perl/bin/python -m llamafactory.cli train \
+/home/fhshao/miniconda3/envs/verl0.6/bin/python -m llamafactory.cli train \
   /home/fhshao/CVPR-submission/experiments/llamafactory_configs/qwen25vl_answer_dpo.yaml
-

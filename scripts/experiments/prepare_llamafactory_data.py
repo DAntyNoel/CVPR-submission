@@ -55,8 +55,6 @@ def convert_file(path: Path) -> list[dict[str, Any]]:
 
 def convert_record(record: dict[str, Any], line_no: int) -> dict[str, Any]:
     prompt = record["prompt"]
-    if prompt.endswith("\nAnswer:"):
-        prompt = prompt[: -len("\nAnswer:")]
     if "<image>" not in prompt:
         prompt = "<image>\n" + prompt
 
@@ -116,4 +114,3 @@ def write_json(path: Path, payload: Any) -> None:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

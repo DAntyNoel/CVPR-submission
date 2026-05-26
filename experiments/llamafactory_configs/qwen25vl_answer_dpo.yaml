@@ -3,6 +3,7 @@ model_name_or_path: /home/fhshao/CVPR-submission/models/Qwen2.5-VL-7B-Instruct
 image_max_pixels: 262144
 video_max_pixels: 16384
 trust_remote_code: true
+deepspeed: /home/fhshao/CVPR-submission/LLaMA-Factory/examples/deepspeed/ds_z3_config.json
 
 ### method
 stage: dpo
@@ -27,7 +28,7 @@ overwrite_cache: true
 output_dir: /home/fhshao/CVPR-submission/outputs/llamafactory/qwen25vl7b_answer_dpo
 logging_steps: 10
 save_steps: 500
-plot_loss: true
+plot_loss: false
 overwrite_output_dir: true
 save_only_model: false
 report_to: none
@@ -42,4 +43,3 @@ warmup_ratio: 0.05
 bf16: true
 ddp_timeout: 180000000
 resume_from_checkpoint: null
-
