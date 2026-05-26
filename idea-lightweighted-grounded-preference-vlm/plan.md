@@ -108,6 +108,17 @@ Evidence hint: mismatched attribute: red.
 - rejected 必须有明显错误，不追求细粒度困难负例。
 - 如果 GQA 属性噪声较大，优先保留对象存在类问题。
 
+### 4.4 数据处理执行计划
+
+详细数据范式、JSONL schema、COCO/GQA 构造规则、质检标准和 15 天执行排期见 [`data_processing_plan.md`](./data_processing_plan.md)。主实验只需要产出两份训练文件：
+
+```text
+data/processed/answer_dpo_train.jsonl
+data/processed/evidence_hint_dpo_train.jsonl
+```
+
+两份文件必须来自同一个 `canonical_pairs.jsonl`，保证 Answer-DPO 和 Evidence-Hint DPO 只差 evidence hint 格式，不引入额外数据差异。
+
 ## 5. 方法
 
 ### 5.1 模型
