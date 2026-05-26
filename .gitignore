@@ -29,6 +29,7 @@ data/eval/
 data/audit/*.csv
 data/audit/*.tsv
 data/audit/*.xlsx
+experiments/llamafactory_data/
 outputs/
 output/
 results/
@@ -55,6 +56,9 @@ logs/
 *.out
 *.err
 slurm-*.out
+
+# External cloned training frameworks
+LLaMA-Factory/
 
 # CVPR/LaTeX build products
 *.aux
