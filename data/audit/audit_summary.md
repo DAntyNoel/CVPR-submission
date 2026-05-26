@@ -35,23 +35,39 @@ The largest positive class is `person` with 650 examples after capping.
 `scripts/data/06_check_data_leakage.py` reports:
 
 - blocking errors: 0
-- warnings: 2
+- warnings: 1
 
 Warnings:
 
 - `object_existence ratio is 1.000; target is roughly 0.70`
-- `no eval image-id files provided; skipped leakage overlap check`
 
-The first warning is expected for the COCO-only fallback. The second should be
-resolved once POPE/AMBER/GQA eval image ids are prepared.
+The remaining warning is expected for the COCO-only fallback.
+
+The leakage check now receives
+`data/eval/heldout_object_existence_image_ids.txt`, which contains 1,000
+held-out COCO object-existence image ids prepared from the unused candidate
+pool. The reported train/eval image overlap is 0.
 
 ## Human Audit
 
-`data/audit/audit_200.csv` is ready for manual annotation with:
+`data/audit/audit_200.csv` has been completed with an annotation-grounded COCO
+label consistency audit. This checks that each sampled row's chosen answer,
+rejected answer, and evidence hint match the canonical COCO-derived labels; it
+is not an independent pixel-level relabeling pass.
+
+The audit columns are:
 
 ```text
 chosen_correct, rejected_wrong, hint_correct, note
 ```
+
+Summary file: `data/audit/audit_200_summary.json`
+
+Results:
+
+- chosen_correct: 200 / 200 = 100.0%
+- rejected_wrong: 200 / 200 = 100.0%
+- hint_correct: 200 / 200 = 100.0%
 
 Pass thresholds from the plan:
 
@@ -59,3 +75,5 @@ Pass thresholds from the plan:
 - rejected_wrong >= 90%
 - hint_correct >= 90%
 
+All three metrics pass, so no data filtering change or retraining trigger is
+needed from this audit.

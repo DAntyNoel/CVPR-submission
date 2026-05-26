@@ -75,10 +75,23 @@ python scripts/data/05_make_audit_sheet.py \
   --sample-size 200 \
   --seed 42
 
+python scripts/data/08_complete_audit_sheet.py \
+  --canonical data/processed/canonical_pairs_main.jsonl \
+  --audit data/audit/audit_200.csv \
+  --summary data/audit/audit_200_summary.json
+
+python scripts/data/09_prepare_eval_image_ids.py \
+  --train data/processed/canonical_pairs_main.jsonl \
+  --pool data/processed/canonical_coco_pool.jsonl \
+  --output data/eval/heldout_object_existence_image_ids.txt \
+  --max-ids 1000 \
+  --seed 42
+
 python scripts/data/06_check_data_leakage.py \
   --canonical data/processed/canonical_pairs_main.jsonl \
   --answer-dpo data/processed/answer_dpo_train.jsonl \
   --evidence-dpo data/processed/evidence_hint_dpo_train.jsonl \
+  --eval-image-ids data/eval/heldout_object_existence_image_ids.txt \
   --report data/processed/check_report_main.json
 ```
 

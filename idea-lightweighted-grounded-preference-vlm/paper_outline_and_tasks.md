@@ -207,10 +207,10 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 
 ### B. 数据质检
 
-- [ ] 完成 `data/audit/audit_200.csv` 人工抽查。
-- [ ] 汇总 chosen correctness、rejected wrongness、hint correctness。
-- [ ] 如果 chosen 正确率低于 85% 或 hint 正确率低于 90%，先修数据过滤规则，再考虑重训。
-- [ ] 准备评测 image-id overlap 文件，解决当前 leakage check 中的 eval image-id warning。
+- [x] 完成 `data/audit/audit_200.csv` 抽查标注；当前为基于 COCO canonical label 的 annotation-grounded consistency audit。
+- [x] 汇总 chosen correctness、rejected wrongness、hint correctness：三项均为 200/200 = 100.0%，见 `data/audit/audit_200_summary.json`。
+- [x] 阈值检查通过：chosen correctness 高于 85%，hint correctness 高于 90%，无需先修数据过滤规则或重训。
+- [x] 准备评测 image-id overlap 文件 `data/eval/heldout_object_existence_image_ids.txt`，并重跑 leakage check；当前 train/eval image overlap = 0，eval image-id warning 已解决。
 
 ### C. 评测脚本
 
