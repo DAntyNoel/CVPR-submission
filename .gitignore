@@ -1,0 +1,75 @@
+# Python bytecode and local tooling
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Local environments and secrets
+.venv/
+venv/
+.conda/
+env/
+.env
+.env.*
+!.env.example
+
+# Package/build artifacts
+build/
+dist/
+*.egg-info/
+
+# Large datasets and generated experiment files
+data/raw/
+data/images/
+data/processed/
+data/eval/
+data/audit/*.csv
+data/audit/*.tsv
+data/audit/*.xlsx
+outputs/
+output/
+results/
+checkpoints/
+ckpts/
+runs/
+wandb/
+tensorboard/
+
+# Model and dataset caches
+.cache/
+hf_cache/
+huggingface/
+models/
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Slurm/runtime logs
+logs/
+*.log
+*.out
+*.err
+slurm-*.out
+
+# CVPR/LaTeX build products
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
