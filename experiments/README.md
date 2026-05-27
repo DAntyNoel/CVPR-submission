@@ -122,6 +122,28 @@ MODEL_KEY=evidence_hint_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.j
   sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
 ```
 
+For the COCO-only controlled validation in
+`idea-lightweighted-grounded-preference-vlm/main_experiment_core_claims/`, pin
+the already-finished 5k COCO adapters with `ADAPTER_NAME_OR_PATH`:
+
+```bash
+MODEL_KEY=answer_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl \
+ADAPTER_NAME_OR_PATH=outputs/llamafactory/qwen25vl7b_answer_dpo \
+  sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
+
+MODEL_KEY=evidence_hint_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl \
+ADAPTER_NAME_OR_PATH=outputs/llamafactory/qwen25vl7b_evidence_hint_dpo \
+  sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
+```
+
+2026-05-27 COCO-only validation launch:
+
+```text
+64205  Base Instruct
+64206  Answer-DPO        outputs/llamafactory/qwen25vl7b_answer_dpo
+64207  Evidence-Hint DPO outputs/llamafactory/qwen25vl7b_evidence_hint_dpo
+```
+
 Raw generations and metadata are written to:
 
 ```text

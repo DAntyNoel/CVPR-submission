@@ -14,6 +14,7 @@ set -xeuo pipefail
 
 MODEL_KEY="${MODEL_KEY:-base}"
 EVAL_JSONL="${EVAL_JSONL:-/home/fhshao/CVPR-submission/data/eval/coco_heldout_object_existence.jsonl}"
+ADAPTER_NAME_OR_PATH="${ADAPTER_NAME_OR_PATH:-}"
 MAX_SAMPLES="${MAX_SAMPLES:-}"
 MAX_NEW_TOKENS="${MAX_NEW_TOKENS:-32}"
 
@@ -40,6 +41,10 @@ ARGS=(
 
 if [[ -n "${MAX_SAMPLES}" ]]; then
   ARGS+=(--max-samples "${MAX_SAMPLES}")
+fi
+
+if [[ -n "${ADAPTER_NAME_OR_PATH}" ]]; then
+  ARGS+=(--adapter-name-or-path "${ADAPTER_NAME_OR_PATH}")
 fi
 
 /home/fhshao/miniconda3/envs/verl0.6/bin/python "${ARGS[@]}"

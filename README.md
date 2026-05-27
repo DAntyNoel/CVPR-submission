@@ -13,6 +13,7 @@
 - mixed audit 与泄漏检查已完成，审计摘要见 `data/audit/`，当前 train/eval image overlap 为 0。
 - GQA simple held-out eval 已生成：`data/eval/gqa_simple_heldout.jsonl`，共 1,000 条，color 与 left/right relation 各 500 条。
 - mixed Answer-DPO job 64200 与 mixed Evidence-Hint DPO job 64201 已通过 Slurm 启动；旧 job 64167/64168 只作为 COCO-only preliminary 记录。
+- 5k COCO-only adapter 的三组 held-out object-existence 验证已启动：Base job 64205、Answer-DPO job 64206、Evidence-Hint DPO job 64207。
 - 统一评测脚本已准备好，下一步等待 mixed adapter 完成后跑 Base / Answer-DPO / Evidence-Hint DPO 的 POPE、COCO held-out、GQA simple 与 refusal-rate 评测。
 
 ## 目录结构
@@ -146,6 +147,27 @@ MODEL_KEY=answer_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl \
 
 MODEL_KEY=evidence_hint_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl \
   sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
+```
+
+如需固定使用已完成的 5k COCO-only adapter，而不是当前 registry 默认的 mixed
+adapter，可通过 `ADAPTER_NAME_OR_PATH` 覆盖：
+
+```bash
+MODEL_KEY=answer_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl \
+ADAPTER_NAME_OR_PATH=outputs/llamafactory/qwen25vl7b_answer_dpo \
+  sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
+
+MODEL_KEY=evidence_hint_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl \
+ADAPTER_NAME_OR_PATH=outputs/llamafactory/qwen25vl7b_evidence_hint_dpo \
+  sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
+```
+
+2026-05-27 已按该 COCO-only 设置启动主实验验证：
+
+```text
+64205  Base Instruct
+64206  Answer-DPO        outputs/llamafactory/qwen25vl7b_answer_dpo
+64207  Evidence-Hint DPO outputs/llamafactory/qwen25vl7b_evidence_hint_dpo
 ```
 
 生成结果保存到：

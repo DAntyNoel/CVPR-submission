@@ -86,6 +86,19 @@ COCO-only preliminary 训练记录：
 | COCO-only training | Answer-DPO 64167 | TBD | TBD | TBD | TBD |
 | COCO-only training | Evidence-Hint DPO 64168 | TBD | TBD | TBD | TBD |
 
+2026-05-27 已使用当前完成的 COCO-only 5k 训练结果启动 held-out COCO
+object-existence 验证：
+
+| Method | Eval Job ID | Adapter |
+| --- | ---: | --- |
+| Base Instruct | 64205 | none |
+| Answer-DPO | 64206 | `outputs/llamafactory/qwen25vl7b_answer_dpo` |
+| Evidence-Hint DPO | 64207 | `outputs/llamafactory/qwen25vl7b_evidence_hint_dpo` |
+
+三个 job 均使用 `data/eval/coco_heldout_object_existence.jsonl`。输出路径为
+`results/eval/generations/coco_heldout_object_existence/<model_key>.jsonl`，
+并在推理结束后自动生成对应 `.metrics.json`。
+
 ## 6. 评测指标
 
 主表建议包含以下指标：
