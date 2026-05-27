@@ -11,6 +11,8 @@
 - 研究计划与论文大纲已整理在 `idea-lightweighted-grounded-preference-vlm/`。
 - COCO Base 分数过高与 Hard COCO ceiling-effect 诊断任务已单独整理在
   `tasks/coco-hard-ceiling-diagnosis/`。
+- Base-error mining 诊断评测任务已单独整理在
+  `tasks/base-error-mining/`，用于后续构造 Base-conditioned locked diagnostic set。
 - CVPR LaTeX 稿件已更新在 `paper/`：`main.tex` 当前是一版按“mixed Evidence-Hint DPO
   正常完成并取得小幅正向结果”假设写成的完整 review-ready 草稿，已移除正文占位标记。
 - 5k mixed preference pairs 已生成：3,500 COCO object-existence + 1,500 GQA simple attribute/relation。
@@ -33,6 +35,7 @@ idea-lightweighted-grounded-preference-vlm/
 
 tasks/
   coco-hard-ceiling-diagnosis/      # COCO/Hard COCO ceiling-effect 诊断任务
+  base-error-mining/                # Base 错误样本挖掘诊断评测任务
 
 scripts/data/
   README.md                        # 数据流水线说明

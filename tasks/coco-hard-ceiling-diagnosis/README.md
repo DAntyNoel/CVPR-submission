@@ -165,7 +165,8 @@ standalone conclusion.
 Only build another COCO variant if the final narrative still needs a sharper
 object-existence diagnostic. Keep it small and do not add a fourth method.
 
-Recommended option: Base-error-mined hard set.
+Recommended option: Base-error-mined hard set. The detailed task outline has
+been split into `tasks/base-error-mining/`.
 
 1. Generate a larger held-out candidate pool.
 2. Run Base Instruct on the pool through Slurm.
