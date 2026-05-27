@@ -53,10 +53,12 @@ picture is diagnostic rather than uniformly positive. \method{} ties
 \answerdpo{} on COCO object existence accuracy (96.1\%) while slightly reducing
 false positives (1.8\% to 1.6\%), but it is lower on GQA simple claims
 (76.6\% vs. 76.8\%) and Hard COCO (94.6\% vs. 95.0\%). Evidence-style prompting
-and a Base-error-mined locked set do not reverse this pattern. These results
-show that template-level evidence hints can nudge precision on some absent
-object claims, but are not sufficient by themselves to consistently improve
-small-scale VLM preference tuning.
+and a Base-error-mined locked set do not reverse this pattern. A 10k scale-up
+diagnostic preserves the same conclusion: \method{} keeps lower false-positive
+rates, but \answerdpo{} remains higher on accuracy and F1 across COCO, Hard
+COCO, and GQA. These results show that template-level evidence hints can nudge
+precision on some unsupported claims, but are not sufficient by themselves to
+consistently improve small-scale VLM preference tuning.
 \end{abstract}
 
 \section{Introduction}
@@ -103,7 +105,7 @@ Our contributions are:
     \item We report a controlled diagnostic result: \method{} slightly lowers
     false positives on COCO-style object-existence questions, but does not
     consistently outperform answer-only DPO across GQA, Hard COCO, prompt-mode,
-    or Base-error-mined evaluations.
+    Base-error-mined evaluations, or a 10k mixed scale-up diagnostic.
 \end{itemize}
 
 \section{Related Work}
@@ -217,6 +219,11 @@ evaluation image ids are excluded from training, yielding zero train/eval image
 overlap. A 200-example mixed audit found 200/200 chosen responses correct,
 200/200 rejected responses wrong, and 200/200 evidence hints consistent with
 the annotations.
+
+We also construct a 10k scale-up diagnostic with the same templates and
+held-out exclusions: 6{,}000 COCO object-existence pairs and 4{,}000 GQA simple
+pairs. This diagnostic writes separate data, adapters, and evaluation outputs,
+and is used only to test whether increasing data size changes the 5k trend.
 
 \section{Experiments}
 
@@ -343,6 +350,37 @@ errors. \answerdpo{} recovers 6.3\% overall, while \method{} recovers 3.0\%.
 The only favorable slice for \method{} is false-positive recovery, but it is a
 2/123 versus 1/123 difference and should not be over-interpreted.
 
+\paragraph{10k scale-up diagnostic.}
+To test whether the mixed result is merely a small-data artifact, we double the
+preference set to 10k pairs while keeping the same backbone, DPO objective,
+response formats, held-out splits, and normal yes/no evaluation. Table
+\ref{tab:scaleup} shows that the scale-up does not change the main claim.
+\method{} again lowers false-positive rates, with the largest margin on GQA
+simple, but \answerdpo{} remains higher on accuracy and F1 across all three
+held-out evaluations.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\begin{tabular}{llccc}
+\toprule
+Eval & Method & Acc & F1 & FPR \\
+\midrule
+COCO & \answerdpo{} & \textbf{96.5} & \textbf{96.4} & 1.8 \\
+COCO & \method{} & 96.1 & 96.0 & \textbf{1.6} \\
+Hard COCO & \answerdpo{} & \textbf{94.8} & \textbf{94.8} & 4.8 \\
+Hard COCO & \method{} & 94.4 & 94.3 & \textbf{3.8} \\
+GQA & \answerdpo{} & \textbf{76.9} & \textbf{75.2} & 16.4 \\
+GQA & \method{} & 76.6 & 74.3 & \textbf{14.6} \\
+\bottomrule
+\end{tabular}
+\caption{10k mixed scale-up diagnostic under the same normal yes/no prompt.
+Values are percentages. Increasing the preference set size preserves the 5k
+pattern: evidence hints reduce FPR but do not improve accuracy or F1 over
+\answerdpo{}.}
+\label{tab:scaleup}
+\end{table}
+
 \section{Limitations}
 
 This study is a controlled, small-scale test rather than a complete solution to
@@ -351,12 +389,13 @@ attributes, and left/right spatial relations; it does not cover counting,
 multi-step compositional reasoning, open-ended descriptions, or dense
 grounding. Evidence hints are template-generated from existing annotations and
 are much weaker than human rationales or region-level supervision. We use one
-backbone, one training set size, and one seed. The results are therefore best
-read as a boundary case: the simple hint format tested here is not sufficient
-to consistently beat answer-only DPO. Finally, annotation incompleteness can
-make some negative object claims ambiguous, and the Base-error-mined audit is
-preliminary, so future work should use harder human-verified negatives,
-stronger hint designs, and broader benchmarks.
+backbone and one seed; the 10k diagnostic checks scale within the same data
+construction rather than exploring broad scaling laws. The results are
+therefore best read as a boundary case: the simple hint format tested here is
+not sufficient to consistently beat answer-only DPO. Finally, annotation
+incompleteness can make some negative object claims ambiguous, and the
+Base-error-mined audit is preliminary, so future work should use harder
+human-verified negatives, stronger hint designs, and broader benchmarks.
 
 \section{Conclusion}
 
@@ -366,7 +405,9 @@ leaving the model, loss, and inference prompt unchanged. In a controlled
 COCO/GQA study, this simple format produces a small reduction in object
 false positives, but it does not consistently improve over answer-only DPO on
 overall accuracy, GQA simple claims, Hard COCO, evidence-style prompting, or a
-Base-error-mined diagnostic set. The broader lesson is useful: lightweight
+Base-error-mined diagnostic set. Doubling the mixed preference data from 5k to
+10k preserves this pattern: \method{} lowers FPR but remains below
+\answerdpo{} on accuracy and F1. The broader lesson is useful: lightweight
 grounding-flavored preference responses are easy to construct and evaluate, but
 template hints alone may be too weak to reliably change VLM visual grounding.
 

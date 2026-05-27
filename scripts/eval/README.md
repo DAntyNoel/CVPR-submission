@@ -279,6 +279,12 @@ Use `OUTPUT_VARIANT` whenever a run should not overwrite an existing result,
 for example `mixed` for the current COCO+GQA adapters or `evidence_prompt` for
 an alternate prompting view.
 
+The 10k scale-up submission script pins the new adapters with
+`ADAPTER_NAME_OR_PATH` and writes normal-prompt results under
+`OUTPUT_VARIANT=mixed10k` for COCO held-out, GQA simple, and Hard COCO. The
+base-error-mined set is intentionally left out because the 10k COCO scale-up
+does not reserve that diagnostic pool as held-out training exclusions.
+
 Evidence-style prompt evaluation reuses the same inference and scoring scripts,
 but changes the instruction suffix and writes to a separate variant directory:
 

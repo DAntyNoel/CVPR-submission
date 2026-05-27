@@ -8,7 +8,8 @@ Evidence-Hint DPO ZeRO-2 results.
 Current files:
 
 - `main.tex`: paper body with real mixed results, Hard COCO diagnostics,
-  evidence-style prompt analysis, and Base-error-mined diagnostics.
+  evidence-style prompt analysis, Base-error-mined diagnostics, and the 10k
+  mixed scale-up check.
 - `main_full.tex`: standalone entry point that enables the appendix and writes
   `build/main_full.pdf`.
 - `preamble.tex`: CVPR author-kit preamble helper, kept aligned with the
@@ -41,8 +42,8 @@ Author-kit alignment:
 
 The paper now follows the completed-result interpretation: template evidence
 hints slightly reduce some false-positive object claims but do not consistently
-outperform Answer-DPO across COCO/GQA/Hard COCO, evidence-style prompting, or
-Base-error-mined diagnostics.
+outperform Answer-DPO across COCO/GQA/Hard COCO, evidence-style prompting,
+Base-error-mined diagnostics, or the 10k mixed scale-up check.
 
 Page budget:
 
@@ -69,8 +70,8 @@ make full
 
 This writes `build/main_full.pdf`. The environment currently uses Tectonic 0.16.9
 because system-level TeX Live cannot be installed without sudo on this machine.
-The diagnostic PDF builds were verified on 2026-05-27: `build/main.pdf` is 4
-pages and `build/main_full.pdf` is 5 pages. The remaining non-fatal warning is
+The diagnostic PDF builds were verified on 2026-05-27: `build/main.pdf` is 5
+pages and `build/main_full.pdf` is 7 pages. The remaining non-fatal warning is
 the upstream `lineno.sty` UTF-8 warning from the bundled review style; there
 are no current overfull/underfull table warnings or Times/Helvetica
 font-substitution warnings.

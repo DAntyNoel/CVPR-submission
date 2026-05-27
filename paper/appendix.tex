@@ -55,6 +55,7 @@ DPO beta & 0.1 \\
 LoRA rank & 16 \\
 Training pairs & 5{,}000 mixed COCO/GQA pairs \\
 COCO/GQA split & 3{,}500 / 1{,}500 \\
+Scale-up diagnostic & 10{,}000 pairs, split 6{,}000 / 4{,}000 \\
 Eval image overlap & 0 train/eval image ids \\
 \bottomrule
 \end{tabular}
@@ -114,6 +115,22 @@ over 474 images: 123 original Base false positives and 404 original Base false
 negatives. It is used only as a diagnostic set for error recovery. On this
 pre-audit set, \answerdpo{} recovers 33/527 errors and \method{} recovers
 16/527 errors. Both rows have 0.0\% refusal and 0.0\% other/invalid outputs.
+
+\subsection{10k Scale-Up Diagnostic}
+
+The scale-up diagnostic uses separate mixed10k files, adapters, and generation
+directories so it does not overwrite the 5k main experiment. The data contains
+6{,}000 COCO object-existence pairs and 4{,}000 GQA simple pairs. Its
+200-example audit passes the same checks as the main audit: 200/200 chosen
+responses correct, 200/200 rejected responses wrong, and 200/200 evidence
+hints consistent with the annotations.
+
+Under the normal yes/no prompt, \answerdpo{} reaches 96.5\% / 76.9\% / 94.8\%
+accuracy on COCO, GQA, and Hard COCO, respectively. The corresponding
+\method{} accuracies are 96.1\% / 76.6\% / 94.4\%. \method{} has lower FPR on
+the same three sets (1.6\% vs. 1.8\%, 14.6\% vs. 16.4\%, and 3.8\% vs. 4.8\%),
+but lower accuracy and F1. Thus the larger diagnostic set supports the same
+paper claim as the 5k main experiment.
 
 \subsection{Reproducibility Notes}
 
