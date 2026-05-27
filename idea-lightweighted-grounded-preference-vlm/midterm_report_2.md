@@ -53,4 +53,10 @@ Phase-2 的价值主要是解释性：简单地移动 evidence 位置或只训�
 3. 从已有 generation JSONL 中挑少量 case study，服务于 failure analysis，而不是强行展示胜例。
 4. 最后再跑一次轻量 LaTeX 编译，确认正文仍为 5-6 页且无表格溢出。
 
-当前不建议继续提交新的 7B 训练或大规模评测，除非明确改变研究问题。
+若决定主动修复当前偏负向结果，而不是只写诊断论文，优先走
+`tasks/balanced-hard-evidence-dpo/`：该任务把 Hard COCO、Base-error-mined、
+canonical COCO paired rows 与 GQA anchors 合成一个 5k balanced hard evidence
+preference set，目标是降低 FPR 的同时控制 FNR，不再只让模型变保守。
+
+当前不建议继续提交新的 7B 训练或大规模评测，除非明确改变研究问题；Balanced
+Hard Evidence-DPO 就是这种“明确改变研究问题”的小规模 rescue run 候选。

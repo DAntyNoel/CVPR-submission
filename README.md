@@ -19,6 +19,10 @@
   Evidence 是三组里最稳的变体：COCO/GQA/Hard COCO Acc 为
   0.961/0.768/0.947，base-error recovery 为 0.044，但仍未改写主线
   “Evidence-Hint 不稳定超过 Answer-DPO” 的诊断结论。
+- 已在 `tasks/balanced-hard-evidence-dpo/` 新增 Balanced Hard Evidence-DPO
+  任务实现：默认构造 5k balanced hard evidence preference 数据，其中
+  object-existence 部分严格 yes/no 平衡，并混入 Hard COCO、Base-error-mined、
+  canonical COCO pairs 与 GQA anchors，目标是降低 FPR 的同时避免 FNR 上升。
 - COCO Base 分数过高与 Hard COCO ceiling-effect 诊断任务已单独整理在
   `tasks/coco-hard-ceiling-diagnosis/`。
 - Base-error mining 诊断评测任务已单独整理在
@@ -83,6 +87,7 @@ idea-imporve-evidence/
 tasks/
   coco-hard-ceiling-diagnosis/      # COCO/Hard COCO ceiling-effect 诊断任务
   base-error-mining/                # Base 错误样本挖掘诊断评测任务
+  balanced-hard-evidence-dpo/       # Balanced hard evidence preference rescue run
 
 scripts/data/
   README.md                        # 数据流水线说明
@@ -177,6 +182,14 @@ data/eval/coco_hard_object_existence.jsonl
 ```
 
 如果需要重新生成数据，优先使用已有 Slurm 脚本或轻量 CPU 脚本；大文件建议软链接，不要直接复制进仓库。
+
+Balanced Hard Evidence-DPO 默认在任务目录内生成派生产物，避免污染主线 5k/10k
+数据注册表：
+
+```text
+tasks/balanced-hard-evidence-dpo/generated/balanced_hard_evidence_dpo_train.jsonl
+tasks/balanced-hard-evidence-dpo/llamafactory_data/cvpr_balanced_hard_evidence_dpo.json
+```
 
 Phase-2 方法变体复用 `canonical_pairs_main.jsonl` 并额外导出：
 
@@ -287,6 +300,20 @@ COCO held-out Acc: Evidence-Only 0.959, Input-Side 0.961, Chosen-Only 0.961
 GQA simple Acc:    Evidence-Only 0.765, Input-Side 0.768, Chosen-Only 0.765
 Hard COCO Acc:     Evidence-Only 0.942, Input-Side 0.947, Chosen-Only 0.946
 Base-error recovery: Evidence-Only 0.015, Input-Side 0.044, Chosen-Only 0.032
+```
+
+Balanced Hard Evidence-DPO 是另一个独立 rescue run，用于直接解决 FPR/FNR
+trade-off。它先生成任务内 LLaMA-Factory 数据，再用 ZeRO-2 训练：
+
+```bash
+sbatch tasks/balanced-hard-evidence-dpo/train_balanced_hard_evidence_dpo.slurm
+```
+
+对应 adapter 与任务内 registry 为：
+
+```text
+outputs/llamafactory/qwen25vl7b_balanced_hard_evidence_dpo_zero2/
+tasks/balanced-hard-evidence-dpo/llamafactory_data/dataset_info.json
 ```
 
 ## 评测
