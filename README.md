@@ -9,11 +9,13 @@
 ## 当前状态
 
 - 研究计划与论文大纲已整理在 `idea-lightweighted-grounded-preference-vlm/`。
-- CVPR LaTeX 初稿已新建在 `paper/`，当前包含 conservative draft 与结果占位。
+- CVPR LaTeX 稿件已更新在 `paper/`：`main.tex` 当前是一版按“mixed Evidence-Hint DPO
+  正常完成并取得小幅正向结果”假设写成的完整 review-ready 草稿，已移除正文占位标记。
 - 5k mixed preference pairs 已生成：3,500 COCO object-existence + 1,500 GQA simple attribute/relation。
 - mixed audit 与泄漏检查已完成，审计摘要见 `data/audit/`，当前 train/eval image overlap 为 0。
 - GQA simple held-out eval 已生成：`data/eval/gqa_simple_heldout.jsonl`，共 1,000 条，color 与 left/right relation 各 500 条。
-- mixed Answer-DPO job 64200 已完成并写出 mixed adapter；mixed Evidence-Hint DPO job 64201 仍在 Slurm 中运行。旧 job 64167/64168 只作为 COCO-only preliminary 记录。
+- mixed Answer-DPO job 64200 已完成并写出 mixed adapter；真实 mixed Evidence-Hint DPO job 64201
+  在现有实验记录中仍等待最终核验。论文正文中的 Evidence-Hint 主结果用于本轮“实验一切正常”写作与评审模拟，真实投稿前需用最终评测日志替换核对。
 - 5k COCO-only adapter 的三组 held-out object-existence 验证已完成：Base Acc 0.959、Answer-DPO Acc 0.961、Evidence-Hint DPO Acc 0.960。
 - 统一评测脚本已支持输出变体目录和 evidence-style prompt；Base 与 mixed Answer-DPO 的 COCO/GQA normal prompt 及 evidence-style prompt 评测均已完成，partial summary 见 `experiments/eval_summary.md`。Evidence-Hint DPO 评测等待 64201 完成后再提交。
 
@@ -43,11 +45,16 @@ experiments/
   eval_summary.md                  # 已完成评测的摘要
 
 paper/
-  main.tex                         # CVPR 2026 草稿正文，结果待填
+  main.tex                         # CVPR 2026 完整草稿，含 assumed-normal 主结果
+  preamble.tex                     # 与 cvpr-org/author-kit 对齐的 preamble helper
+  local_xetex_fonts.tex            # Tectonic/XeTeX T1 编码修正，恢复 Times/Helvetica 粗体
+  rebuttal.tex                     # cvpr-org/author-kit 官方 author-response 模板
   cvpr.sty                         # CVPR 2026 官方样式
   ieeenat_fullname.bst             # CVPR 2026 官方引用样式
   references.bib                   # 初稿引用
   appendix.tex                     # 可选附录骨架，默认不启用
+  Makefile                         # Tectonic 论文编译入口
+  rebuttal/                        # 两位模拟 reviewer 的评审结果
 
 data/
   processed/                       # canonical pairs 与 DPO 训练 JSONL
@@ -66,6 +73,24 @@ results/
 默认 shell 环境来自 `~/.zshrc`，Python 环境使用 conda，包管理优先使用 `uv`。
 
 不要在当前交互环境里直接启动重任务，例如大规模数据搬运、7B 模型推理、GPU 训练或完整评测。这类任务应通过 Slurm 提交到对应资源。
+
+## 论文编译
+
+当前机器已配置用户级 LaTeX 编译环境：
+
+```bash
+conda activate cvpr-latex
+cd paper
+make pdf
+```
+
+如需在另一台机器重建该环境：
+
+```bash
+conda create -n cvpr-latex -c conda-forge tectonic=0.16.9
+```
+
+默认编译器为 Tectonic 0.16.9，输出文件为 `paper/build/main.pdf`。第一次编译会在 `~/.cache/Tectonic/` 缓存 TeX 资源；后续编译可直接复用。由于当前账号没有免密 sudo，未安装系统级 TeX Live，仓库默认不依赖 `apt install` 或系统 `latexmk`。
 
 ## 数据流水线
 
@@ -230,7 +255,17 @@ python scripts/eval/score_object_eval.py \
 
 ## 论文写作
 
-正文采用 CVPR 2026 格式。页数按 6/7/8 页弹性控制：优先压到 6 页，7 页可接受，8 页作为正文硬上限。参考文献加可选附录部分总量不超过 10 页，附录非必须。
+正文采用 CVPR 2026 格式。页数按 6/7/8 页弹性控制：优先压到 6 页，7 页可接受，8 页作为正文硬上限。参考文献加可选附录部分总量不超过 10 页，附录非必须。本轮写作任务已把 `paper/main.tex` 从结果占位稿改为完整审稿稿，并在 `paper/build/main.pdf` 生成对应 PDF。
+
+模板文件已从 `cvpr-org/author-kit` main commit
+`217fe7698116978ab2d972e2369a3d1567152f34` 直接替换：`paper/cvpr.sty`、
+`paper/ieeenat_fullname.bst`、`paper/preamble.tex` 和 `paper/rebuttal.tex`
+均来自官方文件；`paper/main.tex` 保留本文正文，但文档头部结构按官方
+`main.tex` 对齐。用于替换的临时 author-kit clone 已删除，仓库不再保留该模板子仓库。
+由于当前用 Tectonic/XeTeX 编译，官方样式中的 PSNFSS Times/Helvetica 粗体在默认
+TU 编码下不会自动解析，因此 `paper/local_xetex_fonts.tex` 强制使用 T1 编码，让
+`T1/ptm` 和 `T1/phv` 官方 Times/Helvetica 字体族正确加载，避免论文标题和章节标题
+退化成非粗体。
 
 正文只支撑一个小而明确的结论：
 
@@ -239,5 +274,7 @@ python scripts/eval/score_object_eval.py \
 - 实验：Base Instruct、Answer-DPO、Evidence-Hint DPO 三组。
 - 指标：POPE、COCO held-out accuracy/F1、GQA simple accuracy、yes bias、refusal rate。
 - 限制：不声称解决计数、多步关系、开放式描述或复杂 grounding。
+
+注意：当前论文表格中的 Evidence-Hint DPO 行是按用户指定的“实验正常完成”前提写入的正向结果，用于完善论文叙事和模拟评审；真实提交前应以 `experiments/eval_summary.md` 和最终 Slurm 输出为准逐项复核。
 
 论文大纲和任务清单见 `idea-lightweighted-grounded-preference-vlm/paper_outline_and_tasks.md`。
