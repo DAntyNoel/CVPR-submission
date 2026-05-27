@@ -24,11 +24,17 @@ claim-evidence preference:
 
 V2 now has an executable CEPO pipeline: local data construction and audits are
 lightweight, while 7B training and full evaluation are submitted through Slurm.
+The CEPO-Latent run did not beat Answer-DPO on the primary short-answer
+metrics, so the active next experiment is **CEPO-Dual**, which mixes ordinary
+short-answer DPO rows with direct evidence-verifier preference rows.
+
 The generated sidecar artifacts live under:
 
 ```text
 data/processed/cepo/
 experiments/llamafactory_data_cepo/
+data/processed/cepo_dual/
+experiments/llamafactory_data_cepo_dual/
 data/eval/cepo_evidence_probe.jsonl
 data/eval/cepo_wrong_evidence_probe.jsonl
 ```
@@ -50,10 +56,12 @@ idea-evidence-grounded-preference-vlm/
   reusable_assets.md
   plan.md
   experiment_plan.md
+  next_experiment_plan.md
 ```
 
 Active V2 outline: what to reuse from V1, the new CEPO project framing, and the
-planned experiment schedule.
+planned experiment schedule. `next_experiment_plan.md` records the CEPO-Dual
+follow-up after the CEPO-Latent result.
 
 ```text
 futurework-grounded-preference-vlm/
@@ -84,8 +92,8 @@ data/processed/cepo/
 experiments/llamafactory_data_cepo/
 ```
 
-V2 CEPO canonical data, Answer-DPO/CEPO-Latent exports, audit/check summaries,
-and LLaMA-Factory registry files.
+V2 CEPO canonical data, Answer-DPO/CEPO-Latent/CEPO-Dual exports,
+audit/check summaries, and LLaMA-Factory registry files.
 
 ## What Carries Forward From V1
 
@@ -110,7 +118,7 @@ Not worth continuing as a main direction:
 
 The proposed V2 method is **CEPO: Claim-Evidence Preference Optimization**.
 
-Main comparison remains three groups:
+The original CEPO-Latent comparison used three groups:
 
 | Group | Method |
 | --- | --- |
@@ -122,6 +130,15 @@ CEPO-Latent trains with compact claim-evidence blocks, but the main evaluation
 still asks for short answers. A separate evidence-probe evaluation checks
 whether the model learned evidence consistency rather than merely changing
 yes/no bias.
+
+The active follow-up keeps the same three-group discipline but replaces the
+third group with CEPO-Dual:
+
+| Group | Method |
+| --- | --- |
+| A | Base Instruct |
+| B | CEPO Answer-DPO |
+| C | CEPO-Dual |
 
 The fixed V2 run uses 6,000 preference rows:
 
@@ -141,12 +158,22 @@ bash experiments/slurm/submit_cepo_pipeline.sh
 It submits the two ZeRO-2 LoRA-DPO training jobs and after-ok eval jobs for
 COCO/GQA/Hard COCO/Base-error, POPE/AMBER, and the CEPO evidence probes.
 
+For the CEPO-Dual follow-up, build the 8,000-row dual-task export and submit
+the single new ZeRO-2 training job plus fixed eval matrix with:
+
+```bash
+python scripts/data/14_export_cepo_dual_dpo.py
+python scripts/experiments/prepare_llamafactory_data_cepo_dual.py
+bash experiments/slurm/submit_cepo_dual_pipeline.sh
+```
+
 See:
 
 - `idea-evidence-grounded-preference-vlm/reusable_assets.md`
 - `idea-evidence-grounded-preference-vlm/plan.md`
 - `idea-evidence-grounded-preference-vlm/experiment_plan.md`
 - `idea-evidence-grounded-preference-vlm/experiment_run_2026-05-27.md`
+- `idea-evidence-grounded-preference-vlm/next_experiment_plan.md`
 
 ## Environment Rules
 

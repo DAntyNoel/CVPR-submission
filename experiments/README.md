@@ -20,6 +20,15 @@ B. CEPO Answer-DPO: experiments/llamafactory_configs/qwen25vl_cepo_answer_dpo.ya
 C. CEPO-Latent: experiments/llamafactory_configs/qwen25vl_cepo_latent_dpo.yaml
 ```
 
+CEPO-Latent did not provide a sufficient positive short-answer result, so the
+current follow-up is CEPO-Dual:
+
+```text
+A. Base Instruct: no training
+B. CEPO Answer-DPO: experiments/llamafactory_configs/qwen25vl_cepo_answer_dpo.yaml
+C. CEPO-Dual: experiments/llamafactory_configs/qwen25vl_cepo_dual_dpo.yaml
+```
+
 Use the 7B Qwen2.5-VL model for the main run. The scripts expect it at:
 
 ```text
@@ -84,6 +93,40 @@ For training only, use:
 
 ```bash
 bash experiments/slurm/submit_cepo_main.sh
+```
+
+## CEPO-Dual Follow-Up
+
+CEPO-Dual removes the CEPO-Latent format mismatch by mixing short-answer
+preference rows with direct evidence-verifier rows:
+
+```bash
+python scripts/data/14_export_cepo_dual_dpo.py
+python scripts/experiments/prepare_llamafactory_data_cepo_dual.py
+```
+
+The generated files are:
+
+```text
+data/processed/cepo_dual/cepo_dual_dpo_train.jsonl
+data/processed/cepo_dual/cepo_dual_summary.json
+experiments/llamafactory_data_cepo_dual/dataset_info.json
+experiments/llamafactory_data_cepo_dual/cvpr_cepo_dual_dpo.json
+```
+
+Launch the CEPO-Dual ZeRO-2 job plus Base/CEPO Answer-DPO/CEPO-Dual evals with:
+
+```bash
+bash experiments/slurm/submit_cepo_dual_pipeline.sh
+```
+
+The adapter and generations are written to:
+
+```text
+outputs/llamafactory/qwen25vl7b_cepo_dual_dpo_zero2/
+results/eval/generations/<eval_name>/cepo_dual/<model_key>.jsonl
+results/eval/generations/<eval_name>/cepo_dual_external/<model_key>.jsonl
+results/eval/generations/<eval_name>/cepo_dual_evidence_probe/<model_key>.jsonl
 ```
 
 Adapters and generations are written to:

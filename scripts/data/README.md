@@ -32,6 +32,21 @@ data/processed/cepo/leakage_report.json
 `13_check_cepo_data.py` verifies claim fields, same-answer wrong-evidence
 rows, non-identical Answer-DPO exports, and train/eval image overlap.
 
+The CEPO-Dual follow-up reuses the canonical CEPO sidecar and exports an
+8,000-row dual-task DPO file:
+
+```bash
+python scripts/data/14_export_cepo_dual_dpo.py
+```
+
+The default mix is 6,000 short-answer rows, 1,000 supported evidence-verifier
+rows, and 1,000 wrong-evidence verifier rows. It writes:
+
+```text
+data/processed/cepo_dual/cepo_dual_dpo_train.jsonl
+data/processed/cepo_dual/cepo_dual_summary.json
+```
+
 ## Expected raw data
 
 Link or place the raw annotations/images at:

@@ -34,6 +34,7 @@ experiments/llamafactory_data_10k/
 experiments/llamafactory_data_answer_evidence_*/
 experiments/llamafactory_data_input_side_main/
 experiments/llamafactory_data_cepo/
+experiments/llamafactory_data_cepo_dual/
 outputs/
 output/
 results/

@@ -53,6 +53,10 @@ MODEL_REGISTRY = {
         "method": "CEPO-Latent DPO",
         "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_cepo_latent_dpo_zero2",
     },
+    "cepo_dual_dpo": {
+        "method": "CEPO-Dual DPO",
+        "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_cepo_dual_dpo_zero2",
+    },
 }
 
 

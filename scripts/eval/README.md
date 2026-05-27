@@ -9,6 +9,7 @@ answer_dpo
 evidence_hint_dpo
 cepo_answer_dpo
 cepo_latent_dpo
+cepo_dual_dpo
 ```
 
 The scripts are intentionally split into cheap data/metric steps and GPU
@@ -35,6 +36,12 @@ Run them through Slurm with the CEPO pipeline:
 
 ```bash
 bash experiments/slurm/submit_cepo_pipeline.sh
+```
+
+For the CEPO-Dual follow-up, use:
+
+```bash
+bash experiments/slurm/submit_cepo_dual_pipeline.sh
 ```
 
 The evidence-probe Slurm entrypoint asks for JSON with `answer`, `claim`,
