@@ -28,6 +28,25 @@ python scripts/eval/prepare_coco_heldout_eval.py \
 Each selected pool pair contributes one yes question for the annotated object
 and one no question for the unannotated negative object.
 
+## Hard COCO Eval
+
+Build the harder COCO object-existence eval JSONL directly from COCO
+annotations and the held-out image ids:
+
+```bash
+python scripts/eval/prepare_coco_hard_eval.py \
+  --heldout-image-ids data/eval/heldout_object_existence_image_ids.txt \
+  --output data/eval/coco_hard_object_existence.jsonl \
+  --max-pairs 500 \
+  --seed 42
+```
+
+Each selected image contributes one visible-object yes question and one
+same-coarse-group absent-object no question, with low-confidence negatives
+filtered by default. The current output has 1,000 rows, yes/no balanced, 500
+unique images, and `train_eval_image_overlap = 0`; see
+`data/eval/coco_hard_object_existence.summary.json`.
+
 ## GQA Simple Held-Out Eval
 
 Build the small GQA simple eval set from unused GQA candidate pairs:
@@ -103,6 +122,13 @@ MODEL_KEY=evidence_hint_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.j
   sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
 ```
 
+Hard COCO uses the same Slurm entrypoint:
+
+```bash
+MODEL_KEY=base EVAL_JSONL=data/eval/coco_hard_object_existence.jsonl OUTPUT_VARIANT=mixed \
+  sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
+```
+
 Raw generations are saved under:
 
 ```text
@@ -139,5 +165,5 @@ The metrics JSON includes accuracy, F1, yes bias, refusal rate, and a binary
 confusion matrix. Refusal rate is triggered by phrases such as `not sure`,
 `cannot determine`, `unclear`, and related variants.
 
-The same scorer can be used for COCO held-out, POPE, and the yes/no GQA simple
-eval JSONL after model generations are saved.
+The same scorer can be used for COCO held-out, Hard COCO, POPE, and the yes/no
+GQA simple eval JSONL after model generations are saved.

@@ -9,6 +9,8 @@
 ## 当前状态
 
 - 研究计划与论文大纲已整理在 `idea-lightweighted-grounded-preference-vlm/`。
+- COCO Base 分数过高与 Hard COCO ceiling-effect 诊断任务已单独整理在
+  `tasks/coco-hard-ceiling-diagnosis/`。
 - CVPR LaTeX 稿件已更新在 `paper/`：`main.tex` 当前是一版按“mixed Evidence-Hint DPO
   正常完成并取得小幅正向结果”假设写成的完整 review-ready 草稿，已移除正文占位标记。
 - 5k mixed preference pairs 已生成：3,500 COCO object-existence + 1,500 GQA simple attribute/relation。
@@ -19,7 +21,7 @@
   在现有实验记录中仍等待最终核验。论文正文中的 Evidence-Hint 主结果用于本轮“实验一切正常”写作与评审模拟，真实投稿前需用最终评测日志替换核对。
 - 5k COCO-only adapter 的三组 held-out object-existence 验证已完成：Base Acc 0.959、Answer-DPO Acc 0.961、Evidence-Hint DPO Acc 0.960。
 - 统一评测脚本已支持输出变体目录和 evidence-style prompt；Base 与 mixed Answer-DPO 的 COCO/GQA normal prompt 及 evidence-style prompt 评测均已完成，partial summary 见 `experiments/eval_summary.md`。Evidence-Hint DPO 评测等待 64201 完成后再提交。
-- 等待 64201 时，Hard COCO 的 Base 与 mixed Answer-DPO 评测 jobs 64233/64234 已完成：Base Acc 0.944，mixed Answer-DPO Acc 0.950；mixed Evidence-Hint DPO 的 Hard COCO、COCO/GQA normal prompt 与 evidence-style prompt 评测仍等待最终 adapter。
+- 等待 64201 时，Hard COCO 的 Base 与 mixed Answer-DPO 评测 jobs 64233/64234 已完成：Base Acc 0.944，mixed Answer-DPO Acc 0.950；mixed Evidence-Hint DPO 的 COCO/GQA、Hard COCO 与 evidence-style prompt 评测已排入 afterok:64201 依赖队列。
 
 ## 目录结构
 
@@ -28,6 +30,9 @@ idea-lightweighted-grounded-preference-vlm/
   plan.md                         # 项目目标、方法与实验设计
   paper_outline_and_tasks.md       # 论文大纲与后续任务清单
   data_processing_plan.md          # 数据构造方案
+
+tasks/
+  coco-hard-ceiling-diagnosis/      # COCO/Hard COCO ceiling-effect 诊断任务
 
 scripts/data/
   README.md                        # 数据流水线说明
@@ -259,6 +264,11 @@ ADAPTER_NAME_OR_PATH=outputs/llamafactory/qwen25vl7b_evidence_hint_dpo \
 64219  COMPLETED  mixed Answer-DPO   COCO held-out, evidence_prompt output variant
 64233  COMPLETED  Base Instruct      Hard COCO, mixed output variant
 64234  COMPLETED  mixed Answer-DPO   Hard COCO, mixed output variant
+64235  PENDING    mixed Evidence-Hint DPO  COCO held-out, mixed, afterok:64201
+64236  PENDING    mixed Evidence-Hint DPO  GQA simple, mixed, afterok:64201
+64237  PENDING    mixed Evidence-Hint DPO  Hard COCO, mixed, afterok:64201
+64238  PENDING    mixed Evidence-Hint DPO  GQA simple, evidence_prompt, afterok:64201
+64239  PENDING    mixed Evidence-Hint DPO  COCO held-out, evidence_prompt, afterok:64201
 ```
 
 当前可用的 mixed partial 指标：

@@ -139,7 +139,7 @@ data/audit/audit_200.csv
 - yes/no 仍保持平衡；正例沿用可见对象，负例优先选择常共现或同粗类但未标注为可见的对象。
 - 负例可以从同一图片的正对象出发做相近类别采样，例如 `dog/cat`、`bus/truck`、`cup/bottle`、`chair/couch`，并继续过滤低置信漏标类别。
 - 每张图片控制问题数量，避免同图重复过多。
-- 输出建议为 `data/eval/coco_hard_object_existence.jsonl` 和对应 `.summary.json`，评测结果写入独立 output variant，避免覆盖普通 COCO held-out。
+- 当前输出为 `data/eval/coco_hard_object_existence.jsonl` 和对应 `.summary.json`，由 `scripts/eval/prepare_coco_hard_eval.py` 从 held-out image ids 与 COCO annotations 构造；当前版本为 1,000 条、yes/no 各 500 条、500 张 held-out 图像、train/eval image overlap = 0。
 
 Hard COCO 只作为评测压力测试，不用于训练或调参；如果它和普通 COCO 结论冲突，论文应优先解释普通 held-out 的 ceiling effect。
 

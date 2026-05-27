@@ -85,6 +85,19 @@ python scripts/eval/prepare_gqa_simple_heldout_eval.py \
   --seed 42
 ```
 
+Build the Hard COCO held-out eval set:
+
+```bash
+python scripts/eval/prepare_coco_hard_eval.py \
+  --heldout-image-ids data/eval/heldout_object_existence_image_ids.txt \
+  --output data/eval/coco_hard_object_existence.jsonl \
+  --max-pairs 500 \
+  --seed 42
+```
+
+The current Hard COCO file has 1,000 rows, yes/no balanced, 500 unique images,
+and zero train/eval image overlap.
+
 Normalize POPE annotations when the official POPE file is available:
 
 ```bash
@@ -142,6 +155,24 @@ ADAPTER_NAME_OR_PATH=outputs/llamafactory/qwen25vl7b_evidence_hint_dpo \
 64205  Base Instruct
 64206  Answer-DPO        outputs/llamafactory/qwen25vl7b_answer_dpo
 64207  Evidence-Hint DPO outputs/llamafactory/qwen25vl7b_evidence_hint_dpo
+```
+
+2026-05-27 Hard COCO mixed validation while waiting for 64201:
+
+```text
+64233  COMPLETED  Base Instruct      Acc 0.944, F1 0.943
+64234  COMPLETED  mixed Answer-DPO   Acc 0.950, F1 0.949
+```
+
+Submit the mixed Evidence-Hint DPO Hard COCO job after 64201 finishes and the
+adapter dry-run passes. Current dependent eval queue:
+
+```text
+64235  PENDING afterok:64201  Evidence-Hint DPO COCO held-out, mixed
+64236  PENDING afterok:64201  Evidence-Hint DPO GQA simple, mixed
+64237  PENDING afterok:64201  Evidence-Hint DPO Hard COCO, mixed
+64238  PENDING afterok:64201  Evidence-Hint DPO GQA simple, evidence_prompt
+64239  PENDING afterok:64201  Evidence-Hint DPO COCO held-out, evidence_prompt
 ```
 
 Raw generations and metadata are written to:

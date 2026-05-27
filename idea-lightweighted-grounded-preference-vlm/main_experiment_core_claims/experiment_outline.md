@@ -36,7 +36,7 @@ Answer-DPO 和 Evidence-Hint DPO 使用同一份 mixed `canonical_pairs_main.jso
 评测数据：
 
 - COCO held-out：`data/eval/coco_heldout_object_existence.jsonl`，1,000 条，yes/no 各 500 条
-- Hard COCO held-out：待构造，优先从 held-out/unused COCO pool 中选择常共现或同粗类易混淆的 absent-object negative，重点测试 false positive object hallucination
+- Hard COCO held-out：`data/eval/coco_hard_object_existence.jsonl`，1,000 条，yes/no 各 500 条，500 张 held-out 图像；负例为同粗类但未标注可见的 absent object，重点测试 false positive object hallucination
 - GQA simple held-out：`data/eval/gqa_simple_heldout.jsonl`，1,000 条，500 color + 500 left/right relation，yes/no 各 500 条
 - POPE object hallucination：作为外部对象幻觉补充评测
 - AMBER object/attribute subset：数据准备顺利时加入，作为外部多维 hallucination 补充
@@ -170,6 +170,8 @@ COCO-only held-out 结果只能支持“false positive 略低”，不能单独�
 - mixed Evidence-Hint DPO 64201 仍在运行，等待完成后检查 adapter、train metrics 和 dry-run。
 - Base GQA 与 mixed Answer-DPO COCO/GQA 评测 jobs 64213-64215 已完成：Base GQA Acc 0.764，mixed Answer-DPO COCO Acc 0.961，mixed Answer-DPO GQA Acc 0.768。
 - Base/Answer-DPO evidence-style prompt jobs 64216-64219 已完成：Base COCO Acc 0.955，Base GQA Acc 0.768，Answer-DPO COCO Acc 0.956，Answer-DPO GQA Acc 0.766，拒答率均为 0。
+- Hard COCO held-out 已构造完成：`data/eval/coco_hard_object_existence.jsonl`，1,000 条、yes/no 各 500、train/eval image overlap = 0；Base 和 mixed Answer-DPO jobs 64233/64234 已完成，Base Acc 0.944，mixed Answer-DPO Acc 0.950。
+- mixed Evidence-Hint DPO 的下游评测已排入 afterok:64201 依赖队列：64235 COCO held-out、64236 GQA simple、64237 Hard COCO、64238 GQA evidence-style、64239 COCO evidence-style。
 - 官方 POPE 数据与 COCO val2014 图像当前不在仓库本地，POPE 暂放入 supplement/future work。
 - 新增少量大实验优先级已确定：Hard COCO Eval > Evidence-Style Prompt Eval 补全 > POPE/AMBER 小子集 > 10k mixed scale-up。
 

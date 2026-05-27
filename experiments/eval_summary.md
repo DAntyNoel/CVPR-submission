@@ -2,9 +2,9 @@
 
 Updated: 2026-05-27
 
-This file records evaluation results that are already complete while mixed
-Evidence-Hint DPO job 64201 is still running. Do not treat the main table as
-complete until the Evidence-Hint DPO row is available.
+This file records completed evaluation results and in-progress launches while
+mixed Evidence-Hint DPO job 64201 is still running. Do not treat the main table
+as complete until the Evidence-Hint DPO row is available.
 
 ## Normal Yes/No Prompt
 
@@ -18,10 +18,27 @@ Answer with a short yes/no sentence only.
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | COCO held-out | Base Instruct | 64205 | 0.959 | 0.958 | 0.477 | 0.000 | TP 468 / FP 9 / TN 491 / FN 32 |
 | COCO held-out | mixed Answer-DPO | 64214 | 0.961 | 0.960 | 0.479 | 0.000 | TP 470 / FP 9 / TN 491 / FN 30 |
-| COCO held-out | mixed Evidence-Hint DPO | pending 64201 | TBD | TBD | TBD | TBD | TBD |
+| COCO held-out | mixed Evidence-Hint DPO | 64235 pending 64201 | TBD | TBD | TBD | TBD | TBD |
 | GQA simple | Base Instruct | 64213 | 0.764 | 0.740 | 0.408 | 0.000 | TP 336 / FP 72 / TN 428 / FN 164 |
 | GQA simple | mixed Answer-DPO | 64215 | 0.768 | 0.748 | 0.420 | 0.000 | TP 344 / FP 76 / TN 424 / FN 156 |
-| GQA simple | mixed Evidence-Hint DPO | pending 64201 | TBD | TBD | TBD | TBD | TBD |
+| GQA simple | mixed Evidence-Hint DPO | 64236 pending 64201 | TBD | TBD | TBD | TBD | TBD |
+
+## Hard COCO
+
+Eval file:
+
+```text
+data/eval/coco_hard_object_existence.jsonl
+```
+
+It contains 1,000 rows, yes/no balanced, 500 unique held-out images,
+same-coarse-group absent-object negatives, and `train_eval_image_overlap = 0`.
+
+| Method | Job | State | Acc | F1 | Yes Bias | Refusal | Confusion |
+| --- | ---: | --- | ---: | ---: | ---: | ---: | --- |
+| Base Instruct | 64233 | COMPLETED | 0.944 | 0.943 | 0.482 | 0.000 | TP 463 / FP 19 / TN 481 / FN 37 |
+| mixed Answer-DPO | 64234 | COMPLETED | 0.950 | 0.949 | 0.490 | 0.000 | TP 470 / FP 20 / TN 480 / FN 30 |
+| mixed Evidence-Hint DPO | 64237 | pending 64201 | TBD | TBD | TBD | TBD | TBD |
 
 ## Evidence-Style Prompt
 
@@ -37,7 +54,8 @@ Answer yes or no, then briefly mention the visual evidence.
 | COCO held-out | Base Instruct | 64217 | 0.955 | 0.953 | 0.467 | 0.000 | TP 461 / FP 6 / TN 494 / FN 39 |
 | GQA simple | mixed Answer-DPO | 64218 | 0.766 | 0.732 | 0.374 | 0.000 | TP 320 / FP 54 / TN 446 / FN 180 |
 | COCO held-out | mixed Answer-DPO | 64219 | 0.956 | 0.955 | 0.470 | 0.000 | TP 463 / FP 7 / TN 493 / FN 37 |
-| COCO/GQA | mixed Evidence-Hint DPO | pending 64201 | TBD | TBD | TBD | TBD | TBD |
+| GQA simple | mixed Evidence-Hint DPO | 64238 pending 64201 | TBD | TBD | TBD | TBD | TBD |
+| COCO held-out | mixed Evidence-Hint DPO | 64239 pending 64201 | TBD | TBD | TBD | TBD | TBD |
 
-Submit the mixed Evidence-Hint DPO evidence-style jobs after 64201 completes
-and the adapter dry-run passes.
+The mixed Evidence-Hint DPO eval jobs are queued with
+`--dependency=afterok:64201`; if 64201 fails, they will not run.

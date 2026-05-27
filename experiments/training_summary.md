@@ -138,7 +138,12 @@ Wait for job 64201 to complete, then record mixed Evidence-Hint train metrics,
 adapter completeness, log health, and dry-run adapter loading. While it runs,
 Base GQA and mixed Answer-DPO COCO/GQA evaluation jobs have completed via
 `experiments/slurm/eval_vlm_object_hallucination.slurm`; Evidence-Hint DPO
-evaluation should be submitted only after the final adapter exists.
+evaluation should be submitted only after the final adapter exists. Hard COCO
+has also been constructed, and the Base / mixed Answer-DPO Hard COCO eval jobs
+64233 / 64234 completed while 64201 trains. The mixed Evidence-Hint DPO eval
+jobs are queued with `--dependency=afterok:64201`: 64235 COCO held-out, 64236
+GQA simple, 64237 Hard COCO, 64238 GQA evidence-style prompt, and 64239 COCO
+evidence-style prompt.
 
 Completed mixed-eval partial metrics are tracked in:
 
@@ -149,4 +154,5 @@ experiments/eval_summary.md
 Current partial result: COCO held-out Base Acc 0.959 vs mixed Answer-DPO Acc
 0.961; GQA simple Base Acc 0.764 vs mixed Answer-DPO Acc 0.768. Evidence-style
 prompt results for Base/Answer-DPO are complete: Base COCO Acc 0.955, Base GQA
-Acc 0.768, Answer-DPO COCO Acc 0.956, and Answer-DPO GQA Acc 0.766.
+Acc 0.768, Answer-DPO COCO Acc 0.956, and Answer-DPO GQA Acc 0.766. Hard COCO
+Base Acc is 0.944 and mixed Answer-DPO Acc is 0.950.
