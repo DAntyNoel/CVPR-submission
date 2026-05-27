@@ -1,0 +1,13 @@
+{
+  "cvpr_input_side_main_balanced_hard_dpo_qwen25vl32b": {
+    "file_name": "cvpr_input_side_main_balanced_hard_dpo_qwen25vl32b.json",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "images": "images"
+    }
+  }
+}

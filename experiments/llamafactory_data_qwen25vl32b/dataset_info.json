@@ -1,0 +1,68 @@
+{
+  "cvpr_answer_dpo": {
+    "file_name": "cvpr_answer_dpo.json",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "images": "images"
+    }
+  },
+  "cvpr_evidence_hint_dpo": {
+    "file_name": "cvpr_evidence_hint_dpo.json",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "images": "images"
+    }
+  },
+  "cvpr_answer_evidence_mix_dpo": {
+    "file_name": "cvpr_answer_evidence_mix_dpo.json",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "images": "images"
+    }
+  },
+  "cvpr_phase2_evidence_only_dpo": {
+    "file_name": "cvpr_phase2_evidence_only_dpo.json",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "images": "images"
+    }
+  },
+  "cvpr_phase2_input_side_evidence_dpo": {
+    "file_name": "cvpr_phase2_input_side_evidence_dpo.json",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "images": "images"
+    }
+  },
+  "cvpr_phase2_chosen_only_evidence_dpo": {
+    "file_name": "cvpr_phase2_chosen_only_evidence_dpo.json",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "images": "images"
+    }
+  }
+}
