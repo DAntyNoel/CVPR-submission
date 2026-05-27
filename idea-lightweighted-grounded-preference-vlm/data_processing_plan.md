@@ -41,8 +41,9 @@ data/audit/audit_200.csv
 | POPE | 主 object hallucination 评测 |
 | AMBER object/attribute subset | 对象/属性幻觉评测 |
 | GQA val/dev simple subset | 简单 VQA 准确率 |
+| Hard COCO held-out | 常共现/同粗类难负例，专测 absent-object false positive |
 
-关键约束：训练样本优先来自 COCO train2017 和 GQA train；评测使用 POPE/AMBER/GQA val 或 dev。脚本中保留 `image_id` 去重检查，发现 train/eval image overlap 就剔除训练样本。
+关键约束：训练样本优先来自 COCO train2017 和 GQA train；评测使用 POPE/AMBER/GQA val 或 dev。自建 COCO/Hard COCO 评测必须来自 held-out/unused image ids。脚本中保留 `image_id` 去重检查，发现 train/eval image overlap 就剔除训练样本。
 
 ## 2. 目标规模
 
@@ -54,7 +55,7 @@ data/audit/audit_200.csv
 | main | 3,500 | 1,500 | 5,000 |
 | expanded | 6,000 | 4,000 | 10,000 |
 
-推荐执行顺序：先生成 smoke 版，跑通训练和评测；如果 2k 数据格式没问题，直接生成 main 版作为论文主结果。expanded 版只作为 Day 8 的可选增强，不进入主实验组数量统计。
+推荐执行顺序：先生成 smoke 版，跑通训练和评测；如果 2k 数据格式没问题，直接生成 main 版作为论文主结果。expanded 版现在作为条件触发的 10k scale-up：只有当 5k 主结果、Hard COCO、evidence-style prompt 和 POPE/AMBER 小子集仍不足以支撑清晰结论时，才重训 10k Answer-DPO 与 10k Evidence-Hint DPO。
 
 ## 3. 统一样本格式
 
@@ -129,6 +130,18 @@ data/audit/audit_200.csv
 - 从不在该图标注中的 COCO 类别采样。
 - 避免选过于容易被标注漏掉的小物体类别，例如 `fork`、`knife`、`remote` 可以降低采样权重。
 - 优先从同一粗类或相近类中采样，让负例不是太弱，例如 `dog/cat`、`bus/truck`、`cup/bottle`。
+
+### 4.2.1 Hard COCO held-out 负例
+
+普通 COCO held-out 已经可能接近 ceiling，因此新增一个只用于评测的 Hard COCO variant。构造原则：
+
+- 只使用 held-out/unused image ids，不进入训练 canonical pairs。
+- yes/no 仍保持平衡；正例沿用可见对象，负例优先选择常共现或同粗类但未标注为可见的对象。
+- 负例可以从同一图片的正对象出发做相近类别采样，例如 `dog/cat`、`bus/truck`、`cup/bottle`、`chair/couch`，并继续过滤低置信漏标类别。
+- 每张图片控制问题数量，避免同图重复过多。
+- 输出建议为 `data/eval/coco_hard_object_existence.jsonl` 和对应 `.summary.json`，评测结果写入独立 output variant，避免覆盖普通 COCO held-out。
+
+Hard COCO 只作为评测压力测试，不用于训练或调参；如果它和普通 COCO 结论冲突，论文应优先解释普通 held-out 的 ceiling effect。
 
 ### 4.3 问题模板
 
@@ -315,11 +328,12 @@ data/processed/stats_main.json
 | Day 3 上午 | 生成 200 条 audit CSV，人工抽查 | `audit_200.csv` |
 | Day 3 下午 | 根据抽查修过滤规则，生成 main 5k | main 版两份 train JSONL |
 | Day 4 | 训练 Answer-DPO 与 Evidence-Hint DPO | 两个 checkpoint |
-| Day 5 | 跑 POPE/GQA/AMBER 小评测 | 初版结果表 |
-| Day 6 | 如果结果不稳，检查数据分布和 bad cases | `audit_summary.md` |
-| Day 7 | 可选扩展到 10k 或补 seed | expanded 数据或第二 seed |
+| Day 5 | 跑 COCO/GQA/Hard COCO/evidence-style prompt | 初版结果表 |
+| Day 6 | 补 POPE，AMBER 视数据准备情况加入 | 外部评测表 |
+| Day 7 | 如果结果不稳，检查数据分布和 bad cases | `audit_summary.md` |
+| Day 8 | 条件触发 10k scale-up | expanded 数据与两组 DPO train JSONL |
 
-Day 8 以后不再大改数据范式，只做小修、评测、写作和 case study。
+Day 8 以后不再大改数据范式；除条件触发的 10k scale-up 外，只做小修、评测、写作和 case study。
 
 ## 10. 最小失败保护
 

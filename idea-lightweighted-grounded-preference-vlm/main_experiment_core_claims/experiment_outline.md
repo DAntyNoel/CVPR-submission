@@ -36,11 +36,13 @@ Answer-DPO 和 Evidence-Hint DPO 使用同一份 mixed `canonical_pairs_main.jso
 评测数据：
 
 - COCO held-out：`data/eval/coco_heldout_object_existence.jsonl`，1,000 条，yes/no 各 500 条
+- Hard COCO held-out：待构造，优先从 held-out/unused COCO pool 中选择常共现或同粗类易混淆的 absent-object negative，重点测试 false positive object hallucination
 - GQA simple held-out：`data/eval/gqa_simple_heldout.jsonl`，1,000 条，500 color + 500 left/right relation，yes/no 各 500 条
 - POPE object hallucination：作为外部对象幻觉补充评测
+- AMBER object/attribute subset：数据准备顺利时加入，作为外部多维 hallucination 补充
 - 图片重叠：train/eval image overlap = 0
 
-如果 POPE 准备成本过高，第一版主表至少保留 COCO held-out + GQA simple，并把 POPE 写入补充或 limitation。
+如果 POPE/AMBER 准备成本过高，第一版主表至少保留 COCO held-out + Hard COCO + GQA simple，并把 POPE/AMBER 写入补充或 limitation。
 
 ## 4. 训练设置
 
@@ -68,6 +70,8 @@ COCO-only preliminary 训练记录：
 | Evidence-Hint DPO | 64168 | COMPLETED | 0.1025 | 13:22:44 |
 
 64167/64168 基于旧 5,000 条 COCO-only 数据，不进入 mixed 数据主结果表，但可以作为 COCO-only auxiliary/preliminary result 写入论文额外结果。它们适合在等待 mixed 数据重训时先跑 COCO held-out、POPE、refusal rate 和格式违规检查，用来展示纯对象存在子设定下的趋势。mixed job 64200 已使用 2026-05-27 mixed COCO+GQA 数据完成 Answer-DPO 训练；64201 Evidence-Hint DPO 仍在运行。Evidence-Hint DPO 更慢仍是预期现象，主要来自 response 变长带来的 DPO 计算成本增加。
+
+若 5k mixed 主结果和新增评测仍不足以支撑清晰结论，可启动 10k mixed scale-up。该扩展只扩大训练数据，不增加方法组：Base Instruct 不变，只重训 10k Answer-DPO 与 10k Evidence-Hint DPO，并在 COCO held-out、Hard COCO、GQA simple、evidence-style prompt 上复评。
 
 ## 5. COCO-only 额外结果
 
@@ -121,17 +125,19 @@ COCO-only held-out 结果只能支持“false positive 略低”，不能单独�
 | Accuracy | yes/no 判断正确率 | 总体对象存在判断能力 |
 | F1 | 二分类 F1 | 类别平衡下的稳健性 |
 | False Positive Rate | 对不存在对象回答 yes 的比例 | 对象幻觉是否下降 |
+| Hard COCO FPR | 难负例中对不存在对象回答 yes 的比例 | ceiling effect 下的对象幻觉压力测试 |
 | GQA Simple Accuracy | 属性/左右关系回答正确率 | 简单属性和关系是否改善 |
 | Attribute Mismatch | 属性答错比例 | 颜色/材质幻觉是否下降 |
 | Left/Right Reversal | 左右关系答反比例 | 简单空间关系是否改善 |
 | Yes Bias | 回答 yes 的倾向 | 是否只是更爱回答 yes/no |
 | Refusal Rate | 不确定、无法判断等拒答比例 | 是否靠保守拒答获得收益 |
+| Evidence-Style Delta | evidence-style prompt 相对 normal prompt 的变化 | 训练期 evidence hint 是否需要推理期显式触发 |
 
 最重要的比较是 Evidence-Hint DPO vs Answer-DPO，而不是只看 Evidence-Hint DPO 是否超过 Base。
 
 ## 7. 主结果表模板
 
-| Method | POPE F1 | COCO Held-out Acc | GQA Simple Acc | Yes Bias | Refusal Rate |
+| Method | COCO Held-out Acc | Hard COCO FPR | GQA Simple Acc | Yes Bias | Refusal Rate |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Base Instruct | TBD | TBD | TBD | TBD | TBD |
 | Answer-DPO | TBD | TBD | TBD | TBD | TBD |
@@ -139,18 +145,24 @@ COCO-only held-out 结果只能支持“false positive 略低”，不能单独�
 
 填表后优先检查三件事：
 
-1. Evidence-Hint DPO 的 POPE/COCO/GQA 指标是否高于 Answer-DPO。
+1. Evidence-Hint DPO 的 COCO/Hard COCO/GQA 指标是否高于 Answer-DPO。
 2. Evidence-Hint DPO 的 false positive、attribute mismatch 或 left/right reversal 是否下降。
 3. Evidence-Hint DPO 的 refusal rate 是否没有明显升高。
 
+外部评测表可单独记录 POPE F1、AMBER object/attribute 指标。Prompt-mode analysis 表单独比较 normal prompt 与 evidence-style prompt。10k scale-up 若启动，放正文短表或 appendix trend table。
+
 ## 8. 执行顺序
 
-1. 等 mixed Answer-DPO 64200 与 mixed Evidence-Hint DPO 64201 完成，并记录 train metrics。
+1. 等 mixed Evidence-Hint DPO 64201 完成，并记录 train metrics；mixed Answer-DPO 64200 已完成。
 2. 完成 mixed adapter dry-run，确认默认 `answer_dpo`/`evidence_hint_dpo` 指向 mixed 输出目录。
 3. 跑 Base Instruct、mixed Answer-DPO、mixed Evidence-Hint DPO 的正式推理。
-4. 生成 POPE、COCO held-out、GQA simple、refusal rate 主表指标。
-5. 对比错误类型，重点看 false positive object hallucination、attribute mismatch 和 left/right reversal。
-6. 从三组输出中抽取 4-6 个清晰 case study，尽量覆盖 COCO 与 GQA。
+4. 补齐 evidence-style prompt 评测，优先补 Evidence-Hint DPO 的 COCO/GQA。
+5. 构造 Hard COCO Eval，并跑三组正式推理。
+6. 如果 POPE/AMBER 数据快速可用，跑三组外部评测；否则不阻塞主线。
+7. 生成 COCO held-out、Hard COCO、GQA simple、refusal rate 主表指标。
+8. 对比错误类型，重点看 false positive object hallucination、attribute mismatch 和 left/right reversal。
+9. 若主结论仍弱，启动 10k mixed scale-up，只重训 Answer-DPO 与 Evidence-Hint DPO。
+10. 从三组输出中抽取 4-6 个清晰 case study，尽量覆盖 COCO 与 GQA。
 
 当前执行进展：
 
@@ -159,15 +171,19 @@ COCO-only held-out 结果只能支持“false positive 略低”，不能单独�
 - Base GQA 与 mixed Answer-DPO COCO/GQA 评测 jobs 64213-64215 已完成：Base GQA Acc 0.764，mixed Answer-DPO COCO Acc 0.961，mixed Answer-DPO GQA Acc 0.768。
 - Base/Answer-DPO evidence-style prompt jobs 64216-64219 已完成：Base COCO Acc 0.955，Base GQA Acc 0.768，Answer-DPO COCO Acc 0.956，Answer-DPO GQA Acc 0.766，拒答率均为 0。
 - 官方 POPE 数据与 COCO val2014 图像当前不在仓库本地，POPE 暂放入 supplement/future work。
+- 新增少量大实验优先级已确定：Hard COCO Eval > Evidence-Style Prompt Eval 补全 > POPE/AMBER 小子集 > 10k mixed scale-up。
 
 ## 9. 不做的内容
 
 为了保持项目小而有效，主实验阶段暂不加入：
 
 - 多 backbone 对比
-- SFT 或 RLAIF 新基线
+- RLAIF 新基线
 - 多种 DPO 变体
 - box/mask grounding supervision
 - 超过三组的主实验表
+- SFT、critic rerank、RefCOCO grounding 或 3D transfer
 
 这些内容可以放进 future work 或 limitation，避免正文目标发散。
+
+10k mixed scale-up 是数据规模扩展，不算新增方法组；只有在前述评测不足以支撑论文时启动。

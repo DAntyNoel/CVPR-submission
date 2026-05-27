@@ -154,9 +154,20 @@ data/processed/evidence_hint_dpo_train.jsonl
 
 不加入 SFT、不加入 critic、不加入 3D、不加入多种 DPO 变体。这样主表非常清楚。
 
+### 5.4 少量大实验扩展原则
+
+如果资源充足但希望保持论文主线清楚，优先增加“评测视角”和“数据规模”，不要增加第四个方法组。推荐扩展仍围绕三组主实验：
+
+1. **Hard COCO Eval**：从现有 COCO pool 构造更难的 absent-object negative，优先选择常共现、易混淆但未标注为可见的类别，用来缓解普通 COCO held-out 接近 ceiling 的问题。
+2. **Evidence-Style Prompt Eval**：评测时要求模型回答 yes/no 后简短说明视觉证据，比较 normal prompt 与 evidence-style prompt。它对应 future work 中 explicit/latent evidence 的简化版，不需要新训练。
+3. **POPE/AMBER 小子集**：尽量补一个外部 hallucination benchmark。POPE 优先级高于 AMBER；AMBER object/attribute subset 只在数据准备顺利时加入。
+4. **10k Mixed Scale-Up**：只扩大数据，不增加方法组。Base 不变，重训 10k Answer-DPO 与 10k Evidence-Hint DPO，用于观察 evidence hint 是否随数据规模更稳定。
+
+这四项的优先级高于多 backbone、多 seed、SFT baseline 或 critic rerank。论文可以把它们组织成“更难评测、外部评测、推理格式分析、数据规模趋势”四个角度。
+
 ## 6. 评测
 
-评测也保持小而明确。
+评测也保持小而明确。资源充足时，优先把评测做厚，而不是扩展方法组。
 
 ### 6.1 主指标
 
@@ -165,13 +176,19 @@ data/processed/evidence_hint_dpo_train.jsonl
 | POPE accuracy/F1 | POPE subset | 测对象幻觉 |
 | AMBER object/attribute subset | AMBER 小子集 | 测对象和属性幻觉 |
 | GQA simple subset accuracy | 自选 500-1k 条 | 测简单视觉问答 |
+| Hard COCO accuracy/F1/FPR | 常共现难负例 | 测更强对象幻觉压力 |
 
 ### 6.2 辅助分析
 
-只做两项：
+正文主分析优先保留两项：
 
 - **Refusal rate**：统计 “I cannot determine / not sure / unclear” 等回答比例。
 - **Case study**：展示 6-8 个例子，比较普通 DPO 与 Evidence-Hint DPO。
+
+如果版面允许，再补充：
+
+- **Prompt-mode analysis**：normal yes/no prompt vs evidence-style prompt，检查训练期 evidence hint 是否需要在推理格式中被显式激活。
+- **Data-scale trend**：5k vs 10k mixed DPO，检查提升是否随数据量更稳定。
 
 ### 6.3 预期结果
 
@@ -202,8 +219,9 @@ data/processed/evidence_hint_dpo_train.jsonl
 15 天项目中，真实耗时主要不在训练，而在数据清洗、脚本适配和结果整理。额外算力建议用于：
 
 - 跑 7B 主模型，而不是只跑 3B。
-- 对三组实验做 2 个 random seed，增强结论稳定性。
-- 完整跑 POPE/AMBER/GQA 小评测，而不是只抽极小子集。
+- 完整跑 COCO/GQA/Hard COCO/evidence-style prompt，而不是只抽极小子集。
+- 争取补 POPE，AMBER object/attribute subset 作为次优先。
+- 如果前述评测仍不足以支撑结论，再启动 10k mixed Answer-DPO 与 Evidence-Hint DPO 重训。
 - 快速重跑失败配置，减少等待时间。
 
 ### 7.2 保守时间表
@@ -213,9 +231,10 @@ data/processed/evidence_hint_dpo_train.jsonl
 | Day 1-2 | 整理数据模板，生成 5k preference pairs |
 | Day 3 | 人工抽查 100 条，修正模板 |
 | Day 4-5 | 跑 Base、Answer-DPO、Evidence-Hint DPO |
-| Day 6-7 | 跑 POPE/GQA/AMBER 小评测 |
-| Day 8 | 扩到 10k 或做第二个 seed |
-| Day 9-10 | 做 case study 和 refusal rate |
+| Day 6-7 | 跑 COCO/GQA/Hard COCO/evidence-style prompt 评测 |
+| Day 8 | 补 POPE，AMBER 视数据准备情况加入 |
+| Day 9 | 若主结论仍弱，启动 10k mixed Answer-DPO/Evidence-Hint DPO |
+| Day 10 | 做 case study、refusal rate 和 prompt-mode analysis |
 | Day 11-12 | 写正文、表格、图 |
 | Day 13 | 整理 related work 和 limitation |
 | Day 14 | internal review |
