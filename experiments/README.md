@@ -84,6 +84,12 @@ COCO/GQA split, backbone, LoRA-DPO hyperparameters, and ZeRO-2 setup. The only
 change is the training data format: by default, 70% of rows use plain
 Answer-DPO responses and 30% use Evidence-Hint responses.
 
+The completed 30% run is useful but not sufficient as a main-method rescue:
+COCO/GQA improve slightly, while Hard COCO and Base-error-mined weaken. The
+follow-up ratio memo is `tasks/answer-evidence-mix-dpo/LOW_RATIO_STUDY.md`; if
+one more response-side evidence run is launched, use 15% evidence as the next
+point.
+
 Regenerate the LLaMA-Factory data with:
 
 ```bash

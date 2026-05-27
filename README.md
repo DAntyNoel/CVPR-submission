@@ -25,6 +25,9 @@
 - 已在 `tasks/answer-evidence-mix-dpo/` 新增 Answer-Evidence Mix DPO 任务实现：
   默认用 70% plain Answer-DPO + 30% Evidence-Hint DPO 构造 5k mixed rescue run，
   目标是在保留 Answer-DPO Acc/F1 的同时继承一部分 Evidence-Hint 的 FPR 下降。
+  30% run 已完成：COCO/GQA 小幅正向，但 Hard COCO 与 Base-error 仍偏弱；
+  后续 ratio 研究见 `tasks/answer-evidence-mix-dpo/LOW_RATIO_STUDY.md`，下一步优先
+  测 15% evidence，而不是扩大到 50%。
 - 已在 `tasks/balanced-hard-evidence-dpo/` 新增 Balanced Hard Evidence-DPO
   任务实现：默认构造 5k balanced hard evidence preference 数据，其中
   object-existence 部分严格 yes/no 平衡，并混入 Hard COCO、Base-error-mined、
@@ -198,6 +201,14 @@ Answer-DPO 与 30% Evidence-Hint DPO 的混合格式：
 ```text
 data/processed/answer_evidence_mix_dpo_train.jsonl
 experiments/llamafactory_data/cvpr_answer_evidence_mix_dpo.json
+```
+
+低 evidence-ratio 研究建议只追加一个 15% run，并使用独立 sidecar/registry 目录，避免
+覆盖已完成的 30% run：
+
+```text
+data/processed/answer_evidence_mix_r015_dpo_train.jsonl
+experiments/llamafactory_data_answer_evidence_r015/
 ```
 
 Balanced Hard Evidence-DPO 默认在任务目录内生成派生产物，避免污染主线 5k/10k

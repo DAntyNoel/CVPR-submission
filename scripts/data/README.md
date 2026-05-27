@@ -126,6 +126,11 @@ exports 70% as plain Answer-DPO rows plus 30% as Evidence-Hint DPO rows by
 default. Override this with `--answer-evidence-mix-evidence-ratio` and
 `--answer-evidence-mix-seed`.
 
+The 30% run has already completed. For the next low-ratio check, prefer a
+separate 15% sidecar such as
+`data/processed/answer_evidence_mix_r015_dpo_train.jsonl`; keep it out of the
+default 5k registry unless explicitly replacing the 30% run.
+
 Evidence-Only keeps answer text fixed and changes only evidence consistency,
 Input-Side moves the supported cue into the prompt, and Chosen-Only appends
 supported evidence only to the chosen response.
