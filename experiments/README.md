@@ -32,6 +32,25 @@ If it is not available in `/data1/public/hf`, download it on a CPU node:
 sbatch experiments/slurm/download_qwen25vl7b.slurm
 ```
 
+For a model-size diagnostic, use Qwen2.5-VL-32B rather than replacing the main
+7B table. First look for a shared copy under `/data1/public/hf`; if it is not
+present, download on a CPU node through the Hugging Face mirror and prepare the
+isolated 32B data exports with:
+
+```bash
+sbatch experiments/slurm/download_qwen25vl32b_and_prepare_data.slurm
+```
+
+The script clears `http_proxy`, `https_proxy`, and `all_proxy`, sets
+`HF_ENDPOINT=https://hf-mirror.com`, verifies the downloaded model files, and
+writes model-size diagnostic data to:
+
+```text
+data/processed/qwen25vl32b/
+experiments/llamafactory_data_qwen25vl32b/
+experiments/llamafactory_data_input_side_main_qwen25vl32b/
+```
+
 ## CEPO V2 Main Pipeline
 
 CEPO data is generated as an isolated sidecar so it does not overwrite the V1

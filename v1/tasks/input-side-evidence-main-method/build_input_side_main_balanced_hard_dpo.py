@@ -12,7 +12,14 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+def find_repo_root() -> Path:
+    for parent in Path(__file__).resolve().parents:
+        if (parent / "AGENTS.md").exists() and (parent / "scripts").exists():
+            return parent
+    raise RuntimeError("Could not locate repository root from task script path.")
+
+
+REPO_ROOT = find_repo_root()
 SPACE_RE = re.compile(r"\s+")
 
 ARTICLE_OVERRIDES = {

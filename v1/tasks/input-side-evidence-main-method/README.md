@@ -104,6 +104,11 @@ experiments/slurm/submit_input_side_main_balanced_hard_dpo.sh
 scripts/eval/run_vlm_inference.py model key: input_side_main_balanced_hard_dpo
 ```
 
+The archived implementation now resolves the repository root by walking upward
+to the directory containing `AGENTS.md` and `scripts/`, so it can still be run
+from its current `v1/tasks/...` location without treating `v1/` as the project
+root.
+
 数据产物：
 
 ```text
