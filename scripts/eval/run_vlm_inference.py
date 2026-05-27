@@ -45,6 +45,14 @@ MODEL_REGISTRY = {
         "method": "Balanced Hard Input-Side Evidence DPO",
         "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_input_side_main_balanced_hard_dpo_zero2",
     },
+    "cepo_answer_dpo": {
+        "method": "CEPO Answer-DPO",
+        "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_cepo_answer_dpo_zero2",
+    },
+    "cepo_latent_dpo": {
+        "method": "CEPO-Latent DPO",
+        "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_cepo_latent_dpo_zero2",
+    },
 }
 
 

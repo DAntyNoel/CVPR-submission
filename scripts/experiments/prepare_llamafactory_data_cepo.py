@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+"""Convert CEPO DPO JSONL files to LLaMA-Factory multimodal preference JSON."""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+DATASET_SPECS = [
+    (
+        "cvpr_cepo_answer_dpo",
+        "answer_input",
+        "data/processed/cepo/answer_dpo_train.jsonl",
+        "cvpr_cepo_answer_dpo.json",
+        "CEPO Answer-DPO",
+    ),
+    (
+        "cvpr_cepo_latent_dpo",
+        "cepo_input",
+        "data/processed/cepo/cepo_latent_dpo_train.jsonl",
+        "cvpr_cepo_latent_dpo.json",
+        "CEPO-Latent DPO",
+    ),
+]
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--answer-input", default="data/processed/cepo/answer_dpo_train.jsonl")
+    parser.add_argument("--cepo-input", default="data/processed/cepo/cepo_latent_dpo_train.jsonl")
+    parser.add_argument("--output-dir", default="experiments/llamafactory_data_cepo")
+    args = parser.parse_args()
+
+    output_dir = resolve(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    registered: dict[str, str] = {}
+    for dataset_key, input_arg, default_input_path, output_name, label in DATASET_SPECS:
+        input_path = getattr(args, input_arg) or default_input_path
+        records = convert_file(resolve(input_path))
+        output_path = output_dir / output_name
+        write_json(output_path, records)
+        registered[dataset_key] = output_name
+        print(f"Wrote {len(records)} {label} records to {output_path}")
+
+    write_json(output_dir / "dataset_info.json", dataset_info(registered))
+    print(f"Wrote dataset registry to {output_dir / 'dataset_info.json'}")
+    return 0
+
+
+def resolve(path: str | Path) -> Path:
+    path = Path(path)
+    if path.is_absolute():
+        return path
+    return REPO_ROOT / path
+
+
+def convert_file(path: Path) -> list[dict[str, Any]]:
+    records = []
+    with path.open("r", encoding="utf-8") as f:
+        for line_no, line in enumerate(f, start=1):
+            if not line.strip():
+                continue
+            records.append(convert_record(json.loads(line), line_no))
+    return records
+
+
+def convert_record(record: dict[str, Any], line_no: int) -> dict[str, Any]:
+    prompt = record["prompt"]
+    if "<image>" not in prompt:
+        prompt = "<image>\n" + prompt
+
+    image = record["image"]
+    if not resolve(image).exists():
+        raise FileNotFoundError(f"{line_no}: image does not exist: {image}")
+
+    return {
+        "id": record["id"],
+        "conversations": [{"from": "human", "value": prompt}],
+        "chosen": {"from": "gpt", "value": record["chosen"]},
+        "rejected": {"from": "gpt", "value": record["rejected"]},
+        "images": [image],
+    }
+
+
+def dataset_info(registered: dict[str, str]) -> dict[str, Any]:
+    common = {
+        "ranking": True,
+        "formatting": "sharegpt",
+        "columns": {
+            "messages": "conversations",
+            "chosen": "chosen",
+            "rejected": "rejected",
+            "images": "images",
+        },
+    }
+    return {key: {"file_name": file_name, **common} for key, file_name in registered.items()}
+
+
+def write_json(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

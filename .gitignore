@@ -33,6 +33,7 @@ experiments/llamafactory_data/
 experiments/llamafactory_data_10k/
 experiments/llamafactory_data_answer_evidence_*/
 experiments/llamafactory_data_input_side_main/
+experiments/llamafactory_data_cepo/
 outputs/
 output/
 results/
