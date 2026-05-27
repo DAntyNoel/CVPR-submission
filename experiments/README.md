@@ -96,8 +96,14 @@ results/eval/generations/<eval_name>/cepo_external/<model_key>.jsonl
 results/eval/generations/<eval_name>/cepo_evidence_probe/<model_key>.jsonl
 ```
 
-For the archived V1 Evidence-Hint startup, launch training jobs on a GPU
-partition:
+For the archived V1 mixed-data main pipeline, launch the two trained methods
+plus internal and POPE/AMBER evaluation jobs with:
+
+```bash
+bash experiments/slurm/submit_v1_main_mixed.sh
+```
+
+To launch only the older startup pieces by hand, use:
 
 ```bash
 sbatch experiments/slurm/smoke_dpo.slurm
