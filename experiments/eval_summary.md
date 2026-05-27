@@ -42,6 +42,13 @@ backbone, DPO objective, LoRA setup, and ZeRO-2 training. Input-Side Evidence is
 the strongest of the three variants, but it remains close to the main runs and
 does not change the diagnostic conclusion.
 
+The follow-up Balanced Hard Input-Side Evidence DPO run completed as the
+main-method rescue for this task. It improves COCO held-out Acc to 0.966 and
+Base-error-mined recovery to 0.120, mainly by lowering false-negative rates.
+However, Hard COCO FPR rises to 0.048 and external POPE/AMBER show the same
+recall-for-FPR trade-off. It is therefore a useful rescue/diagnostic result,
+not a clean solution to false-positive control.
+
 Phase-2 normal-prompt results:
 
 | Eval | Phase-2 Method | Job | Acc | F1 | FPR | FNR | Yes | Other |
@@ -63,6 +70,67 @@ Phase-2 Base-error-mined recovery:
 | Evidence-Only DPO | 64308 | 527 | 0.015 | 0.000 | 0.020 | 0.000 |
 | Input-Side Evidence DPO | 64312 | 527 | 0.044 | 0.016 | 0.052 | 0.000 |
 | Chosen-Only Evidence DPO | 64316 | 527 | 0.032 | 0.024 | 0.035 | 0.000 |
+
+## Balanced Hard Input-Side Evidence DPO
+
+This run uses `input_side_main_balanced_hard_dpo` and writes main eval outputs
+under `OUTPUT_VARIANT=input_side_main`. The training and eval chain completed
+with exit code 0:
+
+```text
+64443  COMPLETED  Balanced Hard Input-Side Evidence DPO train
+64444  COMPLETED  COCO held-out eval
+64445  COMPLETED  GQA simple eval
+64446  COMPLETED  Hard COCO eval
+64447  COMPLETED  Base-error-mined eval
+```
+
+Main eval results:
+
+| Eval | Job | N | Acc | BAcc | F1 | Neg-F1 | FPR | FNR | Yes | Other |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| COCO held-out | 64444 | 1000 | 0.966 | 0.966 | 0.965 | 0.967 | 0.018 | 0.050 | 0.484 | 0.000 |
+| GQA simple | 64445 | 1000 | 0.766 | 0.766 | 0.748 | 0.782 | 0.162 | 0.306 | 0.428 | 0.000 |
+| Hard COCO | 64446 | 1000 | 0.947 | 0.947 | 0.947 | 0.947 | 0.048 | 0.058 | 0.495 | 0.000 |
+| Base-error-mined | 64447 | 527 | 0.120 | 0.078 | 0.214 | 0.000 | 1.000 | 0.844 | 0.353 | 0.000 |
+
+Comparison to the fixed 5k mixed baselines:
+
+| Eval | Method | Acc | F1 | FPR | FNR | Reading |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| COCO held-out | mixed Answer-DPO | 0.961 | 0.960 | 0.018 | 0.060 | baseline DPO |
+| COCO held-out | Phase-2 Input-Side | 0.961 | 0.960 | 0.016 | 0.062 | lower FPR, same Acc |
+| COCO held-out | Balanced Hard Input-Side | 0.966 | 0.965 | 0.018 | 0.050 | best COCO held-out |
+| GQA simple | mixed Answer-DPO | 0.768 | 0.748 | 0.152 | 0.312 | baseline DPO |
+| GQA simple | Phase-2 Input-Side | 0.768 | 0.747 | 0.150 | 0.314 | close to Answer-DPO |
+| GQA simple | Balanced Hard Input-Side | 0.766 | 0.748 | 0.162 | 0.306 | recall gain, FPR up |
+| Hard COCO | mixed Answer-DPO | 0.950 | 0.949 | 0.040 | 0.060 | best Hard COCO Acc |
+| Hard COCO | Phase-2 Input-Side | 0.947 | 0.946 | 0.038 | 0.068 | best FPR among these rows |
+| Hard COCO | Balanced Hard Input-Side | 0.947 | 0.947 | 0.048 | 0.058 | lower FNR, higher FPR |
+| Base-error-mined | mixed Answer-DPO | 0.063 | 0.115 | 0.992 | 0.921 | modest recovery |
+| Base-error-mined | Phase-2 Input-Side | 0.044 | 0.077 | 0.984 | 0.948 | weak recovery |
+| Base-error-mined | Balanced Hard Input-Side | 0.120 | 0.214 | 1.000 | 0.844 | strongest recovery |
+
+External sanity checks used `OUTPUT_VARIANT=input_side_main_external`:
+
+```text
+64457  COMPLETED  POPE random
+64458  COMPLETED  POPE popular
+64459  COMPLETED  POPE adversarial
+64460  COMPLETED  AMBER discriminative
+```
+
+| Eval | Job | N | Acc | BAcc | F1 | Neg-F1 | FPR | FNR | Yes | Other |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| POPE random | 64457 | 3000 | 0.894 | 0.894 | 0.883 | 0.903 | 0.011 | 0.201 | 0.405 | 0.000 |
+| POPE popular | 64458 | 3000 | 0.883 | 0.883 | 0.872 | 0.892 | 0.033 | 0.201 | 0.416 | 0.000 |
+| POPE adversarial | 64459 | 3000 | 0.871 | 0.871 | 0.861 | 0.880 | 0.057 | 0.201 | 0.428 | 0.000 |
+| AMBER discr. | 64460 | 14216 | 0.881 | 0.860 | 0.818 | 0.912 | 0.076 | 0.204 | 0.318 | 0.000 |
+
+External reading: Balanced Hard Input-Side improves recall and Acc/F1 slightly
+over the fixed mixed Evidence-Hint row, but raises FPR versus mixed
+Answer-DPO/Evidence-Hint on POPE popular/adversarial and AMBER. This mirrors
+the main benchmark trade-off.
 
 Metric refresh for the phase-1/main results: on 2026-05-27, the saved
 generation JSONL files for COCO held-out, GQA simple, Hard COCO, evidence-style

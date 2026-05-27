@@ -4,6 +4,22 @@ Updated: 2026-05-27
 
 ## Slurm Jobs
 
+### Balanced Hard Input-Side Evidence DPO
+
+This run follows `tasks/input-side-evidence-main-method/README.md` and is the
+completed Input-Side Evidence main-method rescue. It uses 5,500 balanced-hard
+input-side DPO rows, Qwen2.5-VL-7B, LoRA-DPO, and ZeRO-2. Responses remain
+plain short answers; evidence is only placed in the user prompt.
+
+| Method | Job ID | Partition | State | ExitCode | Elapsed | Notes |
+| --- | ---: | --- | --- | --- | --- | --- |
+| Balanced Hard Input-Side Evidence DPO | 64443 | RTX4090 | COMPLETED | 0:0 | 00:18:19 | 5,500 rows; input-side visual cues; plain chosen/rejected responses. |
+
+After-ok eval jobs also completed with exit code 0: 64444 for COCO held-out,
+64445 for GQA simple, 64446 for Hard COCO, and 64447 for the Base-error-mined
+diagnostic. External sanity jobs 64457-64460 completed for POPE
+random/popular/adversarial and AMBER discriminative.
+
 ### Phase-2 Method Variants
 
 The first Phase-2 round keeps the same 5k mixed COCO/GQA split, Qwen2.5-VL-7B
@@ -128,6 +144,22 @@ Required files checked:
 - `all_results.json`
 - tokenizer/preprocessor sidecar files
 
+The Balanced Hard Input-Side Evidence DPO output directory contains the
+expected final artifacts:
+
+```text
+outputs/llamafactory/qwen25vl7b_input_side_main_balanced_hard_dpo_zero2/
+```
+
+Required files checked:
+
+- `adapter_config.json`
+- `adapter_model.safetensors`
+- `trainer_state.json`
+- `train_results.json`
+- `all_results.json`
+- tokenizer/preprocessor sidecar files
+
 The COCO-only preliminary LoRA output directories contain the expected final
 artifacts:
 
@@ -182,6 +214,12 @@ Phase-2 train metrics:
 | Input-Side Evidence DPO | 1.0 | 157 | 0.3334 | 895.0952 | 00:14:55 | 5.586 | 0.175 |
 | Chosen-Only Evidence DPO | 1.0 | 157 | 0.1420 | 962.4549 | 00:16:02 | 5.195 | 0.163 |
 
+Balanced Hard Input-Side train metrics:
+
+| Method | Epoch | Steps | Train Loss | Runtime (s) | Runtime | Samples/sec | Steps/sec |
+| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: |
+| Balanced Hard Input-Side Evidence DPO | 1.0 | 172 | 0.2708 | 1029.7037 | 00:17:10 | 5.341 | 0.167 |
+
 COCO-only preliminary metrics:
 
 | Method | Epoch | Steps | Train Loss | Runtime (s) | Runtime | Samples/sec | Steps/sec |
@@ -224,6 +262,10 @@ Acc 0.956, Answer-DPO GQA Acc 0.766, ZeRO-2 Evidence-Hint COCO Acc 0.955, and
 ZeRO-2 Evidence-Hint GQA Acc 0.767. Hard COCO Base Acc is 0.944, mixed
 Answer-DPO Acc is 0.950, and ZeRO-2 Evidence-Hint Acc is 0.946. Base-error
 mining is also complete: Answer-DPO recovery is 0.063 and ZeRO-2 Evidence-Hint
-recovery is 0.030 on the 527-row locked diagnostic set. These results support
-the diagnostic Plan B reading rather than a strong positive Evidence-Hint
-claim.
+recovery is 0.030 on the 527-row locked diagnostic set.
+
+Balanced Hard Input-Side Evidence DPO also completed as job 64443 with four
+main evals and four external sanity evals. It improves COCO held-out Acc to
+0.966 and Base-error recovery to 0.120, but Hard COCO FPR rises to 0.048.
+These results support the diagnostic Plan B reading rather than a strong
+positive Evidence-Hint or Input-Side claim.

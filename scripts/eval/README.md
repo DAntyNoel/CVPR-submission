@@ -258,6 +258,18 @@ phase2_input_side_evidence_dpo
 phase2_chosen_only_evidence_dpo
 ```
 
+The completed Balanced Hard Input-Side Evidence rescue run is registered as:
+
+```text
+input_side_main_balanced_hard_dpo
+```
+
+Its default adapter path is:
+
+```text
+outputs/llamafactory/qwen25vl7b_input_side_main_balanced_hard_dpo_zero2/
+```
+
 GPU generation should be submitted with:
 
 ```bash
@@ -296,6 +308,16 @@ The 10k scale-up submission script pins the new adapters with
 `OUTPUT_VARIANT=mixed10k` for COCO held-out, GQA simple, and Hard COCO. The
 base-error-mined set is intentionally left out because the 10k COCO scale-up
 does not reserve that diagnostic pool as held-out training exclusions.
+
+The Balanced Hard Input-Side Evidence run writes the four main evals under
+`OUTPUT_VARIANT=input_side_main`. Its POPE/AMBER sanity checks use:
+
+```bash
+MODELS=input_side_main_balanced_hard_dpo \
+OUTPUT_VARIANT=input_side_main_external \
+IMAGE_MAX_PIXELS=1003520 \
+  scripts/eval/submit_external_benchmark_evals.sh
+```
 
 Evidence-style prompt evaluation reuses the same inference and scoring scripts,
 but changes the instruction suffix and writes to a separate variant directory:

@@ -219,6 +219,60 @@ Base-error-mined recovery:
 Input-Side Evidence is the best Phase-2 variant, but it remains a diagnostic
 side result rather than a replacement for the three-group main paper table.
 
+## Balanced Hard Input-Side Evidence DPO
+
+The Input-Side main-method rescue follows
+`tasks/input-side-evidence-main-method/README.md`. It keeps responses as plain
+short answers and moves all lightweight evidence into the user prompt as
+`Visual cue: ...`. The balanced-hard version uses 5,500 rows:
+
+```text
+1,000 Hard COCO-style pairs
+1,000 Base-error-mined pairs
+2,500 canonical COCO paired rows
+1,000 GQA anchors
+```
+
+Regenerate the data and launch training plus four after-ok evals with:
+
+```bash
+bash experiments/slurm/submit_input_side_main_balanced_hard_dpo.sh
+```
+
+The config, adapter, and eval outputs are:
+
+```text
+experiments/llamafactory_configs/qwen25vl_input_side_main_balanced_hard_dpo.yaml
+outputs/llamafactory/qwen25vl7b_input_side_main_balanced_hard_dpo_zero2/
+results/eval/generations/<eval_name>/input_side_main/input_side_main_balanced_hard_dpo.jsonl
+```
+
+2026-05-27 completed status:
+
+```text
+64443  COMPLETED  Balanced Hard Input-Side Evidence DPO train
+64444  COMPLETED  COCO held-out eval
+64445  COMPLETED  GQA simple eval
+64446  COMPLETED  Hard COCO eval
+64447  COMPLETED  Base-error-mined eval
+```
+
+Main result:
+
+```text
+COCO held-out:     Acc 0.966/F1 0.965/FPR 0.018/FNR 0.050
+GQA simple:        Acc 0.766/F1 0.748/FPR 0.162/FNR 0.306
+Hard COCO:         Acc 0.947/F1 0.947/FPR 0.048/FNR 0.058
+Base-error-mined:  Acc 0.120/F1 0.214/FPR 1.000/FNR 0.844
+```
+
+External sanity checks completed with `OUTPUT_VARIANT=input_side_main_external`
+for POPE random/popular/adversarial and AMBER discriminative. The pattern is
+consistent with the main evals: better recall and slightly higher Acc/F1 on
+POPE, but higher FPR/yes-bias than the fixed mixed Answer-DPO baseline. Treat
+this as a rescue/diagnostic result, not as a solved false-positive-control
+method.
+
 ## 10k Mixed Scale-Up
 
 Use the scale-up only as a diagnostic for whether data size changes the

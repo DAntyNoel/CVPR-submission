@@ -19,9 +19,13 @@
   Evidence 是三组里最稳的变体：COCO/GQA/Hard COCO Acc 为
   0.961/0.768/0.947，base-error recovery 为 0.044，但仍未改写主线
   “Evidence-Hint 不稳定超过 Answer-DPO” 的诊断结论。
-- 已在 `tasks/input-side-evidence-main-method/` 新增任务说明，将 Input-Side
-  Evidence DPO 作为下一版主改法候选：短期先用现有 Phase-2 结果做主表替换试算，
-  若仍偏弱，再构造 Balanced Hard Input-Side Evidence DPO。
+- `tasks/input-side-evidence-main-method/` 的 Input-Side Evidence 主改法候选已完成：
+  在 Phase-2 Input-Side 基础上实现并训练 Balanced Hard Input-Side Evidence DPO
+  5.5k run。训练 job 64443 与 COCO/GQA/Hard COCO/Base-error-mined 评测 jobs
+  64444-64447 均为 exit 0；POPE/AMBER 外部 sanity jobs 64457-64460 也已完成。
+  结果显示 COCO held-out Acc 提升到 0.966，Base-error recovery 提升到 0.120，
+  但 Hard COCO FPR 升至 0.048，因此它是有价值的 rescue/diagnostic 结果，
+  不是稳定解决 false-positive control 的强主方法。
 - 已在 `tasks/answer-evidence-mix-dpo/` 新增 Answer-Evidence Mix DPO 任务实现：
   默认用 70% plain Answer-DPO + 30% Evidence-Hint DPO 构造 5k mixed rescue run，
   目标是在保留 Answer-DPO Acc/F1 的同时继承一部分 Evidence-Hint 的 FPR 下降。
@@ -219,6 +223,16 @@ tasks/balanced-hard-evidence-dpo/generated/balanced_hard_evidence_dpo_train.json
 tasks/balanced-hard-evidence-dpo/llamafactory_data/cvpr_balanced_hard_evidence_dpo.json
 ```
 
+Balanced Hard Input-Side Evidence DPO 使用独立 registry，避免覆盖 Phase-2
+Input-Side Evidence 产物：
+
+```text
+data/processed/input_side_main_balanced_hard_dpo_train.jsonl
+data/processed/input_side_main_balanced_hard_dpo_summary.json
+experiments/llamafactory_data_input_side_main/cvpr_input_side_main_balanced_hard_dpo.json
+experiments/llamafactory_data_input_side_main/dataset_info.json
+```
+
 Phase-2 方法变体复用 `canonical_pairs_main.jsonl` 并额外导出：
 
 ```text
@@ -356,6 +370,20 @@ sbatch tasks/balanced-hard-evidence-dpo/train_balanced_hard_evidence_dpo.slurm
 ```text
 outputs/llamafactory/qwen25vl7b_balanced_hard_evidence_dpo_zero2/
 tasks/balanced-hard-evidence-dpo/llamafactory_data/dataset_info.json
+```
+
+Balanced Hard Input-Side Evidence DPO 已完成，使用独立 ZeRO-2 配置和提交脚本：
+
+```bash
+bash experiments/slurm/submit_input_side_main_balanced_hard_dpo.sh
+```
+
+对应 adapter 与评测输出为：
+
+```text
+outputs/llamafactory/qwen25vl7b_input_side_main_balanced_hard_dpo_zero2/
+results/eval/generations/<eval_name>/input_side_main/input_side_main_balanced_hard_dpo.jsonl
+results/eval/generations/<eval_name>/input_side_main_external/input_side_main_balanced_hard_dpo.jsonl
 ```
 
 ## 评测
@@ -522,6 +550,16 @@ GQA simple:    Base Acc 0.764, mixed Answer-DPO Acc 0.768, ZeRO-2 Evidence-Hint 
 Hard COCO:     Base Acc 0.944, mixed Answer-DPO Acc 0.950, ZeRO-2 Evidence-Hint Acc 0.946
 Evidence prompt: COCO ZeRO-2 Evidence-Hint Acc 0.955, GQA ZeRO-2 Evidence-Hint Acc 0.767
 Base-error mined recovery: Answer-DPO 0.063, ZeRO-2 Evidence-Hint 0.030
+```
+
+Balanced Hard Input-Side Evidence DPO 已完成：
+
+```text
+COCO held-out:     Acc 0.966/F1 0.965/FPR 0.018/FNR 0.050
+GQA simple:        Acc 0.766/F1 0.748/FPR 0.162/FNR 0.306
+Hard COCO:         Acc 0.947/F1 0.947/FPR 0.048/FNR 0.058
+Base-error mined:  Acc 0.120/F1 0.214/FPR 1.000/FNR 0.844
+External sanity:   POPE random/popular/adversarial Acc 0.894/0.883/0.871; AMBER Acc 0.881
 ```
 
 10k mixed scale-up diagnostic:
