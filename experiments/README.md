@@ -76,6 +76,82 @@ The older `qwen25vl7b_answer_dpo/` and `qwen25vl7b_evidence_hint_dpo/`
 directories correspond to COCO-only preliminary jobs 64167 and 64168. Keep
 them out of the mixed-data main table.
 
+## Phase 2 Method Variants
+
+The first Phase-2 method round follows
+`idea-imporve-evidence/phase2_method_ideas.md` and keeps the same 5k
+COCO/GQA mixed split, backbone, LoRA-DPO hyperparameters, and ZeRO-2 setup.
+Only the preference format changes:
+
+```text
+Evidence-Only DPO        chosen/rejected share the same answer; evidence consistency differs
+Input-Side Evidence DPO  supported evidence moves into the user prompt; responses stay plain
+Chosen-Only Evidence DPO supported evidence is appended only to the chosen response
+```
+
+Regenerate all Answer/Evidence-Hint/Phase-2 LLaMA-Factory data with:
+
+```bash
+python scripts/data/04_export_dpo_formats.py \
+  --input data/processed/canonical_pairs_main.jsonl
+
+python scripts/experiments/prepare_llamafactory_data.py \
+  --output-dir experiments/llamafactory_data
+```
+
+The Phase-2 datasets are registered as:
+
+```text
+cvpr_phase2_evidence_only_dpo
+cvpr_phase2_input_side_evidence_dpo
+cvpr_phase2_chosen_only_evidence_dpo
+```
+
+Launch the three method jobs with:
+
+```bash
+bash experiments/slurm/submit_phase2_method_variants.sh
+```
+
+This submission script also attaches after-ok eval jobs for COCO held-out, GQA
+simple, Hard COCO, and the Base-error-mined diagnostic set. The eval outputs
+use `OUTPUT_VARIANT=phase2`.
+
+The configs are:
+
+```text
+experiments/llamafactory_configs/qwen25vl_phase2_evidence_only_dpo.yaml
+experiments/llamafactory_configs/qwen25vl_phase2_input_side_evidence_dpo.yaml
+experiments/llamafactory_configs/qwen25vl_phase2_chosen_only_evidence_dpo.yaml
+```
+
+Adapters will be written to:
+
+```text
+outputs/llamafactory/qwen25vl7b_phase2_evidence_only_dpo_zero2/
+outputs/llamafactory/qwen25vl7b_phase2_input_side_evidence_dpo_zero2/
+outputs/llamafactory/qwen25vl7b_phase2_chosen_only_evidence_dpo_zero2/
+```
+
+Phase-2 eval generations will be written to:
+
+```text
+results/eval/generations/<eval_name>/phase2/phase2_evidence_only_dpo.jsonl
+results/eval/generations/<eval_name>/phase2/phase2_input_side_evidence_dpo.jsonl
+results/eval/generations/<eval_name>/phase2/phase2_chosen_only_evidence_dpo.jsonl
+```
+
+2026-05-27 launch status:
+
+```text
+64302  RUNNING at launch check  Phase-2 Evidence-Only DPO train
+64303  RUNNING at launch check  Phase-2 Input-Side Evidence DPO train
+64304  RUNNING at launch check  Phase-2 Chosen-Only Evidence DPO train
+64305-64308  PENDING afterok:64302  COCO/GQA/Hard COCO/Base-error evals
+64309-64312  PENDING afterok:64303  COCO/GQA/Hard COCO/Base-error evals
+64313-64316  PENDING afterok:64304  COCO/GQA/Hard COCO/Base-error evals
+```
+
 ## 10k Mixed Scale-Up
 
 Use the scale-up only as a diagnostic for whether data size changes the

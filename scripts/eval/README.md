@@ -212,6 +212,14 @@ outputs/llamafactory/qwen25vl7b_mixed_answer_dpo/
 outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo_zero2/
 ```
 
+Phase-2 method keys are also registered for dependent eval jobs after training:
+
+```text
+phase2_evidence_only_dpo
+phase2_input_side_evidence_dpo
+phase2_chosen_only_evidence_dpo
+```
+
 GPU generation should be submitted with:
 
 ```bash

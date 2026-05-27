@@ -98,6 +98,19 @@ python scripts/data/06_check_data_leakage.py \
 Pass `--eval-image-ids path/to/eval_ids.txt` to the build/check scripts when
 POPE, AMBER, or GQA eval image ids are available.
 
+`04_export_dpo_formats.py` also writes the Phase-2 method-variant sidecars by
+default:
+
+```text
+data/processed/phase2_evidence_only_dpo_train.jsonl
+data/processed/phase2_input_side_evidence_dpo_train.jsonl
+data/processed/phase2_chosen_only_evidence_dpo_train.jsonl
+```
+
+Evidence-Only keeps answer text fixed and changes only evidence consistency,
+Input-Side moves the supported cue into the prompt, and Chosen-Only appends
+supported evidence only to the chosen response.
+
 `08_complete_audit_sheet.py` summarizes both COCO object-existence rows and
 GQA simple attribute/relation rows. Its checks are label/scene-graph
 consistency checks for the sampled audit sheet, not independent pixel-level

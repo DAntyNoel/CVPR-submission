@@ -11,6 +11,11 @@
 - 研究计划与论文大纲已整理在 `idea-lightweighted-grounded-preference-vlm/`。
 - 二期方法改进想法已整理在 `idea-imporve-evidence/`，聚焦 evidence placement、
   evidence-only preference、chosen-only evidence、counterfactual pairs 和 check-step evidence。
+- Phase-2 第一轮方法变体已规划为三组低成本训练：Evidence-Only DPO、Input-Side
+  Evidence DPO 和 Chosen-Only Evidence DPO；三组均复用 5k mixed COCO/GQA split、
+  Qwen2.5-VL-7B、LoRA-DPO 和 ZeRO-2，只改变 preference 格式。
+  2026-05-27 已提交：训练 jobs 64302-64304；COCO/GQA/Hard COCO/Base-error-mined
+  after-ok 评测 jobs 64305-64316，统一写入 `OUTPUT_VARIANT=phase2`。
 - COCO Base 分数过高与 Hard COCO ceiling-effect 诊断任务已单独整理在
   `tasks/coco-hard-ceiling-diagnosis/`。
 - Base-error mining 诊断评测任务已单独整理在
@@ -160,6 +165,17 @@ data/eval/coco_hard_object_existence.jsonl
 
 ```bash
 sbatch scripts/data/prepare_mixed_10k_scaleup.slurm
+Phase-2 方法变体复用 `canonical_pairs_main.jsonl` 并额外导出：
+
+```text
+data/processed/phase2_evidence_only_dpo_train.jsonl
+data/processed/phase2_input_side_evidence_dpo_train.jsonl
+data/processed/phase2_chosen_only_evidence_dpo_train.jsonl
+experiments/llamafactory_data/cvpr_phase2_evidence_only_dpo.json
+experiments/llamafactory_data/cvpr_phase2_input_side_evidence_dpo.json
+experiments/llamafactory_data/cvpr_phase2_chosen_only_evidence_dpo.json
+```
+
 ```
 
 ## 训练
@@ -224,6 +240,23 @@ results/eval/generations/<eval_name>/mixed10k/<model_key>.jsonl
 评测入口见 `scripts/eval/README.md`。先准备 COCO held-out object-existence 评测集：
 
 ```bash
+Phase-2 第一轮三组方法变体通过独立 Slurm 训练脚本提交，不在交互环境直接运行：
+
+```bash
+bash experiments/slurm/submit_phase2_method_variants.sh
+```
+
+该提交脚本会为每个训练任务挂载 after-ok 评测：COCO held-out、GQA simple、Hard COCO
+和 Base-error-mined diagnostic；结果写入 `OUTPUT_VARIANT=phase2`。
+
+对应 adapter 输出为：
+
+```text
+outputs/llamafactory/qwen25vl7b_phase2_evidence_only_dpo_zero2/
+outputs/llamafactory/qwen25vl7b_phase2_input_side_evidence_dpo_zero2/
+outputs/llamafactory/qwen25vl7b_phase2_chosen_only_evidence_dpo_zero2/
+```
+
 python scripts/eval/prepare_coco_heldout_eval.py \
   --heldout-image-ids data/eval/heldout_object_existence_image_ids.txt \
   --output data/eval/coco_heldout_object_existence.jsonl \
