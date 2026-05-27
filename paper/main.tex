@@ -1,0 +1,282 @@
+% CVPR 2026 Paper Template; see https://github.com/cvpr-org/author-kit
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+%%%%%%%%% PAPER TYPE
+% \usepackage{cvpr}              % Camera-ready version
+\usepackage[review]{cvpr}      % Review version
+% \usepackage[pagenumbers]{cvpr} % arXiv/debug version with page numbers
+
+\usepackage{microtype}
+
+\definecolor{cvprblue}{rgb}{0.21,0.49,0.74}
+\usepackage[pagebackref,breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
+
+%%%%%%%%% PAPER ID
+\def\paperID{*****}
+\def\confName{CVPR}
+\def\confYear{2026}
+
+\newcommand{\method}{Evidence-Hint DPO}
+\newcommand{\answerdpo}{Answer-DPO}
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+\title{Lightweight Evidence Hints Improve Preference Tuning for Reducing Object Hallucination in Vision-Language Models}
+
+\author{Anonymous \confName{} Submission}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Preference optimization is a common way to align vision-language models, but
+answer-level preference pairs can encourage a model to learn response style
+rather than the visual support behind a claim. We study a minimal alternative:
+augmenting the chosen and rejected responses in Direct Preference Optimization
+with short, template-generated evidence hints. The method keeps the model
+architecture, training objective, and images unchanged, and only changes the
+response format used during preference tuning. We construct a 5k mixed
+COCO/GQA preference set covering object existence, simple color attributes, and
+left/right spatial relations, and compare a base Qwen2.5-VL-7B-Instruct model
+against \answerdpo{} and \method{}. The resulting evaluation tests whether
+grounding-flavored preference responses reduce hallucinated visual claims on
+held-out COCO and GQA yes/no tasks without increasing refusal. \todo{Replace
+this diagnostic abstract sentence with the final Plan A or Plan B conclusion
+after mixed evaluation finishes.}
+\end{abstract}
+
+\section{Introduction}
+
+Vision-language models (VLMs) can produce fluent visual answers while asserting
+objects, attributes, or relations that are not supported by the image. This
+failure mode is especially important in simple visual-claim settings, where the
+question is not open-ended and the target claim should be verifiable from the
+image. Object existence, basic attributes, and left/right spatial relations are
+therefore useful diagnostic cases: they are limited enough to construct
+controlled preference pairs, but still expose hallucinated visual statements.
+
+Direct Preference Optimization (DPO)~\cite{dpo} provides a simple way to train from
+preferred and dispreferred responses without learning a separate reward model.
+In multimodal preference tuning, however, the preferred response often contains
+only the final answer. A model can then improve its preference objective by
+learning answer templates, hedging patterns, or dataset priors, while the visual
+evidence that makes one response preferable remains implicit.
+
+We examine a small intervention that makes this visual support more explicit.
+For every preference pair, we keep the same image, question, and semantic
+chosen/rejected labels as a standard answer-level DPO baseline, but append a
+short evidence hint to both responses. The hint is generated from existing COCO
+or GQA annotations, such as an annotated visible object, a color attribute, or
+an unsupported object claim. We do not use boxes or masks, change the DPO loss,
+or ask the model to output evidence at inference time.
+
+This paper is intentionally scoped as a controlled, lightweight study. The goal
+is not to solve hallucination broadly, but to test whether a grounding-flavored
+response format gives DPO a better signal than answer-only preferences in a
+small COCO/GQA setting.
+
+Our contributions are:
+\begin{itemize}
+    \item We propose a low-cost preference-data rewrite that injects
+    template-based visual evidence hints into VLM DPO without changing the
+    model or loss.
+    \item We build a 5k aligned COCO/GQA preference set where \answerdpo{} and
+    \method{} use the same images, questions, and semantic labels, differing
+    only in response format.
+    \item We evaluate three groups, Base Instruct, \answerdpo{}, and
+    \method{}, on held-out object existence and simple GQA visual-claim tasks
+    while tracking yes bias and refusal rate.
+\end{itemize}
+
+\section{Related Work}
+
+\paragraph{Hallucination evaluation.}
+Object hallucination has been studied in image captioning and VLM evaluation
+through metrics and benchmarks that compare generated visual claims against
+image annotations or controlled yes/no questions. CHAIR~\cite{chair} measures object
+hallucination in captions, while POPE~\cite{pope} converts object hallucination evaluation
+into polling-style object-existence questions. Our work uses this diagnostic
+spirit, but focuses on preference tuning rather than benchmark design.
+
+\paragraph{Preference tuning.}
+DPO optimizes a policy directly from paired preferences using a fixed reference
+model. It is attractive for this project because it avoids a separate reward
+model and can be implemented with existing multimodal LoRA training pipelines.
+We keep the DPO objective unchanged and isolate the effect of response format.
+
+\paragraph{Grounding and evidence supervision.}
+Grounded VLM training can use boxes, masks, region phrases, or human rationales
+to tie language to image content. Such supervision can be expensive to collect
+or integrate. In contrast, our evidence hints are short templates derived from
+existing object and scene-graph annotations. They are deliberately weaker than
+full grounding, but much cheaper and easier to add to standard preference data.
+
+\section{Method}
+
+\begin{figure*}[t]
+\centering
+\small
+\fbox{%
+\begin{minipage}{0.96\linewidth}
+\textbf{Same image and question, different preference response format.}
+\vspace{0.4em}
+
+\begin{tabular}{p{0.46\linewidth}p{0.46\linewidth}}
+\toprule
+\textbf{Answer-DPO} & \textbf{Evidence-Hint DPO} \\
+\midrule
+\textbf{Chosen:} Yes, there is a dog in the image. &
+\textbf{Chosen:} Yes, there is a dog in the image. Evidence hint: annotated visible object: dog. \\
+\textbf{Rejected:} Yes, there is a cat in the image. &
+\textbf{Rejected:} Yes, there is a cat in the image. Evidence hint: unsupported object: cat is not annotated as visible. \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.4em}
+Both variants use the same image, question, and chosen/rejected semantics. Only
+the response text seen by DPO changes; inference still uses ordinary questions.
+\end{minipage}}
+\caption{Method overview. We compare answer-only preference responses with
+responses augmented by short template evidence hints.}
+\label{fig:method}
+\end{figure*}
+
+\subsection{Answer-Level DPO Baseline}
+
+Let $x=(I,q)$ denote an image-question pair, $y^+$ a preferred response, and
+$y^-$ a rejected response. The \answerdpo{} baseline uses ordinary answer
+strings, such as a correct yes/no response and a hallucinated alternative. It
+trains with the standard DPO loss:
+\begin{equation}
+\mathcal{L}_{\mathrm{DPO}} =
+-\log \sigma \left(
+\beta \log \frac{\pi_\theta(y^+|x)}{\pi_{\mathrm{ref}}(y^+|x)}
+- \beta \log \frac{\pi_\theta(y^-|x)}{\pi_{\mathrm{ref}}(y^-|x)}
+\right).
+\end{equation}
+The baseline therefore receives no explicit textual explanation of why the
+chosen response is visually supported.
+
+\subsection{Evidence-Hint DPO}
+
+\method{} uses the same $x$, $y^+$, and $y^-$ semantics as \answerdpo{}, but
+rewrites the response text by appending a compact evidence hint:
+\begin{quote}
+\small
+\textbf{Question:} Is there a dog in the image?\\
+\textbf{Chosen:} Yes, there is a dog in the image. Evidence hint: annotated
+visible object: dog.\\
+\textbf{Rejected:} Yes, there is a cat in the image. Evidence hint: unsupported
+object: cat is not annotated as visible.
+\end{quote}
+For GQA attributes and relations, the same idea is applied to annotated color,
+material, or left/right relation facts. The hint is not a box, mask, or
+free-form human rationale. It is a short template that makes the visual support
+or unsupported claim explicit in the preference response.
+
+This design isolates one variable: the answer-only and evidence-hint models
+use the same backbone, training images, questions, chosen/rejected semantics,
+DPO beta, LoRA rank, and epoch count. Only the response format changes.
+
+\subsection{Data Construction}
+
+The mixed training set contains 5,000 aligned preference pairs. COCO~\cite{coco} contributes
+3,500 object-existence pairs, where positive objects come from visible
+annotations and negative objects are sampled from categories not annotated in
+the image. GQA~\cite{gqa} contributes 1,500 simple attribute and relation pairs from train
+scene graphs: 986 color attributes, 64 material attributes, and 450 left/right
+spatial relations. We exclude the training image ids from the held-out
+evaluation image ids; the current train/eval image overlap is zero.
+
+The same canonical pairs are exported into two LLaMA-Factory DPO formats:
+answer-only responses for \answerdpo{}, and evidence-hint responses for
+\method{}. A 200-example audit of the mixed set found 200/200 chosen correctness,
+200/200 rejected wrongness, and 200/200 hint correctness.
+
+\section{Experiments}
+
+\subsection{Setup}
+
+We use Qwen2.5-VL-7B-Instruct~\cite{qwen25vl} as the single backbone. The two trained variants
+use LoRA DPO for one epoch with DPO beta 0.1 and LoRA rank 16. The three
+evaluation groups are Base Instruct, \answerdpo{}, and \method{}. The
+COCO-only adapters from preliminary runs are treated only as auxiliary sanity
+checks and are not mixed with the main COCO/GQA table.
+
+\subsection{Evaluation}
+
+The main held-out evaluation uses two controlled yes/no sets:
+\begin{itemize}
+    \item COCO object existence: 1,000 examples, balanced between yes and no.
+    \item GQA simple: 1,000 examples, balanced between color attributes and
+    left/right relations, and balanced between yes and no.
+\end{itemize}
+All generations are scored with the same yes/no parser. We report accuracy,
+F1 where applicable, yes bias, refusal rate, and confusion counts. We also run
+an evidence-style prompt view that asks for a yes/no answer plus a brief visual
+evidence mention, to check whether the training signal is better activated by a
+matching inference format.
+
+\subsection{Main Results}
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lccccc}
+\toprule
+Method & POPE F1 & COCO Acc & GQA Acc & Yes Bias & Refusal \\
+\midrule
+Base Instruct & TBD & TBD & TBD & TBD & TBD \\
+\answerdpo{} & TBD & TBD & TBD & TBD & TBD \\
+\method{} & TBD & TBD & TBD & TBD & TBD \\
+\bottomrule
+\end{tabular}
+\caption{Main mixed COCO/GQA results. POPE is optional if official data is
+prepared in time.}
+\label{tab:main}
+\end{table}
+
+\todo{Fill Table~\ref{tab:main} after mixed Evidence-Hint DPO job 64201 and
+the mixed evaluation jobs finish. If \method{} improves over \answerdpo{}
+without higher refusal, use the positive conclusion. If the gap is small, frame
+the paper as a controlled diagnostic study.}
+
+\subsection{Analysis}
+
+We will analyze whether any gains come from fewer false positives, fewer
+attribute mismatches, or fewer left/right reversals rather than from increased
+refusal. Case studies will show 4--6 examples comparing \answerdpo{} and
+\method{} outputs, with at least one GQA attribute or relation example if the
+GQA generations are clean enough.
+
+\section{Limitations}
+
+This study covers only object existence, simple color/material attributes, and
+left/right spatial relations. It does not evaluate counting, multi-step
+relations, open-ended descriptions, or complex grounding. The evidence hints
+are template-generated from existing annotations, not human-written rationales
+or precise region supervision. We use one backbone, one seed, and a small
+training set, so the results should be read as evidence for a lightweight
+diagnostic signal rather than a complete solution to VLM hallucination.
+
+\section{Conclusion}
+
+Lightweight evidence hints offer a simple way to add visual-support cues to
+VLM preference tuning. In a controlled COCO/GQA setting, this draft tests
+whether grounding-flavored preference responses can reduce hallucinated visual
+claims beyond answer-only DPO while leaving the architecture and training
+objective unchanged. The final conclusion will be selected conservatively after
+the mixed evaluation results are available.
+
+{
+    \small
+    \bibliographystyle{ieeenat_fullname}
+    \bibliography{references}
+}
+
+% Optional supplementary material. Keep references plus appendix within the
+% user-requested 10-page post-body budget if this block is enabled.
+% \clearpage
+% \appendix
+% \input{appendix}
+
+\end{document}
