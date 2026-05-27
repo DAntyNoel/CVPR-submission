@@ -1,14 +1,16 @@
-# 预期效果与核心结论
+# 预期效果与实际结论
 
 更新日期：2026-05-27
 
-## 1. 核心预期
+## 1. 核心预期与当前实际结果
 
 本文希望支持的最小结论是：
 
 > 在 mixed COCO/GQA 偏好数据上，Evidence-Hint DPO 相比普通 Answer-DPO 能更有效地降低对象存在、简单属性和左右空间关系中的视觉幻觉，且收益不是由更高拒答率带来的。
 
 这个结论必须以 mixed 数据重训后的正式评测结果为准。旧的 64167/64168 adapter 来自 COCO-only 数据，只能作为 preliminary run；当前 mixed 数据构造和自动检查通过，不能单独证明方法有效。
+
+2026-05-27 的正式 mixed 结果不满足这个强结论。Evidence-Hint DPO 与 Answer-DPO 在普通 COCO held-out 上 Acc 同为 0.961，FPR 略低 0.016 vs. 0.018；但 GQA simple 为 0.766 vs. 0.768，Hard COCO 为 0.946 vs. 0.950，Base-error-mined recovery 为 0.030 vs. 0.063。因此当前论文应采用“模板化 evidence hint 的增益有限”的诊断型结论。
 
 ## 2. 理想结果形态
 
@@ -49,6 +51,8 @@
 | Evidence-Hint DPO 弱于 Answer-DPO | 负结果结论：evidence hint 可能引入格式漂移或训练难度，需进一步改进 hint 格式 |
 | Evidence-Hint DPO 指标提升但拒答率明显升高 | 谨慎结论：收益可能来自保守回答，不能声称模型获得更强视觉 grounding |
 
+当前匹配的结果情况介于“Evidence-Hint DPO 与 Answer-DPO 接近”和“部分指标弱于 Answer-DPO”之间。拒答率没有升高，normal prompt 下也没有 literal `Evidence hint` 格式泄漏；更可能的解释是模板 hint 造成了轻微 yes/no bias shift，降低一部分 false positive，同时提高一部分 false negative。
+
 ## 5. 推荐正文表述
 
 如果结果支持预期，可以在摘要和结论中使用保守表述：
@@ -66,6 +70,8 @@
 中文含义：
 
 > 受控实验表明，单纯模板化 evidence hint 未必足以稳定超过普通 Answer-DPO，说明后续轻量 grounding 信号可能需要更好的 hint 设计或更强视觉对齐。
+
+当前 `paper/main.tex` 已采用这一较弱但真实的表述。
 
 ## 6. Case Study 预期
 

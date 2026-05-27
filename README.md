@@ -12,9 +12,9 @@
 - COCO Base 分数过高与 Hard COCO ceiling-effect 诊断任务已单独整理在
   `tasks/coco-hard-ceiling-diagnosis/`。
 - Base-error mining 诊断评测任务已单独整理在
-  `tasks/base-error-mining/`，用于后续构造 Base-conditioned locked diagnostic set。
-- CVPR LaTeX 稿件已更新在 `paper/`：`main.tex` 当前是一版按“mixed Evidence-Hint DPO
-  正常完成并取得小幅正向结果”假设写成的完整 review-ready 草稿，已移除正文占位标记。
+  `tasks/base-error-mining/`，Base-conditioned locked diagnostic set 与三组复评均已完成。
+- CVPR LaTeX 稿件已更新在 `paper/`：`main.tex` 当前已从 assumed-positive 草稿改为
+  使用真实结果的 controlled diagnostic study。
 - 5k mixed preference pairs 已生成：3,500 COCO object-existence + 1,500 GQA simple attribute/relation。
 - mixed audit 与泄漏检查已完成，审计摘要见 `data/audit/`，当前 train/eval image overlap 为 0。
 - GQA simple held-out eval 已生成：`data/eval/gqa_simple_heldout.jsonl`，共 1,000 条，color 与 left/right relation 各 500 条。
@@ -26,12 +26,19 @@
   950.96s、train loss 0.1347，adapter dry-run 已通过；`evidence_hint_dpo` 默认评测
   registry 已切到该 adapter。
 - 5k COCO-only adapter 的三组 held-out object-existence 验证已完成：Base Acc 0.959、Answer-DPO Acc 0.961、Evidence-Hint DPO Acc 0.960。
-- 统一评测脚本已支持输出变体目录和 evidence-style prompt；Base 与 mixed Answer-DPO 的 COCO/GQA normal prompt 及 evidence-style prompt 评测均已完成，partial summary 见 `experiments/eval_summary.md`。
+- 统一评测脚本已支持输出变体目录和 evidence-style prompt；Base、mixed Answer-DPO 和
+  mixed Evidence-Hint DPO 的 COCO/GQA normal prompt、Hard COCO 和 evidence-style prompt
+  评测均已完成，summary 见 `experiments/eval_summary.md`。
 - Hard COCO 的 Base 与 mixed Answer-DPO 评测 jobs 64233/64234 已完成：Base Acc 0.944，
   mixed Answer-DPO Acc 0.950；原 `afterok:64201` 依赖评测 jobs 64235-64239 和 64263
   已取消。ZeRO-2 Evidence-Hint 的 normal-prompt 评测 jobs 64255-64257 已完成：COCO Acc
   0.961、GQA Acc 0.766、Hard COCO Acc 0.946；evidence-style jobs 64258/64259 也已完成：
   COCO Acc 0.955、GQA Acc 0.767。
+- Base-error mining 诊断已完成：候选池 10,000 条，Base Acc 0.9472；locked set 527 条
+  Base 错误。Answer-DPO recovery 为 0.063，Evidence-Hint DPO ZeRO-2 recovery 为 0.030。
+- 当前真实结论采用 Plan B：模板化 evidence hint 在 COCO/Hard COCO/GQA 上只带来很小的
+  false-positive 下降，整体 Acc/F1 未稳定超过 Answer-DPO；不再提交重复评测或 10k 重训，
+  除非后续明确需要新的规模实验。
 
 ## 目录结构
 
@@ -63,7 +70,7 @@ experiments/
   eval_summary.md                  # 已完成评测的摘要
 
 paper/
-  main.tex                         # CVPR 2026 完整草稿，含 assumed-normal 主结果
+  main.tex                         # CVPR 2026 诊断型完整草稿，含真实 mixed 主结果
   main_full.tex                    # 独立完整稿入口，编译时包含 appendix
   preamble.tex                     # 与 cvpr-org/author-kit 对齐的 preamble helper
   local_xetex_fonts.tex            # Tectonic/XeTeX T1 编码修正，恢复 Times/Helvetica 粗体
@@ -119,9 +126,9 @@ cd paper
 make full
 ```
 
-输出文件为 `paper/build/main_full.pdf`。2026-05-27 已验证：普通 `make pdf`
-生成 4 页 `paper/build/main.pdf`，`make full` 生成 5 页带附录
-`paper/build/main_full.pdf`。
+输出文件为 `paper/build/main_full.pdf`。2026-05-27 已重新验证诊断稿：普通
+`make pdf` 生成 4 页 `paper/build/main.pdf`，`make full` 生成 5 页带附录
+`paper/build/main_full.pdf`；仅剩官方 `lineno.sty` UTF-8 warning，无表格溢出告警。
 
 ## 数据流水线
 
@@ -274,7 +281,7 @@ ADAPTER_NAME_OR_PATH=outputs/llamafactory/qwen25vl7b_evidence_hint_dpo \
 64207  Evidence-Hint DPO outputs/llamafactory/qwen25vl7b_evidence_hint_dpo
 ```
 
-2026-05-27 mixed/evidence-style 评测当前状态：
+2026-05-27 mixed/evidence-style/base-error-mined 评测当前状态：
 
 ```text
 64213  COMPLETED  Base Instruct      GQA simple, mixed output variant
@@ -298,15 +305,20 @@ ADAPTER_NAME_OR_PATH=outputs/llamafactory/qwen25vl7b_evidence_hint_dpo \
 64258  COMPLETED  mixed Evidence-Hint DPO  COCO held-out, evidence_prompt_zero2
 64259  COMPLETED  mixed Evidence-Hint DPO  GQA simple, evidence_prompt_zero2
 64263  CANCELLED  old afterok:64201 base-error-mined eval
+64251  COMPLETED  Base Instruct      base-error mining candidates, mixed
+64262  COMPLETED  Base Instruct      base-error-mined locked set, mixed
+64264  COMPLETED  mixed Answer-DPO   base-error-mined locked set, mixed
+64267  COMPLETED  mixed Evidence-Hint DPO  base-error-mined locked set, mixed
 ```
 
-当前可用的 mixed partial 指标：
+当前可用的 mixed 指标：
 
 ```text
 COCO held-out: Base Acc 0.959, mixed Answer-DPO Acc 0.961, ZeRO-2 Evidence-Hint Acc 0.961
 GQA simple:    Base Acc 0.764, mixed Answer-DPO Acc 0.768, ZeRO-2 Evidence-Hint Acc 0.766
 Hard COCO:     Base Acc 0.944, mixed Answer-DPO Acc 0.950, ZeRO-2 Evidence-Hint Acc 0.946
 Evidence prompt: COCO ZeRO-2 Evidence-Hint Acc 0.955, GQA ZeRO-2 Evidence-Hint Acc 0.767
+Base-error mined recovery: Answer-DPO 0.063, ZeRO-2 Evidence-Hint 0.030
 ```
 
 生成结果保存到：
@@ -324,7 +336,7 @@ python scripts/eval/score_object_eval.py \
 
 ## 论文写作
 
-正文采用 CVPR 2026 格式。页数按 6/7/8 页弹性控制：优先压到 6 页，7 页可接受，8 页作为正文硬上限。参考文献加可选附录部分总量不超过 10 页，附录非必须。本轮写作任务已把 `paper/main.tex` 从结果占位稿改为完整审稿稿，并在 `paper/build/main.pdf` 生成对应 PDF。
+正文采用 CVPR 2026 格式。页数按 6/7/8 页弹性控制：优先压到 6 页，7 页可接受，8 页作为正文硬上限。参考文献加可选附录部分总量不超过 10 页，附录非必须。本轮写作任务已把 `paper/main.tex` 从结果占位稿改为使用真实结果的诊断型审稿稿。
 
 模板文件已从 `cvpr-org/author-kit` main commit
 `217fe7698116978ab2d972e2369a3d1567152f34` 直接替换：`paper/cvpr.sty`、
@@ -336,14 +348,15 @@ TU 编码下不会自动解析，因此 `paper/local_xetex_fonts.tex` 强制使�
 `T1/ptm` 和 `T1/phv` 官方 Times/Helvetica 字体族正确加载，避免论文标题和章节标题
 退化成非粗体。
 
-正文只支撑一个小而明确的结论：
+正文只支撑一个小而明确的诊断结论：
 
 - 方法：不改模型结构、不改 DPO loss，只改 preference response 格式。
 - 数据：5k mixed COCO/GQA preference pairs，覆盖对象存在、简单颜色/材质属性和左右空间关系。
 - 实验：Base Instruct、Answer-DPO、Evidence-Hint DPO 三组。
-- 指标：COCO held-out、Hard COCO、GQA simple 的 Acc/BAcc/F1/FPR/FNR、yes/no bias、refusal/other rate、生成长度与 evidence-cue rate；POPE/AMBER 视官方数据可用性补充。
+- 指标：COCO held-out、Hard COCO、GQA simple 的 Acc/BAcc/F1/FPR/FNR、yes/no bias、refusal/other rate、生成长度与 evidence-cue rate；base-error-mined recovery 作为诊断补充；POPE/AMBER 因官方数据当前不在本地，暂放 future work。
 - 限制：不声称解决计数、多步关系、开放式描述或复杂 grounding。
-
-注意：当前论文表格中的 Evidence-Hint DPO 行是按用户指定的“实验正常完成”前提写入的正向结果，用于完善论文叙事和模拟评审；真实提交前应以 `experiments/eval_summary.md` 和最终 Slurm 输出为准逐项复核。
+- 结论：Evidence-Hint DPO 在 COCO/Hard COCO/GQA 上只表现出小幅 false-positive 下降，
+  整体 Acc/F1 与 base-error recovery 未稳定超过 Answer-DPO，因此论文写成 controlled
+  diagnostic study，而不是强正向方法论文。
 
 论文大纲和任务清单见 `idea-lightweighted-grounded-preference-vlm/paper_outline_and_tasks.md`。

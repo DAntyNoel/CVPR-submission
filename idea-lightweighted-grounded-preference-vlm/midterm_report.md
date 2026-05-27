@@ -10,13 +10,11 @@
 
 训练侧需要区分旧结果和新主实验。Answer-DPO job 64167 与 Evidence-Hint DPO job 64168 已正常结束，它们基于旧 5,000 条 COCO-only 数据，不应放入 mixed 数据论文主表。不过这两组 adapter 仍然有价值，可以作为 COCO-only auxiliary/preliminary result 写入论文补充结果或分析部分，用来展示 evidence hint 在纯对象存在设定下的先行趋势。2026-05-27 mixed LLaMA-Factory 数据已重新导出，两组 mixed DPO 已完成：Answer-DPO job 64200，Evidence-Hint DPO ZeRO-2 job 64252。训练设置保持 LoRA DPO、1 epoch、`pref_beta=0.1`、LoRA rank 16；原 Evidence-Hint ZeRO-3 job 64201 已取消。
 
-评测侧已经准备好 1,000 条 COCO held-out object-existence eval，yes/no 各 500 条；也已准备好 `data/eval/gqa_simple_heldout.jsonl`，共 1,000 条，500 条 color attribute 和 500 条 left/right relation，yes/no 各 500 条，且训练 GQA image overlap 为 0。统一推理入口和 adapter 加载检查已有基础。等待 mixed 训练完成期间，可以先把旧 COCO-only adapter 的后续评测跑完，包括 COCO held-out、POPE、refusal rate 和格式违规检查。这些结果可作为额外表格或 appendix 结果，但表头必须标注为 `COCO-only training`。
+评测侧已经完成 COCO held-out、GQA simple、Hard COCO、evidence-style prompt 和 Base-error-mined diagnostic。COCO held-out 上 Base/Answer-DPO/Evidence-Hint DPO Acc 分别为 0.959/0.961/0.961；GQA simple 为 0.764/0.768/0.766；Hard COCO 为 0.944/0.950/0.946。Base-error-mined locked set 上 Answer-DPO recovery 为 0.063，Evidence-Hint DPO recovery 为 0.030。官方 POPE/AMBER 数据当前不在本地，本轮不阻塞主线。
 
 ## 2. 预期结论是否正常
 
-目前看项目方向正常，但主结论还不能提前确认。数据已经从 COCO-only 扩展到 mixed COCO+GQA，并且自动检查通过；这让论文范围比旧版更完整，但也意味着旧 adapter 不能直接支撑最终主表。旧 COCO-only 结果可以先作为“对象存在子设定”的额外证据，Evidence-Hint DPO 的最终主结论仍必须等待 mixed 数据重训后的 held-out、POPE 和 GQA simple 评测结果。
-
-预期结论更新为：如果 Evidence-Hint DPO 相比 Answer-DPO 在 POPE/COCO object existence 或 GQA simple attribute/relation 上有稳定提升，同时 refusal rate 没有明显升高，就可以支持“轻量 evidence hint 有助于回答级 DPO 学到更强视觉依据”的基础结论。如果收益只出现在 COCO 而不出现在 GQA，则正文应把结论收窄为对象存在类幻觉；如果整体提升不明显，也可以改写为可复现的负结果或诊断性结论。
+当前结果支持诊断型结论，而不是强正向方法结论。Evidence-Hint DPO 在 COCO/Hard COCO/GQA 上只表现出轻微 false-positive 下降，整体 Acc/F1 与 Base-error recovery 未稳定超过 Answer-DPO；refusal 和 other/invalid rate 均未升高，normal prompt 下也没有 literal `Evidence hint` 格式泄漏。论文应明确说明模板化 evidence hint 的当前形式不足以稳定改善小规模 DPO，但提供了一个可复现的 controlled diagnostic setting。
 
 ## 3. 论文核心目标是否有变化
 
@@ -26,11 +24,11 @@
 
 ## 4. 潜在问题和解决方案
 
-1. mixed 数据上的正式主训练已完成。当前状态是 64167/64168 已明确标记为 COCO-only auxiliary/preliminary run，mixed Answer-DPO 64200 和 mixed Evidence-Hint DPO ZeRO-2 64252 已完成；后续聚焦补齐 evidence-style 评测与论文表格。
+1. mixed 数据上的正式主训练与主要评测均已完成。当前状态是 64167/64168 已明确标记为 COCO-only auxiliary/preliminary run，mixed Answer-DPO 64200 和 mixed Evidence-Hint DPO ZeRO-2 64252 是主训练结果。
 
 2. GQA simple held-out eval 已准备完成。后续风险转为评测噪声：如果 GQA eval 噪声较高，主结论按 COCO/POPE 收窄，GQA 作为补充分析。
 
-3. 等待 mixed 重训期间可能出现空档。解决方案是先跑旧 COCO-only adapter 的 COCO held-out/POPE/refusal 评测，把结果作为额外结果保存；这些结果只和 COCO-only 训练设定对应，不与 mixed 主表直接混写。
+3. 普通 COCO 和 Hard COCO 都接近 ceiling。解决方案已执行：加入 evidence-style prompt 与 Base-error-mined diagnostic，并在论文中解释这些评测仍未显示稳定正向 Evidence-Hint delta。
 
 4. POPE 或 AMBER 数据准备可能拖慢主表。解决方案是先把 COCO held-out + GQA simple 作为最小主表，POPE 作为强补充；AMBER 只在脚本顺利时加入，不为它扩大实验范围。
 
@@ -40,4 +38,4 @@
 
 ## 5. 下一步优先级
 
-下一步最重要的是等待 mixed 数据重训完成，并利用等待时间拿到旧 COCO-only adapter 的额外评测结果。推荐顺序是：先跑旧 COCO-only Answer-DPO/Evidence-Hint DPO 的 COCO held-out/POPE/refusal 评测并保存为 auxiliary result；等待 mixed Answer-DPO 和 mixed Evidence-Hint DPO 完成后，跑 Base/mixed Answer-DPO/mixed Evidence-Hint DPO 的 COCO held-out、GQA simple、POPE 和 refusal-rate 评测，生成主表指标。无论结果强弱，当前论文都应维持三组主实验和 6 页以内的简洁设定。
+当前不再重复提交已完成的 COCO/GQA/Hard COCO/evidence-style/base-error-mined 评测。下一步优先级是：编译并检查诊断型论文页数；如需更强结论，再单独决定是否启动 10k mixed scale-up 或准备官方 POPE/AMBER 数据。无论是否扩展，当前论文都应维持三组主实验和 6 页以内的简洁设定。

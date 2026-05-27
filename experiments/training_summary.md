@@ -155,16 +155,20 @@ also completed: 64258 COCO held-out Acc 0.955 and 64259 GQA simple Acc 0.767.
 The old dependency jobs 64235 to 64239 and 64263 were cancelled along with job
 64201.
 
-Completed mixed-eval partial metrics are tracked in:
+Completed mixed-eval metrics are tracked in:
 
 ```text
 experiments/eval_summary.md
 ```
 
-Current partial result: COCO held-out Base Acc 0.959, mixed Answer-DPO Acc
+Current result: COCO held-out Base Acc 0.959, mixed Answer-DPO Acc
 0.961, and ZeRO-2 Evidence-Hint Acc 0.961; GQA simple Base Acc 0.764, mixed
 Answer-DPO Acc 0.768, and ZeRO-2 Evidence-Hint Acc 0.766. Evidence-style prompt
 results are complete: Base COCO Acc 0.955, Base GQA Acc 0.768, Answer-DPO COCO
 Acc 0.956, Answer-DPO GQA Acc 0.766, ZeRO-2 Evidence-Hint COCO Acc 0.955, and
 ZeRO-2 Evidence-Hint GQA Acc 0.767. Hard COCO Base Acc is 0.944, mixed
-Answer-DPO Acc is 0.950, and ZeRO-2 Evidence-Hint Acc is 0.946.
+Answer-DPO Acc is 0.950, and ZeRO-2 Evidence-Hint Acc is 0.946. Base-error
+mining is also complete: Answer-DPO recovery is 0.063 and ZeRO-2 Evidence-Hint
+recovery is 0.030 on the 527-row locked diagnostic set. These results support
+the diagnostic Plan B reading rather than a strong positive Evidence-Hint
+claim.

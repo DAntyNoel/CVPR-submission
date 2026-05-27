@@ -195,7 +195,17 @@ Current Evidence-Hint eval status:
 64258  COMPLETED            Evidence-Hint DPO COCO held-out, evidence_prompt_zero2, Acc 0.955
 64259  COMPLETED            Evidence-Hint DPO GQA simple, evidence_prompt_zero2, Acc 0.767
 64263  CANCELLED            old afterok:64201 base-error-mined eval
+64251  COMPLETED            Base candidate mining, Acc 0.9472 on 10,000 rows
+64262  COMPLETED            Base-error-mined locked set, Base recovery 0.000
+64264  COMPLETED            Base-error-mined locked set, Answer-DPO recovery 0.063
+64267  COMPLETED            Base-error-mined locked set, Evidence-Hint DPO recovery 0.030
 ```
+
+Completed mixed results support the diagnostic Plan B reading: Evidence-Hint
+DPO slightly lowers some false-positive rates but does not consistently beat
+Answer-DPO on overall Acc/F1 or Base-error recovery. Do not re-submit the same
+COCO/GQA/Hard COCO/evidence-style/base-error-mined jobs unless their output
+files are explicitly missing.
 
 Raw generations and metadata are written to:
 

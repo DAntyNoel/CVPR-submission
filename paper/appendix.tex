@@ -1,9 +1,8 @@
 \section{Supplementary Material}
 
 This appendix provides reproducibility details for the controlled COCO/GQA
-study. It is not required to understand the main claim, but records the data
-templates, training settings, scoring rules, and confusion counts used by the
-full-paper build.
+diagnostic study. It records the data templates, training settings, scoring
+rules, and confusion counts used by the full-paper build.
 
 \subsection{Preference Pair Templates}
 
@@ -67,10 +66,11 @@ Eval image overlap & 0 train/eval image ids \\
 
 All held-out generations are scored with a deterministic yes/no parser. Answers
 whose first decisive statement is affirmative are scored as yes; answers whose
-first decisive statement is negative are scored as no. Outputs without a
-parseable yes/no decision, or with explicit uncertainty such as ``cannot
-determine'' or ``not sure'', are counted as refusals. The same parser is used
-for Base Instruct, \answerdpo{}, and \method{}.
+first decisive statement is negative are scored as no. Outputs with explicit
+uncertainty such as ``cannot determine'' or ``not sure'' are counted as
+refusals, while outputs without a parseable yes/no decision are counted as
+other/invalid. The same parser is used for Base Instruct, \answerdpo{}, and
+\method{}.
 
 Yes bias is the fraction of parsed predictions assigned to yes. The COCO
 false-positive rate is computed over negative object-existence questions. GQA
@@ -80,8 +80,8 @@ slices.
 \subsection{Confusion Counts}
 
 Table~\ref{tab:app_counts} gives the confusion counts corresponding to the
-main held-out table. The COCO split contains 500 yes and 500 no examples. The
-GQA split is also balanced between yes and no labels.
+main held-out table. The COCO, Hard COCO, and GQA splits each contain 500 yes
+and 500 no examples.
 
 \begin{table}[h]
 \centering
@@ -92,16 +92,28 @@ Eval & Method & TP & FP & TN & FN \\
 \midrule
 COCO & Base Instruct & 468 & 9 & 491 & 32 \\
 COCO & \answerdpo{} & 470 & 9 & 491 & 30 \\
-COCO & \method{} & 476 & 5 & 495 & 24 \\
+COCO & \method{} & 469 & 8 & 492 & 31 \\
+Hard COCO & Base Instruct & 463 & 19 & 481 & 37 \\
+Hard COCO & \answerdpo{} & 470 & 20 & 480 & 30 \\
+Hard COCO & \method{} & 465 & 19 & 481 & 35 \\
 GQA & Base Instruct & 336 & 72 & 428 & 164 \\
 GQA & \answerdpo{} & 344 & 76 & 424 & 156 \\
-GQA & \method{} & 365 & 66 & 434 & 135 \\
+GQA & \method{} & 338 & 72 & 428 & 162 \\
 \bottomrule
 \end{tabular}
 \caption{Held-out confusion counts used for the reported accuracy, F1,
-yes-bias, and false-positive analyses.}
+yes-bias, false-positive, and false-negative analyses.}
 \label{tab:app_counts}
 \end{table}
+
+\subsection{Base-Error-Mined Diagnostic Set}
+
+The Base-error-mined set is constructed from errors made by Base Instruct on a
+10{,}000-row held-out COCO candidate pool. The locked set contains 527 rows
+over 474 images: 123 original Base false positives and 404 original Base false
+negatives. It is used only as a diagnostic set for error recovery. On this
+pre-audit set, \answerdpo{} recovers 33/527 errors and \method{} recovers
+16/527 errors. Both rows have 0.0\% refusal and 0.0\% other/invalid outputs.
 
 \subsection{Reproducibility Notes}
 

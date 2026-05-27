@@ -28,7 +28,9 @@
 - 已完成：Base/Answer-DPO 的 evidence-style prompt 评测 jobs 64216-64219；Base COCO Acc 0.955，Base GQA Acc 0.768，Answer-DPO COCO Acc 0.956，Answer-DPO GQA Acc 0.766，拒答率均为 0。
 - 已完成：Hard COCO held-out eval 构造，`data/eval/coco_hard_object_existence.jsonl` 共 1,000 条、yes/no 各 500、500 张 held-out 图像、train/eval image overlap = 0；Base 和 mixed Answer-DPO 评测 jobs 64233/64234 已完成，Base Acc 0.944，mixed Answer-DPO Acc 0.950。
 - 已完成：mixed Evidence-Hint DPO ZeRO-2 normal-prompt 评测 jobs 64255-64257：COCO Acc 0.961，GQA Acc 0.766，Hard COCO Acc 0.946；evidence-style jobs 64258/64259：COCO Acc 0.955，GQA Acc 0.767。旧 `afterok:64201` jobs 64235-64239 已取消。
-- 已完成：新建 `paper/` CVPR LaTeX 草稿目录，写入 Abstract、Introduction、Related Work、Method、Experiment Setup、Limitations 与结果占位。
+- 已完成：Base-error mining 诊断。候选池 10,000 条，Base Acc 0.9472；locked diagnostic set 527 条。Answer-DPO recovery 0.063，Evidence-Hint DPO ZeRO-2 recovery 0.030。
+- 当前真实结果不支持强正向结论。Evidence-Hint DPO 只在部分 false-positive 指标上略低于 Answer-DPO，整体 Acc/F1、Hard COCO、GQA simple 和 Base-error recovery 未稳定超过 Answer-DPO。论文已切换为 controlled diagnostic study。
+- 已完成：新建并更新 `paper/` CVPR LaTeX 草稿目录，已写入使用真实结果的 Abstract、Introduction、Related Work、Method、Experiment Setup、Results、Diagnostics 与 Limitations。
 - 新决策：在不增加方法组的前提下，允许新增少量更大实验来丰富论文。优先级为 Hard COCO Eval、Evidence-Style Prompt Eval 补全、POPE/AMBER 小子集、10k mixed scale-up。所有新增实验仍围绕 Base / Answer-DPO / Evidence-Hint DPO 三组，不加入 SFT、critic、多 backbone 或 3D。
 
 因此实验规划需要相应调整：主实验仍保持三组不扩张，但两组 DPO 需要在当前 mixed 数据上重新训练。论文结论可以从“只验证 COCO 对象存在幻觉”扩展为“验证对象存在、简单属性和简单左右空间关系上的轻量 evidence hint”，但仍不能声称覆盖复杂推理、计数、多步关系或开放式描述。
@@ -182,15 +184,15 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 
 #### 4.3 Main Results
 
-主表建议：
+当前主表：
 
 | Method | COCO Acc/BAcc | COCO FPR/FNR | Hard COCO FPR/FNR | GQA Acc/BAcc | Yes/Ref/Other |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Base Instruct | TBD | TBD | TBD | TBD | TBD |
-| Answer-DPO | TBD | TBD | TBD | TBD | TBD |
-| Evidence-Hint DPO | TBD | TBD | TBD | TBD | TBD |
+| Base Instruct | 0.959/0.959 | 0.018/0.064 | 0.038/0.074 | 0.764/0.764 | COCO yes 0.477 / ref 0.000 / other 0.000 |
+| Answer-DPO | 0.961/0.961 | 0.018/0.060 | 0.040/0.060 | 0.768/0.768 | COCO yes 0.479 / ref 0.000 / other 0.000 |
+| Evidence-Hint DPO | 0.961/0.961 | 0.016/0.062 | 0.038/0.070 | 0.766/0.766 | COCO yes 0.477 / ref 0.000 / other 0.000 |
 
-只要 Evidence-Hint DPO 相比 Answer-DPO 在 POPE/COCO 或 GQA simple 上有稳定提升，并且 refusal rate 没有明显升高，就足够支撑这篇示例论文的主结论。若收益只出现在 COCO 而不出现在 GQA，应在正文中把结论收窄为对象存在类幻觉。
+真实结果显示 Evidence-Hint DPO 相比 Answer-DPO 只在 COCO/Hard COCO/GQA 的 FPR 上有小幅下降或持平，但整体 Acc/F1 与 FNR 没有稳定优势。因此正文采用 controlled diagnostic study，而不是“小而有效”的强正向结论。
 
 两条结果解释路线：
 
@@ -228,9 +230,9 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 | 编号 | 类型 | 内容 | 状态 |
 | --- | --- | --- | --- |
 | Figure 1 | 方法图 | Answer-DPO vs Evidence-Hint DPO 数据格式对比 | LaTeX 初稿已放入 `paper/main.tex` |
-| Table 1 | 主结果表 | Base / Answer-DPO / Evidence-Hint DPO | 等评测 |
-| Table 2 | Hard / external eval | Hard COCO，POPE/AMBER 小子集视数据可用性加入 | Hard COCO Base/Answer-DPO/Evidence-Hint 已完成 |
-| Table 3 | Prompt-mode analysis | normal prompt vs evidence-style prompt | Base/Answer-DPO/Evidence-Hint 已完成 |
+| Table 1 | 主结果表 | Base / Answer-DPO / Evidence-Hint DPO | 已按真实 mixed 结果填入 `paper/main.tex` |
+| Table 2 | Hard / diagnostic eval | Hard COCO 与 Base-error-mined diagnostic | Hard COCO 与 Base-error-mined 三组均已完成 |
+| Table 3 | Prompt-mode analysis | normal prompt vs evidence-style prompt | Base/Answer-DPO/Evidence-Hint 已完成并写入诊断分析 |
 | Table 4 | Scale-up trend | 5k vs 10k mixed Answer-DPO/Evidence-Hint DPO | 条件触发 |
 | Appendix Table | COCO-only auxiliary | 旧 5k COCO-only adapter 的 sanity check | 已有结果，视篇幅放正文或补充 |
 | Figure 2 | Case study | 4-6 个对象/属性/关系幻觉例子 | 等推理输出 |
@@ -295,16 +297,16 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 - [x] 额外补一组 evidence-style prompt eval：提示模型回答 yes/no 后简短说明视觉证据，再复用 yes/no parser，检查 Evidence-Hint DPO 的训练信号是否需要在推理格式中被激活；Base/Answer-DPO jobs 64216-64219 已完成，Base COCO Acc 0.955，Base GQA Acc 0.768，Answer-DPO COCO Acc 0.956，Answer-DPO GQA Acc 0.766；Evidence-Hint DPO ZeRO-2 jobs 64258/64259 已完成，COCO Acc 0.955，GQA Acc 0.767。
 - [x] 完成 Hard COCO Base 与 mixed Answer-DPO 评测：jobs 64233/64234，Base Acc 0.944，mixed Answer-DPO Acc 0.950，输出变体为 `mixed`。
 - [x] 收集 Hard COCO mixed Evidence-Hint DPO 评测结果：ZeRO-2 job 64257 已完成，Acc 0.946，FPR 0.038，FNR 0.070。
-- [ ] 如果 POPE 数据准备完成，跑 POPE 三组评测；AMBER object/attribute subset 作为次优先。
-- [ ] 条件触发 10k scale-up 评测：10k Answer-DPO 与 10k Evidence-Hint DPO 至少跑 COCO held-out、Hard COCO、GQA simple 和 evidence-style prompt。
-- [ ] 填 Table 1：COCO held-out 与 GQA simple 的 Acc/BAcc/F1/FPR/FNR、Hard COCO FPR/FNR、yes/refusal/other rate。
-- [ ] 填 Table 2：Hard COCO 与 POPE/AMBER 外部结果，POPE/AMBER 若不可用则如实说明。
-- [ ] 填 Table 3：normal prompt vs evidence-style prompt。
+- [x] 如果 POPE 数据准备完成，跑 POPE 三组评测；AMBER object/attribute subset 作为次优先：当前官方 POPE/AMBER 数据不在本地，本轮不阻塞主线，写入 limitation/future work。
+- [ ] 条件触发 10k scale-up 评测：当前 5k 结果已足以写成诊断型论文，暂不提交 10k 重训，除非后续明确需要规模趋势。
+- [x] 填 Table 1：COCO held-out 与 GQA simple 的 Acc/BAcc/F1/FPR/FNR、Hard COCO FPR/FNR、yes/refusal/other rate。
+- [x] 填 Table 2：Hard COCO 与 Base-error-mined diagnostic；POPE/AMBER 若不可用则如实说明。
+- [x] 填 Table 3：normal prompt vs evidence-style prompt。
 - [x] 扩展 yes/no scorer 指标：默认输出 Acc、BAcc、F1、FPR、FNR、TNR、yes/no bias、refusal/other/invalid rate、生成长度、evidence-cue rate，并按 source/task_type/target/target_text 汇总分组指标。
 - [ ] 填 Table 4 或 appendix：5k vs 10k scale-up trend，只有条件触发后才写入正文。
-- [ ] 检查 Evidence-Hint DPO 的收益是否不是由更高拒答率造成。
-- [ ] 如果 Evidence-Hint DPO 结果弱于 Answer-DPO，优先分析是否 evidence hint 训练导致推理格式漂移。
-- [ ] 如果 mixed 结果仍与 Answer-DPO 接近，优先解释 ordinary COCO ceiling effect，并用 Hard COCO、evidence-style prompt 与 scale-up trend 做补充判断。
+- [x] 检查 Evidence-Hint DPO 的收益是否不是由更高拒答率造成：normal/evidence-style 主要评测 refusal 与 other 均为 0.0。
+- [x] 如果 Evidence-Hint DPO 结果弱于 Answer-DPO，优先分析是否 evidence hint 训练导致推理格式漂移：normal prompt 下 literal `Evidence hint` 泄漏为 0，主要表现为 yes/no bias 和 FPR/FNR trade-off。
+- [x] 如果 mixed 结果仍与 Answer-DPO 接近，优先解释 ordinary COCO ceiling effect，并用 Hard COCO、evidence-style prompt 与 scale-up trend 做补充判断：Hard COCO、evidence-style prompt 与 Base-error-mined diagnostic 已完成；scale-up 暂留 future work。
 
 ### E. Case Study
 
@@ -318,21 +320,21 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 
 - [x] 新建 CVPR LaTeX 草稿目录：`paper/`。
 - [x] 切换到 CVPR 2026 官方格式：`paper/main.tex` 使用 `\usepackage[review]{cvpr}`，并加入 `cvpr.sty` 与 `ieeenat_fullname.bst`。
-- [x] 写 Abstract 和 Introduction 初稿：见 `paper/main.tex`，保留 Plan A/Plan B 结果占位。
+- [x] 写 Abstract 和 Introduction：见 `paper/main.tex`，已切换到真实 Plan B 诊断型表述。
 - [x] 写 Method，重点保持“只改数据格式，不改训练目标”：见 `paper/main.tex`。
 - [x] 写 Experiment Setup，明确 mixed COCO+GQA 范围和 GQA simple 限定：见 `paper/main.tex`。
-- [ ] 填主结果表和 case study。
+- [x] 填主结果表；case study 暂不作为正文必要项，改用 Base-error-mined diagnostic table。
 - [x] 写 Limitations，主动承认数据范围小：见 `paper/main.tex`。
-- [ ] 全文按 6/7/8 页控制：优先 6 页，7 页可接受，8 页为正文硬上限；参考文献加可选附录不超过 10 页。当前环境缺少 `latexmk`/`pdflatex`/`tectonic`，待 LaTeX 工具可用后编译确认页数。
+- [x] 全文按 6/7/8 页控制：2026-05-27 诊断稿已重新编译，`paper/build/main.pdf` 为 4 页，`paper/build/main_full.pdf` 为 5 页，无表格溢出告警。
 
 ### G. 风险与备选方案
 
-- [x] Plan A 写作路线：若 Evidence-Hint DPO 在 mixed COCO/GQA 或 POPE 上稳定优于 Answer-DPO，主文强调“小而有效”的 hallucination reduction，并把 COCO-only auxiliary 作为先行 sanity check。
-- [x] Plan B 写作路线：若 mixed 结果仍然差异很小，主文收窄为 controlled diagnostic study，明确说明 Base/Answer-DPO 已接近 ceiling、yes/no-only 推理弱化了 evidence hint 信号，并把 Hard COCO Eval、evidence-style prompt 与 10k scale-up 作为后续验证。
-- [ ] Plan B 实验补强：保留三组主实验不变，只增加评测视角，不新增训练组；evidence-style prompt 入口已完成并提交 Base/Answer-DPO，Hard COCO eval 已构造并提交前两组，paired bootstrap/McNemar 仍待主结果后决定。
-- [ ] 少量大实验优先级：Hard COCO Eval > Evidence-Style Prompt Eval 补全 > POPE/AMBER 小子集 > 10k mixed scale-up。除 10k scale-up 外都不需要新训练。
+- [x] Plan A 写作路线：已评估但当前结果不满足，不采用强正向叙事。
+- [x] Plan B 写作路线：mixed 结果差异很小，主文已收窄为 controlled diagnostic study，明确说明 Base/Answer-DPO 已接近 ceiling，模板化 evidence hint 主要表现为 FPR/FNR trade-off。
+- [x] Plan B 实验补强：保留三组主实验不变，只增加评测视角，不新增训练组；Hard COCO、evidence-style prompt 与 Base-error-mined diagnostic 已完成。
+- [x] 少量大实验优先级：Hard COCO Eval、Evidence-Style Prompt Eval 和 Base-error mining 已完成；POPE/AMBER 因官方数据当前不在本地暂放 future work；10k mixed scale-up 暂不触发。
 - [x] 若 64201 训练失败或被替代：已用完成的 ZeRO-2 mixed Evidence-Hint adapter 作为默认主线，旧 64201 与依赖队列已取消。
-- [ ] 若 POPE 数据准备耗时：先用自建 held-out object-existence eval 出趋势表。
-- [ ] 若 Evidence-Hint DPO 生成时总带 evidence：在评测 prompt 中明确要求 `Answer with a short yes/no sentence only.`，并统计格式违规率。
+- [x] 若 POPE 数据准备耗时：先用自建 held-out object-existence eval 出趋势表；已完成 COCO/Hard COCO/GQA/Base-error-mined 诊断。
+- [x] 若 Evidence-Hint DPO 生成时总带 evidence：在评测 prompt 中明确要求 `Answer with a short yes/no sentence only.`，并统计格式违规率；normal prompt 下未见 literal `Evidence hint` 泄漏。
 - [ ] 若 Answer-DPO 与 Evidence-Hint DPO 都退化：检查 DPO 数据中 rejected 是否过于模板化，必要时降低学习率或减少 epoch 后重训。
 - [ ] 若主结果没有提升：题目可改为 `A Controlled Diagnostic Study of Lightweight Evidence Hints for VLM Preference Tuning`，保留可复现实验价值，避免强行声称提升。

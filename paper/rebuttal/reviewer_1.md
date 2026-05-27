@@ -1,5 +1,8 @@
 # Simulated Reviewer 1
 
+Archived note: this review was written for the earlier assumed-positive draft,
+not for the current diagnostic manuscript.
+
 Overall score: 4.2 / 5  
 Confidence: 3.5 / 5  
 Recommendation: Weak Accept

@@ -1,16 +1,15 @@
 # Simulated Review Package
 
-This directory contains two simulated CVPR-style reviews for the current
+This directory contains two simulated CVPR-style reviews for an earlier
 `paper/build/main.pdf`.
 
 Context:
 
-- The reviewed PDF is the complete manuscript produced from `paper/main.tex`.
-- The Evidence-Hint DPO row is evaluated under the user-requested assumption
-  that the mixed Evidence-Hint experiment completes normally and yields the
-  reported positive trend.
-- Before a real submission, verify the reported Evidence-Hint numbers against
-  final Slurm logs and `experiments/eval_summary.md`.
+- These reviews were written for the previous assumed-positive manuscript.
+- `paper/main.tex` has since been rewritten as a controlled diagnostic study
+  using the completed mixed Evidence-Hint DPO ZeRO-2 results.
+- Regenerate simulated reviews after compiling the diagnostic PDF if reviewer
+  feedback is needed.
 
 Files:
 

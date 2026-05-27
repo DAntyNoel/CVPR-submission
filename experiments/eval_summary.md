@@ -6,6 +6,15 @@ This file records completed evaluation results and in-progress launches. The
 mixed Evidence-Hint DPO default adapter is the completed ZeRO-2 run from job
 64252. The old ZeRO-3 job 64201 and its dependency queue were cancelled.
 
+## Overall Reading
+
+The completed 5k mixed results support the Plan B / diagnostic interpretation.
+Evidence-Hint DPO slightly reduces false-positive rates on COCO-style object
+questions, but it does not consistently beat Answer-DPO on Acc/F1 or recovery:
+COCO held-out is tied at 0.961, GQA simple is 0.766 vs. Answer-DPO 0.768, Hard
+COCO is 0.946 vs. 0.950, and Base-error-mined recovery is 0.030 vs. 0.063.
+Refusal and other/invalid rates are 0.0 throughout the normal yes/no runs.
+
 ## Normal Yes/No Prompt
 
 Prompt suffix:
@@ -81,3 +90,24 @@ the set.
 Old dependency jobs 64235 to 64239 and 64263 were cancelled after ZeRO-2 job
 64252 replaced job 64201. Jobs 64255 to 64259 use the completed ZeRO-2 adapter
 and are complete.
+
+## Base-Error-Mined Diagnostic Set
+
+This set is conditioned on Base Instruct errors from a larger held-out COCO
+candidate pool. It measures recovery from Base failures, not unbiased
+benchmark accuracy. The audit sheet has been prepared but not manually filled,
+so the table should be described as pre-audit diagnostic evidence.
+
+Candidate pool job 64251 completed on 10,000 rows with Base Acc 0.9472 and 528
+yes/no errors. The locked set contains 527 rows, 474 images, 404 Base false
+negatives, and 123 Base false positives.
+
+| Method | Job | Rows | Recovery Acc | FP Recovery | FN Recovery | Ref | Other | Confusion |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| Base Instruct | 64262 | 527 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | TP 0 / FP 123 / TN 0 / FN 404 |
+| mixed Answer-DPO | 64264 | 527 | 0.063 | 0.008 | 0.079 | 0.000 | 0.000 | TP 32 / FP 122 / TN 1 / FN 372 |
+| mixed Evidence-Hint DPO | 64267 | 527 | 0.030 | 0.016 | 0.035 | 0.000 | 0.000 | TP 14 / FP 121 / TN 2 / FN 390 |
+
+The only favorable slice for Evidence-Hint DPO is false-positive recovery
+(2/123 vs. 1/123), while overall recovery and false-negative recovery are lower
+than Answer-DPO.

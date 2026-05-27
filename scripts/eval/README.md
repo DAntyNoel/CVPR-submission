@@ -95,6 +95,12 @@ job 64252. If an older or alternate Evidence-Hint run uses an explicit
 adapter/output variant, pass `--evidence-file` to point at that generation
 file.
 
+Current completed Base-error-mined results: candidate mining job 64251 produced
+10,000 Base generations with Acc 0.9472; the locked diagnostic set has 527
+rows. Locked-set jobs 64262/64264/64267 completed for Base/Answer-DPO/
+Evidence-Hint DPO. Answer-DPO recovery is 0.063 and Evidence-Hint DPO recovery
+is 0.030, so this diagnostic does not support a positive Evidence-Hint delta.
+
 ## GQA Simple Held-Out Eval
 
 Build the small GQA simple eval set from unused GQA candidate pairs:
@@ -154,7 +160,7 @@ The default adapter paths point to the mixed-data main adapters:
 
 ```text
 outputs/llamafactory/qwen25vl7b_mixed_answer_dpo/
-outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo/
+outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo_zero2/
 ```
 
 GPU generation should be submitted with:

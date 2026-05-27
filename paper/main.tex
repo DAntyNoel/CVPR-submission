@@ -30,7 +30,7 @@
 \newcommand{\answerdpo}{Answer-DPO}
 
 %%%%%%%%% TITLE - PLEASE UPDATE
-\title{Lightweight Evidence Hints Improve Preference Tuning for Reducing Object Hallucination in Vision-Language Models}
+\title{A Controlled Diagnostic Study of Lightweight Evidence Hints for Vision-Language Preference Tuning}
 
 %%%%%%%%% AUTHORS - PLEASE UPDATE
 \author{Anonymous \confName{} Submission}
@@ -48,12 +48,15 @@ chosen and rejected responses in Direct Preference Optimization with short,
 template-generated evidence hints derived from existing COCO and GQA
 annotations. The method keeps the backbone, images, optimizer, DPO loss, and
 inference prompt unchanged; only the preference response format changes. On a
-5k mixed COCO/GQA preference set with Qwen2.5-VL-7B-Instruct, \method{}
-improves over \answerdpo{} by 1.0 accuracy point on held-out COCO object
-existence and 3.1 points on held-out GQA simple visual claims, while reducing
-false-positive object claims from 1.8\% to 1.0\% and keeping refusal at 0.0\%.
-These results suggest that a very small amount of explicit textual evidence can
-make preference tuning more useful for controlled hallucination reduction.
+5k mixed COCO/GQA preference set with Qwen2.5-VL-7B-Instruct, the resulting
+picture is diagnostic rather than uniformly positive. \method{} ties
+\answerdpo{} on COCO object existence accuracy (96.1\%) while slightly reducing
+false positives (1.8\% to 1.6\%), but it is lower on GQA simple claims
+(76.6\% vs. 76.8\%) and Hard COCO (94.6\% vs. 95.0\%). Evidence-style prompting
+and a Base-error-mined locked set do not reverse this pattern. These results
+show that template-level evidence hints can nudge precision on some absent
+object claims, but are not sufficient by themselves to consistently improve
+small-scale VLM preference tuning.
 \end{abstract}
 
 \section{Introduction}
@@ -97,9 +100,10 @@ Our contributions are:
     \item We construct a 5k aligned COCO/GQA preference set where
     \answerdpo{} and \method{} use the same images, questions, and semantic
     labels, differing only in response format.
-    \item We show that \method{} improves controlled hallucination metrics over
-    answer-only DPO, mainly through fewer false positives and fewer simple
-    attribute/relation errors, without increasing refusal.
+    \item We report a controlled diagnostic result: \method{} slightly lowers
+    false positives on COCO-style object-existence questions, but does not
+    consistently outperform answer-only DPO across GQA, Hard COCO, prompt-mode,
+    or Base-error-mined evaluations.
 \end{itemize}
 
 \section{Related Work}
@@ -226,14 +230,15 @@ evidence requirement is added.
 
 \subsection{Evaluation}
 
-We evaluate on two held-out yes/no sets. The COCO object-existence set contains
-1{,}000 examples balanced between present and absent object claims. The GQA
-simple set contains 1{,}000 examples balanced between color-attribute and
-left/right-relation questions, and balanced between yes and no labels. All
-outputs are decoded with the same yes/no parser. We report accuracy, F1,
-yes-bias, refusal rate, and confusion-derived error rates. Refusal covers
-answers such as ``cannot determine'' or ``not sure'' that avoid a yes/no
-decision.
+We evaluate on three held-out yes/no sets. The COCO object-existence set
+contains 1{,}000 examples balanced between present and absent object claims.
+Hard COCO also contains 1{,}000 balanced examples, but uses same-coarse-group
+absent objects to increase false-positive pressure. The GQA simple set contains
+1{,}000 examples balanced between color-attribute and left/right-relation
+questions, and balanced between yes and no labels. All outputs are decoded with
+the same yes/no parser. We report accuracy, F1, yes-bias, refusal rate, and
+confusion-derived error rates. Refusal covers answers such as ``cannot
+determine'' or ``not sure'' that avoid a yes/no decision.
 
 \subsection{Main Results}
 
@@ -242,33 +247,34 @@ decision.
 \small
 \begin{tabular}{lccccccc}
 \toprule
-Method & COCO Acc & COCO F1 & COCO FPR & GQA Acc & GQA F1 & Yes Bias & Refusal \\
+Method & COCO Acc & COCO FPR/FNR & Hard Acc & Hard FPR/FNR & GQA Acc & GQA FPR/FNR & Ref. \\
 \midrule
-Base Instruct & 95.9 & 95.8 & 1.8 & 76.4 & 74.0 & 47.7 / 40.8 & 0.0 \\
-\answerdpo{} & 96.1 & 96.0 & 1.8 & 76.8 & 74.8 & 47.9 / 42.0 & 0.0 \\
-\method{} & \textbf{97.1} & \textbf{97.0} & \textbf{1.0} & \textbf{79.9} & \textbf{78.4} & 48.1 / 43.1 & 0.0 \\
+Base Instruct & 95.9 & 1.8 / 6.4 & 94.4 & 3.8 / 7.4 & 76.4 & 14.4 / 32.8 & 0.0 \\
+\answerdpo{} & \textbf{96.1} & 1.8 / \textbf{6.0} & \textbf{95.0} & 4.0 / \textbf{6.0} & \textbf{76.8} & 15.2 / \textbf{31.2} & 0.0 \\
+\method{} & \textbf{96.1} & \textbf{1.6} / 6.2 & 94.6 & \textbf{3.8} / 7.0 & 76.6 & \textbf{14.4} / 32.4 & 0.0 \\
 \bottomrule
 \end{tabular}
-\caption{Held-out results. Accuracy, F1, COCO false-positive rate (FPR), and
-refusal are percentages. Yes Bias reports COCO / GQA yes prediction rates.}
+\caption{Held-out results under the normal yes/no prompt. Accuracy, false
+positive rate (FPR), false negative rate (FNR), and refusal are percentages.
+The evidence-hint variant slightly lowers FPR on COCO-style object questions,
+but does not consistently improve overall accuracy or FNR.}
 \label{tab:main}
 \end{table*}
 
-Table~\ref{tab:main} shows that answer-only preference tuning gives only small
-gains over the base model: +0.2 accuracy points on COCO and +0.4 points on GQA.
-Adding evidence hints produces a larger improvement while preserving the same
-training and inference interface. Relative to \answerdpo{}, \method{} improves
-COCO accuracy by 1.0 point and GQA accuracy by 3.1 points. The COCO
-false-positive rate drops from 1.8\% to 1.0\%, indicating fewer absent objects
-are claimed as present. Refusal remains 0.0\% for all methods, so the gains do
-not come from avoiding uncertain questions.
+Table~\ref{tab:main} shows a narrow and mixed effect. \answerdpo{} gives small
+accuracy gains over the base model on all three held-out sets. \method{} ties
+\answerdpo{} on ordinary COCO object existence and slightly reduces the COCO
+false-positive rate, but gives up one true positive relative to \answerdpo{}.
+The same precision-recall pattern appears on Hard COCO: \method{} lowers FPR
+from 4.0\% to 3.8\%, but its FNR rises from 6.0\% to 7.0\%, yielding lower
+accuracy. On GQA simple, \method{} also lowers FPR relative to \answerdpo{} but
+increases FNR enough that overall accuracy and F1 are lower.
 
-The GQA result is important because the method is not only memorizing object
-existence templates. It also improves simple color and left/right visual claims,
-where the rejected answer is wrong because it conflicts with an annotated
-attribute or relation. The yes-bias increases slightly on GQA, but stays close
-to the balanced-label target and is accompanied by higher F1, suggesting that
-the gain is not a trivial tendency to answer ``yes'' more often.
+Refusal and invalid-output rates are 0.0\% for all rows. Therefore the
+differences are not caused by conservative abstention or parser failures. The
+result is better read as a small response-bias shift: template evidence hints
+make the model a little less likely to answer ``yes'' to unsupported claims,
+but this also removes some correct affirmative answers.
 
 \subsection{Error Decomposition}
 
@@ -279,37 +285,63 @@ the gain is not a trivial tendency to answer ``yes'' more often.
 \toprule
 Method & ObjFP & Color & L/R & Leak \\
 \midrule
-Base Instruct & 1.8 & 18.4 & 28.8 & 0.0 \\
-\answerdpo{} & 1.8 & 17.6 & 28.8 & 0.0 \\
-\method{} & \textbf{1.0} & \textbf{15.2} & \textbf{25.0} & 0.0 \\
+Base Instruct & 1.8 & 15.8 & 31.4 & 0.0 \\
+\answerdpo{} & 1.8 & \textbf{15.6} & \textbf{30.8} & 0.0 \\
+\method{} & \textbf{1.6} & 16.0 & \textbf{30.8} & 0.0 \\
 \bottomrule
 \end{tabular}
 \caption{Error decomposition in percentage points. Object false positive (FP)
 is measured over COCO negative questions; color and left/right (L/R) errors are
 measured over the corresponding GQA slices. Hint Leak counts generations that
-copy the training-time ``Evidence hint'' format.}
+copy the literal training-time ``Evidence hint'' format under the normal
+prompt.}
 \label{tab:error}
 \end{table}
 
-Table~\ref{tab:error} supports the intended mechanism. The improvement is
-concentrated in errors that the evidence templates target: absent-object false
-positives, color mismatches, and left/right reversals. We also find no evidence
-of format leakage: \method{} does not copy the literal ``Evidence hint'' string
-under the normal yes/no prompt. This matters because the intervention is meant
-to shape preference learning, not to force a new answer format at inference
-time.
+Table~\ref{tab:error} shows why the main result is diagnostic. The intended
+effect appears only on COCO absent-object false positives. It does not transfer
+to a clear improvement on GQA color errors, and relation accuracy is tied with
+\answerdpo{}. We also find no literal format leakage: \method{} does not copy
+the training-time ``Evidence hint'' string under the normal yes/no prompt.
 
-\subsection{Qualitative Behavior}
+\subsection{Additional Diagnostics}
 
-Qualitative comparisons show the same pattern as the aggregate metrics. On
-COCO negatives, \answerdpo{} often preserves the fluent affirmative style of
-the base model, while \method{} more frequently rejects unsupported object
-claims with a direct ``no'' answer. On GQA color questions, the evidence-hint
-model is less likely to accept a plausible but wrong color. On left/right
-relations, it reduces simple reversals but does not eliminate them, which is
-consistent with the remaining L/R error rate in Table~\ref{tab:error}. These
-examples suggest that the hints help the model treat preference pairs as
-evidence-dependent comparisons rather than only answer-style comparisons.
+\paragraph{Evidence-style prompt.}
+We also evaluate with an explicit instruction: ``Answer yes or no, then briefly
+mention the visual evidence.'' This prompt increases evidence-cue language but
+does not make \method{} dominate \answerdpo{}. On COCO, the accuracies are
+95.5\% for Base, 95.6\% for \answerdpo{}, and 95.5\% for \method{}. On GQA,
+the corresponding accuracies are 76.8\%, 76.6\%, and 76.7\%. Thus explicitly
+asking for evidence at inference time is not enough to recover a hidden benefit
+from training-time evidence hints.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Method & Rows & Rec. & FP Rec. & FN Rec. \\
+\midrule
+Base Instruct & 527 & 0.0 & 0.0 & 0.0 \\
+\answerdpo{} & 527 & \textbf{6.3} & 0.8 & \textbf{7.9} \\
+\method{} & 527 & 3.0 & \textbf{1.6} & 3.5 \\
+\bottomrule
+\end{tabular}
+\caption{Base-error-mined diagnostic set. Recovery is accuracy on a locked set
+of Base Instruct errors; FP/FN recovery split the original Base error type.
+This set is Base-conditioned and should not be read as an unbiased benchmark.}
+\label{tab:mined}
+\end{table}
+
+\paragraph{Base-error-mined set.}
+Because ordinary COCO is near ceiling, we mine a locked diagnostic set from
+Base Instruct errors on a 10k held-out candidate pool. The candidate pool has
+94.72\% Base accuracy and 528 Base errors; after filtering, the locked set has
+527 rows: 123 Base false positives and 404 Base false negatives. As shown in
+Table~\ref{tab:mined}, both DPO variants recover only a small fraction of these
+errors. \answerdpo{} recovers 6.3\% overall, while \method{} recovers 3.0\%.
+The only favorable slice for \method{} is false-positive recovery, but it is a
+2/123 versus 1/123 difference and should not be over-interpreted.
 
 \section{Limitations}
 
@@ -318,24 +350,25 @@ VLM hallucination. The data covers object existence, simple color/material
 attributes, and left/right spatial relations; it does not cover counting,
 multi-step compositional reasoning, open-ended descriptions, or dense
 grounding. Evidence hints are template-generated from existing annotations and
-are weaker than human rationales or region-level supervision. We use one
-backbone, one training set size, and one seed, so the results should be read as
-evidence that lightweight textual support is useful in this setting, not as a
-claim of universal robustness. Finally, annotation incompleteness can still
-make some negative object claims ambiguous, so future work should combine this
-format with harder human-verified negatives and broader benchmarks.
+are much weaker than human rationales or region-level supervision. We use one
+backbone, one training set size, and one seed. The results are therefore best
+read as a boundary case: the simple hint format tested here is not sufficient
+to consistently beat answer-only DPO. Finally, annotation incompleteness can
+make some negative object claims ambiguous, and the Base-error-mined audit is
+preliminary, so future work should use harder human-verified negatives,
+stronger hint designs, and broader benchmarks.
 
 \section{Conclusion}
 
-We presented \method{}, a minimal preference-data rewrite for reducing
-hallucinated visual claims in VLMs. By appending short annotation-derived
-evidence hints to chosen and rejected DPO responses, the method gives the
-preference objective an explicit cue about visual support while leaving the
-model, loss, and inference prompt unchanged. In a controlled COCO/GQA study,
-this small change improves over answer-only DPO on object existence, simple
-attributes, and left/right relations without increasing refusal. The result
-suggests a useful direction for low-cost grounding signals: even weak textual
-evidence can make preference tuning less dependent on answer style alone.
+We presented \method{}, a minimal preference-data rewrite that appends short
+annotation-derived evidence hints to chosen and rejected DPO responses while
+leaving the model, loss, and inference prompt unchanged. In a controlled
+COCO/GQA study, this simple format produces a small reduction in object
+false positives, but it does not consistently improve over answer-only DPO on
+overall accuracy, GQA simple claims, Hard COCO, evidence-style prompting, or a
+Base-error-mined diagnostic set. The broader lesson is useful: lightweight
+grounding-flavored preference responses are easy to construct and evaluate, but
+template hints alone may be too weak to reliably change VLM visual grounding.
 
 {
     \small

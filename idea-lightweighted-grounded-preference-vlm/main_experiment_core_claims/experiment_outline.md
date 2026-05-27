@@ -69,9 +69,11 @@ COCO-only preliminary 训练记录：
 | Answer-DPO | 64167 | COMPLETED | 0.2791 | 00:57:29 |
 | Evidence-Hint DPO | 64168 | COMPLETED | 0.1025 | 13:22:44 |
 
-64167/64168 基于旧 5,000 条 COCO-only 数据，不进入 mixed 数据主结果表，但可以作为 COCO-only auxiliary/preliminary result 写入论文额外结果。它们适合在等待 mixed 数据重训时先跑 COCO held-out、POPE、refusal rate 和格式违规检查，用来展示纯对象存在子设定下的趋势。mixed job 64200 已使用 2026-05-27 mixed COCO+GQA 数据完成 Answer-DPO 训练；Evidence-Hint DPO 改用已完成的 ZeRO-2 job 64252 作为默认主结果，原 ZeRO-3 job 64201 已取消。
+64167/64168 基于旧 5,000 条 COCO-only 数据，不进入 mixed 数据主结果表，只作为 COCO-only auxiliary/preliminary result。mixed job 64200 已使用 2026-05-27 mixed COCO+GQA 数据完成 Answer-DPO 训练；Evidence-Hint DPO 改用已完成的 ZeRO-2 job 64252 作为默认主结果，原 ZeRO-3 job 64201 已取消。
 
 若 5k mixed 主结果和新增评测仍不足以支撑清晰结论，可启动 10k mixed scale-up。该扩展只扩大训练数据，不增加方法组：Base Instruct 不变，只重训 10k Answer-DPO 与 10k Evidence-Hint DPO，并在 COCO held-out、Hard COCO、GQA simple、evidence-style prompt 上复评。
+
+当前真实结果已足以支撑诊断型论文，不重复提交 10k scale-up：Evidence-Hint DPO 在普通 COCO 与 Hard COCO 上 FPR 略低，但整体 Acc/F1、GQA simple 和 Base-error-mined recovery 未稳定超过 Answer-DPO。
 
 ## 5. COCO-only 额外结果
 
@@ -82,13 +84,13 @@ COCO-only preliminary 训练记录：
 - 作用：证明 evidence hint 在纯 object existence 设置下是否已有趋势，并为 mixed 主实验提供先行证据。
 - 限制：不能用于声称方法改善 GQA 属性/关系，也不能替代 mixed COCO+GQA 主表。
 
-辅助表模板：
+辅助结果：
 
-| Setting | Method | COCO Held-out Acc | COCO Held-out F1 | POPE F1 | Refusal Rate |
+| Setting | Method | COCO Held-out Acc | COCO Held-out F1 | COCO FPR | Refusal Rate |
 | --- | --- | ---: | ---: | ---: | ---: |
-| COCO-only training | Base Instruct | TBD | TBD | TBD | TBD |
-| COCO-only training | Answer-DPO 64167 | TBD | TBD | TBD | TBD |
-| COCO-only training | Evidence-Hint DPO 64168 | TBD | TBD | TBD | TBD |
+| COCO-only training | Base Instruct | 0.959 | 0.958 | 0.018 | 0.000 |
+| COCO-only training | Answer-DPO 64167 | 0.961 | 0.960 | 0.018 | 0.000 |
+| COCO-only training | Evidence-Hint DPO 64168 | 0.960 | 0.959 | 0.016 | 0.000 |
 
 2026-05-27 已使用当前完成的 COCO-only 5k 训练结果启动 held-out COCO
 object-existence 验证：
@@ -139,19 +141,21 @@ COCO-only held-out 结果只能支持“false positive 略低”，不能单独�
 
 最重要的比较是 Evidence-Hint DPO vs Answer-DPO，而不是只看 Evidence-Hint DPO 是否超过 Base。
 
-## 7. 主结果表模板
+## 7. 主结果表
 
 | Method | COCO Acc/BAcc | COCO FPR/FNR | Hard COCO FPR/FNR | GQA Acc/BAcc | Yes/Ref/Other |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Base Instruct | TBD | TBD | TBD | TBD | TBD |
-| Answer-DPO | TBD | TBD | TBD | TBD | TBD |
-| Evidence-Hint DPO | TBD | TBD | TBD | TBD | TBD |
+| Base Instruct | 0.959/0.959 | 0.018/0.064 | 0.038/0.074 | 0.764/0.764 | COCO yes 0.477 / ref 0.000 / other 0.000 |
+| Answer-DPO | 0.961/0.961 | 0.018/0.060 | 0.040/0.060 | 0.768/0.768 | COCO yes 0.479 / ref 0.000 / other 0.000 |
+| Evidence-Hint DPO | 0.961/0.961 | 0.016/0.062 | 0.038/0.070 | 0.766/0.766 | COCO yes 0.477 / ref 0.000 / other 0.000 |
 
 填表后优先检查三件事：
 
 1. Evidence-Hint DPO 的 COCO/Hard COCO/GQA 指标是否高于 Answer-DPO。
 2. Evidence-Hint DPO 的 false positive、attribute mismatch 或 left/right reversal 是否下降。
 3. Evidence-Hint DPO 的 refusal rate 是否没有明显升高。
+
+检查结果：第 1 点不满足，第 2 点只在 COCO/Hard COCO/GQA FPR 上部分满足，第 3 点满足。论文应写成 Plan B controlled diagnostic study。
 
 外部评测表可单独记录 POPE F1、AMBER object/attribute 指标。Prompt-mode analysis 表单独比较 normal prompt 与 evidence-style prompt。10k scale-up 若启动，放正文短表或 appendix trend table。
 
@@ -176,6 +180,7 @@ COCO-only held-out 结果只能支持“false positive 略低”，不能单独�
 - Base/Answer-DPO evidence-style prompt jobs 64216-64219 已完成：Base COCO Acc 0.955，Base GQA Acc 0.768，Answer-DPO COCO Acc 0.956，Answer-DPO GQA Acc 0.766，拒答率均为 0。
 - Hard COCO held-out 已构造完成：`data/eval/coco_hard_object_existence.jsonl`，1,000 条、yes/no 各 500、train/eval image overlap = 0；Base 和 mixed Answer-DPO jobs 64233/64234 已完成，Base Acc 0.944，mixed Answer-DPO Acc 0.950。
 - mixed Evidence-Hint DPO 的 old afterok:64201 依赖队列已取消；ZeRO-2 normal-prompt 评测 64255/64256/64257 已完成，evidence-style 64258/64259 也已完成。
+- Base-error mining 诊断已完成：candidate job 64251，locked-set jobs 64262/64264/64267。Answer-DPO recovery 0.063，Evidence-Hint DPO recovery 0.030。
 - 官方 POPE 数据与 COCO val2014 图像当前不在仓库本地，POPE 暂放入 supplement/future work。
 - 新增少量大实验优先级已确定：Hard COCO Eval > Evidence-Style Prompt Eval 补全 > POPE/AMBER 小子集 > 10k mixed scale-up。
 

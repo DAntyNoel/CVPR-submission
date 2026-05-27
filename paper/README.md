@@ -2,13 +2,13 @@
 
 This directory contains the CVPR 2026-format paper draft for the controlled
 COCO/GQA evidence-hint DPO study. The current `main.tex` is a complete
-review-ready manuscript written under the user-requested assumption that the
-mixed Evidence-Hint DPO experiment completes normally and yields the reported
-positive trend.
+diagnostic manuscript using the completed mixed Answer-DPO and mixed
+Evidence-Hint DPO ZeRO-2 results.
 
 Current files:
 
-- `main.tex`: paper body with assumed-normal main results and analysis.
+- `main.tex`: paper body with real mixed results, Hard COCO diagnostics,
+  evidence-style prompt analysis, and Base-error-mined diagnostics.
 - `main_full.tex`: standalone entry point that enables the appendix and writes
   `build/main_full.pdf`.
 - `preamble.tex`: CVPR author-kit preamble helper, kept aligned with the
@@ -39,10 +39,10 @@ Author-kit alignment:
 - The temporary author-kit clone used for replacement has been removed; the
   project does not vendor the author-kit repository.
 
-The Evidence-Hint numbers in the paper should be treated as an assumed-normal
-writing target until the final Slurm logs and evaluation summaries are
-available. Before a real submission, replace or verify these values against the
-completed mixed Evidence-Hint DPO adapter and held-out evaluation outputs.
+The paper now follows the completed-result interpretation: template evidence
+hints slightly reduce some false-positive object claims but do not consistently
+outperform Answer-DPO across COCO/GQA/Hard COCO, evidence-style prompting, or
+Base-error-mined diagnostics.
 
 Page budget:
 
@@ -69,11 +69,11 @@ make full
 
 This writes `build/main_full.pdf`. The environment currently uses Tectonic 0.16.9
 because system-level TeX Live cannot be installed without sudo on this machine.
-The PDF builds were verified on 2026-05-27: `build/main.pdf` is 4 pages and
-`build/main_full.pdf` is 5 pages. The remaining non-fatal warning is the
-upstream `lineno.sty` UTF-8 warning from the bundled review style; there are
-no current overfull table warnings or Times/Helvetica font-substitution
-warnings.
+The diagnostic PDF builds were verified on 2026-05-27: `build/main.pdf` is 4
+pages and `build/main_full.pdf` is 5 pages. The remaining non-fatal warning is
+the upstream `lineno.sty` UTF-8 warning from the bundled review style; there
+are no current overfull/underfull table warnings or Times/Helvetica
+font-substitution warnings.
 
 The draft currently uses review mode:
 
