@@ -28,6 +28,13 @@ DATASET_SPECS = [
         "Evidence-Hint DPO",
     ),
     (
+        "cvpr_answer_evidence_mix_dpo",
+        "answer_evidence_mix_input",
+        "data/processed/answer_evidence_mix_dpo_train.jsonl",
+        "cvpr_answer_evidence_mix_dpo.json",
+        "Answer-Evidence Mix DPO",
+    ),
+    (
         "cvpr_phase2_evidence_only_dpo",
         "phase2_evidence_only_input",
         "data/processed/phase2_evidence_only_dpo_train.jsonl",
@@ -55,6 +62,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--answer-input", default="data/processed/answer_dpo_train.jsonl")
     parser.add_argument("--evidence-input", default="data/processed/evidence_hint_dpo_train.jsonl")
+    parser.add_argument(
+        "--answer-evidence-mix-input",
+        default="data/processed/answer_evidence_mix_dpo_train.jsonl",
+    )
     parser.add_argument(
         "--phase2-evidence-only-input",
         default="data/processed/phase2_evidence_only_dpo_train.jsonl",

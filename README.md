@@ -19,6 +19,9 @@
   Evidence 是三组里最稳的变体：COCO/GQA/Hard COCO Acc 为
   0.961/0.768/0.947，base-error recovery 为 0.044，但仍未改写主线
   “Evidence-Hint 不稳定超过 Answer-DPO” 的诊断结论。
+- 已在 `tasks/answer-evidence-mix-dpo/` 新增 Answer-Evidence Mix DPO 任务实现：
+  默认用 70% plain Answer-DPO + 30% Evidence-Hint DPO 构造 5k mixed rescue run，
+  目标是在保留 Answer-DPO Acc/F1 的同时继承一部分 Evidence-Hint 的 FPR 下降。
 - 已在 `tasks/balanced-hard-evidence-dpo/` 新增 Balanced Hard Evidence-DPO
   任务实现：默认构造 5k balanced hard evidence preference 数据，其中
   object-existence 部分严格 yes/no 平衡，并混入 Hard COCO、Base-error-mined、
@@ -87,6 +90,7 @@ idea-imporve-evidence/
 tasks/
   coco-hard-ceiling-diagnosis/      # COCO/Hard COCO ceiling-effect 诊断任务
   base-error-mining/                # Base 错误样本挖掘诊断评测任务
+  answer-evidence-mix-dpo/          # 70/30 Answer/Evidence mixed-format DPO rescue run
   balanced-hard-evidence-dpo/       # Balanced hard evidence preference rescue run
 
 scripts/data/
@@ -175,6 +179,7 @@ make full
 data/processed/canonical_pairs.jsonl
 data/processed/answer_dpo_train.jsonl
 data/processed/evidence_hint_dpo_train.jsonl
+data/processed/answer_evidence_mix_dpo_train.jsonl
 data/audit/audit_200.csv
 data/processed/check_report_main.json
 data/eval/gqa_simple_heldout.jsonl
@@ -182,6 +187,14 @@ data/eval/coco_hard_object_existence.jsonl
 ```
 
 如果需要重新生成数据，优先使用已有 Slurm 脚本或轻量 CPU 脚本；大文件建议软链接，不要直接复制进仓库。
+
+Answer-Evidence Mix DPO 复用 `canonical_pairs_main.jsonl`，默认导出 70% plain
+Answer-DPO 与 30% Evidence-Hint DPO 的混合格式：
+
+```text
+data/processed/answer_evidence_mix_dpo_train.jsonl
+experiments/llamafactory_data/cvpr_answer_evidence_mix_dpo.json
+```
 
 Balanced Hard Evidence-DPO 默认在任务目录内生成派生产物，避免污染主线 5k/10k
 数据注册表：
@@ -300,6 +313,20 @@ COCO held-out Acc: Evidence-Only 0.959, Input-Side 0.961, Chosen-Only 0.961
 GQA simple Acc:    Evidence-Only 0.765, Input-Side 0.768, Chosen-Only 0.765
 Hard COCO Acc:     Evidence-Only 0.942, Input-Side 0.947, Chosen-Only 0.946
 Base-error recovery: Evidence-Only 0.015, Input-Side 0.044, Chosen-Only 0.032
+```
+
+Answer-Evidence Mix DPO 是一个独立 rescue run，不进入当前三组主实验表。它使用
+ZeRO-2 配置，训练和四个 after-ok 评测通过：
+
+```bash
+bash experiments/slurm/submit_answer_evidence_mix_dpo.sh
+```
+
+对应 adapter 与评测输出为：
+
+```text
+outputs/llamafactory/qwen25vl7b_answer_evidence_mix_dpo_zero2/
+results/eval/generations/<eval_name>/answer_evidence_mix/answer_evidence_mix_dpo.jsonl
 ```
 
 Balanced Hard Evidence-DPO 是另一个独立 rescue run，用于直接解决 FPR/FNR

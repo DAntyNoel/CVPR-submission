@@ -238,6 +238,18 @@ outputs/llamafactory/qwen25vl7b_mixed_answer_dpo/
 outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo_zero2/
 ```
 
+The Answer-Evidence Mix DPO rescue run is registered as:
+
+```text
+answer_evidence_mix_dpo
+```
+
+Its default adapter path is:
+
+```text
+outputs/llamafactory/qwen25vl7b_answer_evidence_mix_dpo_zero2/
+```
+
 Phase-2 method keys are also registered for dependent eval jobs after training:
 
 ```text

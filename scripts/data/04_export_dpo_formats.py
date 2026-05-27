@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Export canonical pairs to Answer-DPO, Evidence-Hint, and Phase-2 DPO JSONL."""
+"""Export canonical pairs to Answer-DPO, Evidence-Hint, Mix-DPO, and Phase-2 DPO JSONL."""
 
 from __future__ import annotations
 
 import argparse
+import random
 import sys
 
 from common import load_jsonl, repo_path, write_jsonl
@@ -16,6 +17,22 @@ def main() -> int:
     parser.add_argument(
         "--evidence-output",
         default="data/processed/evidence_hint_dpo_train.jsonl",
+    )
+    parser.add_argument(
+        "--answer-evidence-mix-output",
+        default="data/processed/answer_evidence_mix_dpo_train.jsonl",
+    )
+    parser.add_argument(
+        "--answer-evidence-mix-evidence-ratio",
+        type=float,
+        default=0.3,
+        help="Fraction of records exported in Evidence-Hint format for Answer-Evidence Mix DPO.",
+    )
+    parser.add_argument(
+        "--answer-evidence-mix-seed",
+        type=int,
+        default=42,
+        help="Seed for selecting Evidence-Hint rows in Answer-Evidence Mix DPO.",
     )
     parser.add_argument(
         "--evidence-only-output",
@@ -40,17 +57,29 @@ def main() -> int:
     records = load_jsonl(canonical_path)
     answer_records = [export_answer(record, args.include_metadata) for record in records]
     evidence_records = [export_evidence(record, args.include_metadata) for record in records]
+    answer_evidence_mix_records = export_answer_evidence_mix(
+        records,
+        args.include_metadata,
+        evidence_ratio=args.answer_evidence_mix_evidence_ratio,
+        seed=args.answer_evidence_mix_seed,
+    )
     evidence_only_records = [export_evidence_only(record, args.include_metadata) for record in records]
     input_side_records = [export_input_side_evidence(record, args.include_metadata) for record in records]
     chosen_only_records = [export_chosen_only_evidence(record, args.include_metadata) for record in records]
 
     answer_count = write_jsonl(args.answer_output, answer_records)
     evidence_count = write_jsonl(args.evidence_output, evidence_records)
+    answer_evidence_mix_count = write_jsonl(args.answer_evidence_mix_output, answer_evidence_mix_records)
     evidence_only_count = write_jsonl(args.evidence_only_output, evidence_only_records)
     input_side_count = write_jsonl(args.input_side_evidence_output, input_side_records)
     chosen_only_count = write_jsonl(args.chosen_only_evidence_output, chosen_only_records)
     print(f"Wrote {answer_count} Answer-DPO records to {repo_path(args.answer_output)}")
     print(f"Wrote {evidence_count} Evidence-Hint DPO records to {repo_path(args.evidence_output)}")
+    print(
+        f"Wrote {answer_evidence_mix_count} Answer-Evidence Mix DPO records "
+        f"to {repo_path(args.answer_evidence_mix_output)} "
+        f"({args.answer_evidence_mix_evidence_ratio:.1%} evidence target, seed {args.answer_evidence_mix_seed})"
+    )
     print(f"Wrote {evidence_only_count} Phase-2 Evidence-Only records to {repo_path(args.evidence_only_output)}")
     print(f"Wrote {input_side_count} Phase-2 Input-Side Evidence records to {repo_path(args.input_side_evidence_output)}")
     print(f"Wrote {chosen_only_count} Phase-2 Chosen-Only Evidence records to {repo_path(args.chosen_only_evidence_output)}")
@@ -99,6 +128,28 @@ def export_evidence(record: dict, include_metadata: bool) -> dict:
     out["chosen"] = f"{record['chosen_answer']}\n{chosen_hint}"
     out["rejected"] = f"{record['rejected_answer']}\n{rejected_hint}"
     return out
+
+
+def export_answer_evidence_mix(
+    records: list[dict],
+    include_metadata: bool,
+    evidence_ratio: float,
+    seed: int,
+) -> list[dict]:
+    """Mix plain Answer-DPO rows with a deterministic subset of Evidence-Hint rows."""
+    if not 0.0 <= evidence_ratio <= 1.0:
+        raise ValueError(f"answer_evidence_mix_evidence_ratio must be in [0, 1], got {evidence_ratio}")
+    evidence_count = round(len(records) * evidence_ratio)
+    indices = list(range(len(records)))
+    random.Random(seed).shuffle(indices)
+    evidence_indices = set(indices[:evidence_count])
+    mixed_records = []
+    for idx, record in enumerate(records):
+        if idx in evidence_indices:
+            mixed_records.append(export_evidence(record, include_metadata))
+        else:
+            mixed_records.append(export_answer(record, include_metadata))
+    return mixed_records
 
 
 def export_evidence_only(record: dict, include_metadata: bool) -> dict:

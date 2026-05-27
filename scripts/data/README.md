@@ -79,7 +79,8 @@ cp data/processed/canonical_pairs_main_clean.jsonl data/processed/canonical_pair
 python scripts/data/04_export_dpo_formats.py \
   --input data/processed/canonical_pairs_main.jsonl \
   --answer-output data/processed/answer_dpo_train.jsonl \
-  --evidence-output data/processed/evidence_hint_dpo_train.jsonl
+  --evidence-output data/processed/evidence_hint_dpo_train.jsonl \
+  --answer-evidence-mix-output data/processed/answer_evidence_mix_dpo_train.jsonl
 
 python scripts/data/05_make_audit_sheet.py \
   --input data/processed/canonical_pairs_main.jsonl \
@@ -110,14 +111,20 @@ python scripts/data/06_check_data_leakage.py \
 Pass `--eval-image-ids path/to/eval_ids.txt` to the build/check scripts when
 POPE, AMBER, or GQA eval image ids are available.
 
-`04_export_dpo_formats.py` also writes the Phase-2 method-variant sidecars by
-default:
+`04_export_dpo_formats.py` also writes the Answer-Evidence Mix DPO sidecar and
+the Phase-2 method-variant sidecars by default:
 
 ```text
+data/processed/answer_evidence_mix_dpo_train.jsonl
 data/processed/phase2_evidence_only_dpo_train.jsonl
 data/processed/phase2_input_side_evidence_dpo_train.jsonl
 data/processed/phase2_chosen_only_evidence_dpo_train.jsonl
 ```
+
+Answer-Evidence Mix DPO keeps one row per canonical pair and deterministically
+exports 70% as plain Answer-DPO rows plus 30% as Evidence-Hint DPO rows by
+default. Override this with `--answer-evidence-mix-evidence-ratio` and
+`--answer-evidence-mix-seed`.
 
 Evidence-Only keeps answer text fixed and changes only evidence consistency,
 Input-Side moves the supported cue into the prompt, and Chosen-Only appends
@@ -146,6 +153,7 @@ eval image ids, then exports:
 data/processed/canonical_pairs_mixed10k.jsonl
 data/processed/answer_dpo_train_mixed10k.jsonl
 data/processed/evidence_hint_dpo_train_mixed10k.jsonl
+data/processed/answer_evidence_mix_dpo_train_mixed10k.jsonl
 experiments/llamafactory_data_10k/
 ```
 

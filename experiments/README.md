@@ -76,6 +76,45 @@ The older `qwen25vl7b_answer_dpo/` and `qwen25vl7b_evidence_hint_dpo/`
 directories correspond to COCO-only preliminary jobs 64167 and 64168. Keep
 them out of the mixed-data main table.
 
+## Answer-Evidence Mix DPO
+
+The Answer-Evidence Mix DPO rescue run follows
+`tasks/answer-evidence-mix-dpo/README.md`. It keeps the same 5k mixed
+COCO/GQA split, backbone, LoRA-DPO hyperparameters, and ZeRO-2 setup. The only
+change is the training data format: by default, 70% of rows use plain
+Answer-DPO responses and 30% use Evidence-Hint responses.
+
+Regenerate the LLaMA-Factory data with:
+
+```bash
+python scripts/data/04_export_dpo_formats.py \
+  --input data/processed/canonical_pairs_main.jsonl \
+  --answer-evidence-mix-evidence-ratio 0.3 \
+  --answer-evidence-mix-seed 42
+
+python scripts/experiments/prepare_llamafactory_data.py \
+  --output-dir experiments/llamafactory_data
+```
+
+The dataset is registered as:
+
+```text
+cvpr_answer_evidence_mix_dpo
+```
+
+Launch training plus COCO/GQA/Hard COCO/Base-error after-ok evals with:
+
+```bash
+bash experiments/slurm/submit_answer_evidence_mix_dpo.sh
+```
+
+The adapter and eval outputs will be written to:
+
+```text
+outputs/llamafactory/qwen25vl7b_answer_evidence_mix_dpo_zero2/
+results/eval/generations/<eval_name>/answer_evidence_mix/answer_evidence_mix_dpo.jsonl
+```
+
 ## Phase 2 Method Variants
 
 The first Phase-2 method round follows
@@ -89,7 +128,7 @@ Input-Side Evidence DPO  supported evidence moves into the user prompt; response
 Chosen-Only Evidence DPO supported evidence is appended only to the chosen response
 ```
 
-Regenerate all Answer/Evidence-Hint/Phase-2 LLaMA-Factory data with:
+Regenerate all Answer/Evidence-Hint/Mix/Phase-2 LLaMA-Factory data with:
 
 ```bash
 python scripts/data/04_export_dpo_formats.py \

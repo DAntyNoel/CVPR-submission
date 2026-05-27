@@ -25,6 +25,10 @@ MODEL_REGISTRY = {
         "method": "Evidence-Hint DPO",
         "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo_zero2",
     },
+    "answer_evidence_mix_dpo": {
+        "method": "Answer-Evidence Mix DPO",
+        "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_answer_evidence_mix_dpo_zero2",
+    },
     "phase2_evidence_only_dpo": {
         "method": "Phase-2 Evidence-Only DPO",
         "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_phase2_evidence_only_dpo_zero2",

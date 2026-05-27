@@ -74,6 +74,7 @@ mkdir -p logs data/processed data/audit experiments/llamafactory_data_10k "$HF_H
   --input data/processed/canonical_pairs_mixed10k.jsonl \
   --answer-output data/processed/answer_dpo_train_mixed10k.jsonl \
   --evidence-output data/processed/evidence_hint_dpo_train_mixed10k.jsonl \
+  --answer-evidence-mix-output data/processed/answer_evidence_mix_dpo_train_mixed10k.jsonl \
   --evidence-only-output data/processed/phase2_evidence_only_dpo_train_mixed10k.jsonl \
   --input-side-evidence-output data/processed/phase2_input_side_evidence_dpo_train_mixed10k.jsonl \
   --chosen-only-evidence-output data/processed/phase2_chosen_only_evidence_dpo_train_mixed10k.jsonl
@@ -101,6 +102,7 @@ mkdir -p logs data/processed data/audit experiments/llamafactory_data_10k "$HF_H
 "$PYTHON_BIN" scripts/experiments/prepare_llamafactory_data.py \
   --answer-input data/processed/answer_dpo_train_mixed10k.jsonl \
   --evidence-input data/processed/evidence_hint_dpo_train_mixed10k.jsonl \
+  --answer-evidence-mix-input data/processed/answer_evidence_mix_dpo_train_mixed10k.jsonl \
   --phase2-evidence-only-input data/processed/phase2_evidence_only_dpo_train_mixed10k.jsonl \
   --phase2-input-side-evidence-input data/processed/phase2_input_side_evidence_dpo_train_mixed10k.jsonl \
   --phase2-chosen-only-evidence-input data/processed/phase2_chosen_only_evidence_dpo_train_mixed10k.jsonl \
@@ -112,6 +114,7 @@ wc -l \
   data/processed/canonical_pairs_mixed10k.jsonl \
   data/processed/answer_dpo_train_mixed10k.jsonl \
   data/processed/evidence_hint_dpo_train_mixed10k.jsonl \
+  data/processed/answer_evidence_mix_dpo_train_mixed10k.jsonl \
   data/processed/phase2_evidence_only_dpo_train_mixed10k.jsonl \
   data/processed/phase2_input_side_evidence_dpo_train_mixed10k.jsonl \
   data/processed/phase2_chosen_only_evidence_dpo_train_mixed10k.jsonl \
