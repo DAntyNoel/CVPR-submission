@@ -281,8 +281,9 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 - [x] 准备 GQA simple held-out eval JSONL，优先抽 500-1,000 条 color/left-right 样本，并与训练 GQA image ids 去重：`data/eval/gqa_simple_heldout.jsonl` 共 1,000 条，500 color + 500 left/right relation，yes/no 各 500，`train_eval_image_overlap = 0`。
 - [x] 实现并扩展 yes/no 统计脚本：`scripts/eval/score_object_eval.py` 输出 Acc、BAcc、F1、FPR、FNR、TNR、yes/no bias、refusal/other/invalid rate、生成长度、evidence-cue rate、二分类混淆矩阵和分组指标。
 - [x] 保存每组模型的原始生成结果，后续做 case study：统一输出到 `results/eval/generations/<eval_name>/<model_key>.jsonl`，保留 image、question、target、prompt、generation、model key 和 method。
-- [ ] 准备 POPE 官方数据与所需图片；如果官方数据下载阻塞，则明确把 POPE 放入 supplement/future work，不阻塞 Hard COCO。
-- [ ] 评估 AMBER object/attribute subset 的本地准备成本，只在能快速接入统一 yes/no scorer 时加入。
+- [x] 补官方 POPE/AMBER metadata 准备入口：`scripts/eval/prepare_official_external_benchmarks.py` sparse-clone 官方标注/query，生成 POPE 三个 COCO split 与 AMBER discriminative 统一 eval JSONL；`prepare_pope_eval.py` 已兼容官方 `.json` JSONL 格式。
+- [x] 补 AMBER discriminative normalizer：`scripts/eval/prepare_amber_eval.py` 接入 existence/attribute/relation，并复用统一 yes/no scorer；AMBER official discriminative F1 对应 `negative_f1`。
+- [ ] 放置官方图片后提交外部 benchmark：POPE 需要 COCO val2014，AMBER 需要官方图片包；三组 GPU 评测通过 `scripts/eval/submit_external_benchmark_evals.sh` 提交。
 
 ### D. 主结果
 
@@ -293,11 +294,11 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 - [x] 跑 mixed Base Instruct 评测，至少覆盖 COCO held-out 与 GQA simple：COCO held-out 复用已完成 Base 输出，Acc 0.959；GQA simple job 64213 已完成，Acc 0.764。
 - [x] 跑 mixed Answer-DPO 评测，至少覆盖 COCO held-out 与 GQA simple：jobs 64214/64215 已完成，COCO Acc 0.961，GQA Acc 0.768。
 - [x] 跑 mixed Evidence-Hint DPO 评测，至少覆盖 COCO held-out 与 GQA simple：ZeRO-2 jobs 64255/64256 已完成，COCO Acc 0.961，GQA Acc 0.766。
-- [x] 检查 POPE 官方数据本地可用性：当前仓库未发现官方 POPE 标注或 COCO val2014 图像；本轮先把 POPE 放入 supplement/future work，除非后续单独准备官方数据。
+- [x] 检查并补齐 POPE/AMBER 官方 metadata 可用性：官方标注/query 可由脚本准备；当前 GPU 外部评测的剩余阻塞是 COCO val2014 与 AMBER 官方图片未放置。
 - [x] 额外补一组 evidence-style prompt eval：提示模型回答 yes/no 后简短说明视觉证据，再复用 yes/no parser，检查 Evidence-Hint DPO 的训练信号是否需要在推理格式中被激活；Base/Answer-DPO jobs 64216-64219 已完成，Base COCO Acc 0.955，Base GQA Acc 0.768，Answer-DPO COCO Acc 0.956，Answer-DPO GQA Acc 0.766；Evidence-Hint DPO ZeRO-2 jobs 64258/64259 已完成，COCO Acc 0.955，GQA Acc 0.767。
 - [x] 完成 Hard COCO Base 与 mixed Answer-DPO 评测：jobs 64233/64234，Base Acc 0.944，mixed Answer-DPO Acc 0.950，输出变体为 `mixed`。
 - [x] 收集 Hard COCO mixed Evidence-Hint DPO 评测结果：ZeRO-2 job 64257 已完成，Acc 0.946，FPR 0.038，FNR 0.070。
-- [x] 如果 POPE 数据准备完成，跑 POPE 三组评测；AMBER object/attribute subset 作为次优先：当前官方 POPE/AMBER 数据不在本地，本轮不阻塞主线，写入 limitation/future work。
+- [ ] 如果 POPE/AMBER 图片准备完成，跑三组外部评测：POPE random/popular/adversarial 与 AMBER discriminative 用 `OUTPUT_VARIANT=mixed_external`，作为 appendix/supplement 外部 sanity check。
 - [ ] 条件触发 10k scale-up 评测：当前 5k 结果已足以写成诊断型论文，暂不提交 10k 重训，除非后续明确需要规模趋势。
 - [x] 填 Table 1：COCO held-out 与 GQA simple 的 Acc/BAcc/F1/FPR/FNR、Hard COCO FPR/FNR、yes/refusal/other rate。
 - [x] 填 Table 2：Hard COCO 与 Base-error-mined diagnostic；POPE/AMBER 若不可用则如实说明。

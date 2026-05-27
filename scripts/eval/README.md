@@ -122,21 +122,70 @@ training set and writes a summary to:
 data/eval/gqa_simple_heldout.summary.json
 ```
 
-## POPE Eval
+## Official POPE/AMBER External Eval
 
-Normalize an official POPE object-hallucination annotation file:
+Prepare the official POPE and AMBER query/annotation files and normalize them
+into the shared yes/no eval schema:
+
+```bash
+python scripts/eval/prepare_official_external_benchmarks.py
+```
+
+This writes:
+
+```text
+data/eval/pope_coco_random.jsonl
+data/eval/pope_coco_popular.jsonl
+data/eval/pope_coco_adversarial.jsonl
+data/eval/amber_discriminative.jsonl
+```
+
+The helper sparse-clones only lightweight official metadata from the POPE and
+AMBER GitHub repos. It does not download image archives. POPE expects COCO
+val2014 images under `data/raw/coco/val2014`; AMBER images should be unpacked
+under `data/raw/amber/images`. Missing image counts are reported in each
+summary JSON.
+
+For a small wiring check of AMBER only, cap each dimension:
+
+```bash
+python scripts/eval/prepare_official_external_benchmarks.py \
+  --amber-max-records-per-dimension 100
+```
+
+To normalize an already downloaded official POPE file manually:
 
 ```bash
 python scripts/eval/prepare_pope_eval.py \
-  --input path/to/pope.jsonl \
+  --input data/raw/external/pope/output/coco/coco_pope_random.json \
   --image-root data/raw/coco/val2014 \
-  --output data/eval/pope_object_hallucination.jsonl
+  --output data/eval/pope_coco_random.jsonl \
+  --source-name pope_coco_random \
+  --sampling-strategy random
 ```
 
-The normalized schema matches the COCO held-out JSONL:
+To normalize official AMBER discriminative queries manually:
+
+```bash
+python scripts/eval/prepare_amber_eval.py \
+  --annotation data/raw/external/amber/data/annotations.json \
+  --query-root data/raw/external/amber/data/query \
+  --image-root data/raw/amber/images \
+  --output data/eval/amber_discriminative.jsonl
+```
+
+Both normalized schemas match the COCO held-out JSONL and add benchmark fields:
 
 ```text
-id, image, image_id, question, target, task_type
+id, source, source_id, benchmark, dimension, image, image_id, question, target, task_type
+```
+
+Submit the three fixed model groups on all prepared external evals through
+Slurm:
+
+```bash
+DRY_RUN=1 scripts/eval/submit_external_benchmark_evals.sh
+scripts/eval/submit_external_benchmark_evals.sh
 ```
 
 ## Unified Inference
@@ -222,11 +271,15 @@ The metrics JSON includes:
 - yes/no bias, refusal rate, other/invalid prediction rate
 - evidence-cue rate and generation length statistics
 - binary confusion matrix and prediction/target counts
-- subgroup metrics for `source`, `task_type`, `target`, and `target_text` when
-  at least 20 examples are available
+- subgroup metrics for `benchmark`, `source`, `dimension`, `task_type`,
+  `target`, and `target_text` when at least 20 examples are available
 
 Refusal rate is triggered by phrases such as `not sure`, `cannot determine`,
 `unclear`, and related variants.
 
-The same scorer can be used for COCO held-out, Hard COCO, POPE, and the yes/no
-GQA simple eval JSONL after model generations are saved.
+The same scorer can be used for COCO held-out, Hard COCO, POPE, AMBER
+discriminative, and the yes/no GQA simple eval JSONL after model generations
+are saved. For AMBER discriminative reporting, use `accuracy` and
+`negative_f1`; AMBER's official precision/recall/F1 treat the negative/no class
+as the hallucination-detection class. Default subgroup metrics now include
+`benchmark` and `dimension`.

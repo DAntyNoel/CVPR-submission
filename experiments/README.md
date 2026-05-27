@@ -140,13 +140,22 @@ python scripts/eval/prepare_coco_hard_eval.py \
 The current Hard COCO file has 1,000 rows, yes/no balanced, 500 unique images,
 and zero train/eval image overlap.
 
-Normalize POPE annotations when the official POPE file is available:
+Prepare official POPE/AMBER external benchmark metadata and normalized eval
+JSONL files:
 
 ```bash
-python scripts/eval/prepare_pope_eval.py \
-  --input path/to/pope.jsonl \
-  --image-root data/raw/coco/val2014 \
-  --output data/eval/pope_object_hallucination.jsonl
+python scripts/eval/prepare_official_external_benchmarks.py
+```
+
+This produces POPE random/popular/adversarial and AMBER discriminative eval
+files under `data/eval/`. It only downloads official annotations/query files.
+Before GPU evaluation, place COCO val2014 images at `data/raw/coco/val2014`
+and AMBER official images at `data/raw/amber/images`. Submit the fixed
+Base/Answer-DPO/Evidence-Hint DPO comparison with:
+
+```bash
+DRY_RUN=1 scripts/eval/submit_external_benchmark_evals.sh
+scripts/eval/submit_external_benchmark_evals.sh
 ```
 
 After the mixed adapter directories are written, check adapter wiring without

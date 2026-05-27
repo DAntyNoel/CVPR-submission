@@ -30,7 +30,7 @@ EVIDENCE_CUE_RE = re.compile(
     re.IGNORECASE,
 )
 WORD_RE = re.compile(r"[A-Za-z0-9']+")
-DEFAULT_GROUP_FIELDS = ("source", "task_type", "target", "target_text")
+DEFAULT_GROUP_FIELDS = ("benchmark", "source", "dimension", "task_type", "target", "target_text")
 
 
 def main() -> int:

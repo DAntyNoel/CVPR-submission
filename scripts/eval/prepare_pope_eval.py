@@ -14,7 +14,7 @@ from common import ensure_parent, repo_path, write_json
 
 
 IMAGE_KEYS = ("image", "image_path", "file_name", "filename")
-IMAGE_ID_KEYS = ("image_id", "imageId", "img_id", "question_id")
+IMAGE_ID_KEYS = ("image_id", "imageId", "img_id")
 QUESTION_KEYS = ("question", "text", "prompt")
 LABEL_KEYS = ("label", "answer", "target")
 
@@ -26,7 +26,15 @@ def main() -> int:
     parser.add_argument("--output", default="data/eval/pope_object_hallucination.jsonl")
     parser.add_argument("--summary", default="data/eval/pope_object_hallucination.summary.json")
     parser.add_argument("--source-name", default="pope")
+    parser.add_argument("--benchmark", default="pope")
+    parser.add_argument("--dimension", default="existence")
+    parser.add_argument("--sampling-strategy", default=None)
     parser.add_argument("--max-records", type=int, default=None)
+    parser.add_argument(
+        "--require-images",
+        action="store_true",
+        help="Return an error if any normalized image path is missing.",
+    )
     args = parser.parse_args()
 
     input_path = repo_path(args.input)
@@ -45,6 +53,17 @@ def main() -> int:
 
     if not rows:
         print("No POPE rows could be normalized.", file=sys.stderr)
+        return 1
+    missing_images = [
+        str(repo_path(row["image"]))
+        for row in rows
+        if row.get("image") and not repo_path(row["image"]).exists()
+    ]
+    if missing_images and args.require_images:
+        print(
+            f"Missing {len(missing_images)} POPE images; first missing image: {missing_images[0]}",
+            file=sys.stderr,
+        )
         return 1
 
     output_path = repo_path(args.output)
@@ -65,8 +84,14 @@ def main() -> int:
             "source_name": args.source_name,
             "records_in": len(raw_records),
             "records_out": len(rows),
+            "unique_images": len({row["image_id"] for row in rows}),
             "target_counts": dict(sorted(target_counts.items())),
             "image_root": str(repo_path(args.image_root)),
+            "benchmark": args.benchmark,
+            "dimension": args.dimension,
+            "sampling_strategy": args.sampling_strategy,
+            "missing_images": len(missing_images),
+            "missing_image_examples": missing_images[:10],
         },
     )
 
@@ -79,17 +104,14 @@ def read_records(path: Path) -> Iterable[dict[str, Any]]:
     suffix = path.suffix.lower()
     if suffix == ".jsonl":
         with path.open("r", encoding="utf-8") as f:
-            for line_no, line in enumerate(f, start=1):
-                line = line.strip()
-                if not line:
-                    continue
-                payload = json.loads(line)
-                if not isinstance(payload, dict):
-                    raise ValueError(f"{path}:{line_no}: expected object")
-                yield payload
+            yield from read_jsonl_records(f, path)
     elif suffix == ".json":
-        with path.open("r", encoding="utf-8") as f:
-            payload = json.load(f)
+        text = path.read_text(encoding="utf-8")
+        try:
+            payload = json.loads(text)
+        except json.JSONDecodeError:
+            yield from read_jsonl_records(text.splitlines(), path)
+            return
         if isinstance(payload, dict):
             for key in ("questions", "annotations", "data", "records"):
                 if isinstance(payload.get(key), list):
@@ -107,11 +129,22 @@ def read_records(path: Path) -> Iterable[dict[str, Any]]:
         raise ValueError(f"Unsupported POPE file suffix: {path.suffix}")
 
 
+def read_jsonl_records(lines: Iterable[str], path: Path) -> Iterable[dict[str, Any]]:
+    for line_no, line in enumerate(lines, start=1):
+        line = line.strip()
+        if not line:
+            continue
+        payload = json.loads(line)
+        if not isinstance(payload, dict):
+            raise ValueError(f"{path}:{line_no}: expected object")
+        yield payload
+
+
 def normalize_record(raw: dict[str, Any], idx: int, args: argparse.Namespace) -> dict[str, Any] | None:
     question = first_value(raw, QUESTION_KEYS)
     target = normalize_target(first_value(raw, LABEL_KEYS))
     image = first_value(raw, IMAGE_KEYS)
-    image_id = first_value(raw, IMAGE_ID_KEYS) or image or f"pope_{idx:06d}"
+    image_id = first_value(raw, IMAGE_ID_KEYS) or derive_image_id(image, f"pope_{idx:06d}")
     if not question or not target:
         return None
     image_path = resolve_image_path(image, image_id, args.image_root)
@@ -119,6 +152,9 @@ def normalize_record(raw: dict[str, Any], idx: int, args: argparse.Namespace) ->
         "id": f"{args.source_name}_{idx:06d}",
         "source": args.source_name,
         "source_id": raw.get("question_id") or raw.get("id") or idx,
+        "benchmark": args.benchmark,
+        "dimension": args.dimension,
+        "sampling_strategy": args.sampling_strategy,
         "image": image_path,
         "image_id": str(image_id),
         "question": str(question).strip(),
@@ -141,6 +177,17 @@ def normalize_target(value: Any) -> str | None:
     if text in {"no", "n", "false", "0", "absent"}:
         return "no"
     return None
+
+
+def derive_image_id(image: Any, fallback: str) -> str:
+    if not image:
+        return fallback
+    stem = Path(str(image)).stem
+    if stem.startswith("COCO_"):
+        digits = stem.rsplit("_", 1)[-1]
+        if digits:
+            return str(int(digits))
+    return stem or fallback
 
 
 def resolve_image_path(image: Any, image_id: Any, image_root: str) -> str:

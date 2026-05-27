@@ -33,6 +33,9 @@
 - 统一评测脚本已支持输出变体目录和 evidence-style prompt；Base、mixed Answer-DPO 和
   mixed Evidence-Hint DPO 的 COCO/GQA normal prompt、Hard COCO 和 evidence-style prompt
   评测均已完成，summary 见 `experiments/eval_summary.md`。
+- 官方 POPE/AMBER 外部评测链路已补齐：`prepare_official_external_benchmarks.py`
+  可 sparse-clone 官方标注/query 并生成 POPE random/popular/adversarial 与 AMBER
+  discriminative eval JSONL；GPU 评测仍需先放置 COCO val2014 与 AMBER 官方图片。
 - Hard COCO 的 Base 与 mixed Answer-DPO 评测 jobs 64233/64234 已完成：Base Acc 0.944，
   mixed Answer-DPO Acc 0.950；原 `afterok:64201` 依赖评测 jobs 64235-64239 和 64263
   已取消。ZeRO-2 Evidence-Hint 的 normal-prompt 评测 jobs 64255-64257 已完成：COCO Acc
@@ -249,6 +252,30 @@ python scripts/eval/prepare_coco_hard_eval.py \
   --seed 42
 ```
 
+官方 POPE/AMBER 外部 benchmark 可用轻量脚本准备标注与统一 eval JSONL：
+
+```bash
+python scripts/eval/prepare_official_external_benchmarks.py
+```
+
+输出文件为：
+
+```text
+data/eval/pope_coco_random.jsonl
+data/eval/pope_coco_popular.jsonl
+data/eval/pope_coco_adversarial.jsonl
+data/eval/amber_discriminative.jsonl
+```
+
+该脚本只下载官方 metadata，不拉取图片。POPE 评测需要 COCO val2014 图片位于
+`data/raw/coco/val2014`；AMBER 评测需要官方图片解压到 `data/raw/amber/images`。
+确认图片就绪后，可提交三组固定模型的外部评测：
+
+```bash
+DRY_RUN=1 scripts/eval/submit_external_benchmark_evals.sh
+scripts/eval/submit_external_benchmark_evals.sh
+```
+
 mixed adapter 训练完成后，可以做轻量 dry-run，检查 adapter 路径是否正确：
 
 ```bash
@@ -380,7 +407,7 @@ TU 编码下不会自动解析，因此 `paper/local_xetex_fonts.tex` 强制使�
 - 方法：不改模型结构、不改 DPO loss，只改 preference response 格式。
 - 数据：5k mixed COCO/GQA preference pairs，覆盖对象存在、简单颜色/材质属性和左右空间关系。
 - 实验：Base Instruct、Answer-DPO、Evidence-Hint DPO 三组。
-- 指标：COCO held-out、Hard COCO、GQA simple 的 Acc/BAcc/F1/FPR/FNR、yes/no bias、refusal/other rate、生成长度与 evidence-cue rate；base-error-mined recovery 作为诊断补充；POPE/AMBER 因官方数据当前不在本地，暂放 future work。
+- 指标：COCO held-out、Hard COCO、GQA simple 的 Acc/BAcc/F1/FPR/FNR、yes/no bias、refusal/other rate、生成长度与 evidence-cue rate；base-error-mined recovery 作为诊断补充；POPE/AMBER 作为外部 benchmark 补充，待官方图片放置并通过 Slurm 完成三组评测后写入 appendix 或补充表。
 - 限制：不声称解决计数、多步关系、开放式描述或复杂 grounding。
 - 结论：Evidence-Hint DPO 在 COCO/Hard COCO/GQA 上只表现出小幅 false-positive 下降，
   整体 Acc/F1 与 base-error recovery 未稳定超过 Answer-DPO，因此论文写成 controlled
