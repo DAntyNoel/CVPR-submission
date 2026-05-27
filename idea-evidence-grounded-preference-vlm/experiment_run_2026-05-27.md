@@ -107,3 +107,15 @@ Claim-evidence preference provides a stronger grounding signal than
 answer-only preference, improving evidence consistency without introducing
 over-refusal.
 ```
+
+## Interim Decision Update
+
+The current short-answer results are not enough to converge the paper as a
+positive CEPO-Latent result. CEPO-Latent is close to Base and does not beat
+CEPO Answer-DPO on COCO held-out, GQA simple, Hard COCO, or Base-error-mined.
+
+The next planned experiment is `CEPO-Dual`, documented in:
+
+```text
+idea-evidence-grounded-preference-vlm/next_experiment_plan.md
+```
