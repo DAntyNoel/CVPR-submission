@@ -4,6 +4,23 @@ Updated: 2026-05-27
 
 ## Slurm Jobs
 
+### Phase-2 Method Variants
+
+The first Phase-2 round keeps the same 5k mixed COCO/GQA split, Qwen2.5-VL-7B
+backbone, LoRA-DPO recipe, and ZeRO-2 setup. It changes only the preference
+format, so these runs are diagnostic side experiments rather than replacements
+for the three-group main table.
+
+| Method | Job ID | Partition | State | ExitCode | Elapsed | Notes |
+| --- | ---: | --- | --- | --- | --- | --- |
+| Evidence-Only DPO | 64302 | RTX4090 | COMPLETED | 0:0 | 00:16:05 | Chosen/rejected share the answer text; evidence consistency differs. |
+| Input-Side Evidence DPO | 64303 | RTX4090 | COMPLETED | 0:0 | 00:16:13 | Supported evidence is moved into the user prompt; responses stay plain. |
+| Chosen-Only Evidence DPO | 64304 | RTX4090 | COMPLETED | 0:0 | 00:17:25 | Supported evidence is appended only to the chosen response. |
+
+After-ok eval jobs also completed with exit code 0: jobs 64305-64308 for
+Evidence-Only, 64309-64312 for Input-Side, and 64313-64316 for Chosen-Only.
+All Phase-2 eval outputs use `OUTPUT_VARIANT=phase2`.
+
 ### 10k Mixed Scale-Up Diagnostic
 
 The 10k scale-up is a diagnostic for whether data size changes the
@@ -156,6 +173,14 @@ Mixed train metrics:
 | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: |
 | Answer-DPO | 1.0 | 157 | 0.3722 | 3417.2152 | 00:56:57 | 1.463 | 0.046 |
 | Evidence-Hint DPO | 1.0 | 157 | 0.1347 | 950.9633 | 00:15:51 | 5.258 | 0.165 |
+
+Phase-2 train metrics:
+
+| Method | Epoch | Steps | Train Loss | Runtime (s) | Runtime | Samples/sec | Steps/sec |
+| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: |
+| Evidence-Only DPO | 1.0 | 157 | 0.1431 | 885.6483 | 00:14:46 | 5.646 | 0.177 |
+| Input-Side Evidence DPO | 1.0 | 157 | 0.3334 | 895.0952 | 00:14:55 | 5.586 | 0.175 |
+| Chosen-Only Evidence DPO | 1.0 | 157 | 0.1420 | 962.4549 | 00:16:02 | 5.195 | 0.163 |
 
 COCO-only preliminary metrics:
 

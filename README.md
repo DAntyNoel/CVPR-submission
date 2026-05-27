@@ -11,17 +11,20 @@
 - 研究计划与论文大纲已整理在 `idea-lightweighted-grounded-preference-vlm/`。
 - 二期方法改进想法已整理在 `idea-imporve-evidence/`，聚焦 evidence placement、
   evidence-only preference、chosen-only evidence、counterfactual pairs 和 check-step evidence。
-- Phase-2 第一轮方法变体已规划为三组低成本训练：Evidence-Only DPO、Input-Side
-  Evidence DPO 和 Chosen-Only Evidence DPO；三组均复用 5k mixed COCO/GQA split、
-  Qwen2.5-VL-7B、LoRA-DPO 和 ZeRO-2，只改变 preference 格式。
-  2026-05-27 已提交：训练 jobs 64302-64304；COCO/GQA/Hard COCO/Base-error-mined
-  after-ok 评测 jobs 64305-64316，统一写入 `OUTPUT_VARIANT=phase2`。
+- Phase-2 第一轮方法变体已完成：Evidence-Only DPO、Input-Side Evidence DPO
+  和 Chosen-Only Evidence DPO；三组均复用 5k mixed COCO/GQA split、
+  Qwen2.5-VL-7B、LoRA-DPO 和 ZeRO-2，只改变 preference 格式。训练 jobs
+  64302-64304 与 COCO/GQA/Hard COCO/Base-error-mined after-ok 评测 jobs
+  64305-64316 均为 exit 0，统一写入 `OUTPUT_VARIANT=phase2`。Input-Side
+  Evidence 是三组里最稳的变体：COCO/GQA/Hard COCO Acc 为
+  0.961/0.768/0.947，base-error recovery 为 0.044，但仍未改写主线
+  “Evidence-Hint 不稳定超过 Answer-DPO” 的诊断结论。
 - COCO Base 分数过高与 Hard COCO ceiling-effect 诊断任务已单独整理在
   `tasks/coco-hard-ceiling-diagnosis/`。
 - Base-error mining 诊断评测任务已单独整理在
   `tasks/base-error-mining/`，Base-conditioned locked diagnostic set 与三组复评均已完成。
 - CVPR LaTeX 稿件已更新在 `paper/`：`main.tex` 当前已从 assumed-positive 草稿改为
-  使用真实结果的 controlled diagnostic study。
+  使用真实结果的 controlled diagnostic study，并已纳入 10k mixed scale-up 诊断结论。
 - 5k mixed preference pairs 已生成：3,500 COCO object-existence + 1,500 GQA simple attribute/relation。
 - 10k mixed scale-up 诊断有独立 Slurm 链路：6,000 COCO + 4,000 GQA，不覆盖 5k
   主线数据、adapter 或评测结果，用于检查数据规模是否改变 Evidence-Hint 趋势。
@@ -61,8 +64,8 @@
 - Base-error mining 诊断已完成：候选池 10,000 条，Base Acc 0.9472；locked set 527 条
   Base 错误。Answer-DPO recovery 为 0.063，Evidence-Hint DPO ZeRO-2 recovery 为 0.030。
 - 当前真实结论采用 Plan B：模板化 evidence hint 在 COCO/Hard COCO/GQA 上只带来很小的
-  false-positive 下降，整体 Acc/F1 未稳定超过 Answer-DPO；不再提交重复评测或 10k 重训，
-  除非后续明确需要新的规模实验。
+  false-positive 下降，整体 Acc/F1 未稳定超过 Answer-DPO；10k mixed scale-up 已确认
+  该趋势没有翻转。后续不再提交重复评测或新的规模实验，除非明确需要。
 
 ## 目录结构
 
@@ -71,6 +74,8 @@ idea-lightweighted-grounded-preference-vlm/
   plan.md                         # 项目目标、方法与实验设计
   paper_outline_and_tasks.md       # 论文大纲与后续任务清单
   data_processing_plan.md          # 数据构造方案
+  midterm_report.md                # 第一份中期进展报告
+  midterm_report_2.md              # 第二份中期进展报告，含 10k/外部评测/Phase-2 收口
 
 idea-imporve-evidence/
   phase2_method_ideas.md           # 二期 evidence 方法改进方案
@@ -154,7 +159,7 @@ make full
 ```
 
 输出文件为 `paper/build/main_full.pdf`。2026-05-27 已重新验证诊断稿：普通
-`make pdf` 生成 4 页 `paper/build/main.pdf`，`make full` 生成 5 页带附录
+`make pdf` 生成 5 页 `paper/build/main.pdf`，`make full` 生成 7 页带附录
 `paper/build/main_full.pdf`；仅剩官方 `lineno.sty` UTF-8 warning，无表格溢出告警。
 
 ## 数据流水线
@@ -270,6 +275,18 @@ bash experiments/slurm/submit_phase2_method_variants.sh
 outputs/llamafactory/qwen25vl7b_phase2_evidence_only_dpo_zero2/
 outputs/llamafactory/qwen25vl7b_phase2_input_side_evidence_dpo_zero2/
 outputs/llamafactory/qwen25vl7b_phase2_chosen_only_evidence_dpo_zero2/
+```
+
+2026-05-27 status: Phase-2 第一轮已完成。训练 jobs 64302-64304 均为
+`COMPLETED`，评测 jobs 64305-64316 均为 `COMPLETED`。结果显示
+Input-Side Evidence DPO 最接近主线 Answer-DPO，但三组都没有带来足以替换
+主实验结论的稳定提升：
+
+```text
+COCO held-out Acc: Evidence-Only 0.959, Input-Side 0.961, Chosen-Only 0.961
+GQA simple Acc:    Evidence-Only 0.765, Input-Side 0.768, Chosen-Only 0.765
+Hard COCO Acc:     Evidence-Only 0.942, Input-Side 0.947, Chosen-Only 0.946
+Base-error recovery: Evidence-Only 0.015, Input-Side 0.044, Chosen-Only 0.032
 ```
 
 ## 评测
@@ -477,12 +494,13 @@ TU 编码下不会自动解析，因此 `paper/local_xetex_fonts.tex` 强制使�
 正文只支撑一个小而明确的诊断结论：
 
 - 方法：不改模型结构、不改 DPO loss，只改 preference response 格式。
-- 数据：5k mixed COCO/GQA preference pairs，覆盖对象存在、简单颜色/材质属性和左右空间关系。
+- 数据：5k mixed COCO/GQA preference pairs 为主实验，10k mixed scale-up 作为规模诊断；
+  覆盖对象存在、简单颜色/材质属性和左右空间关系。
 - 实验：Base Instruct、Answer-DPO、Evidence-Hint DPO 三组。
-- 指标：COCO held-out、Hard COCO、GQA simple 的 Acc/BAcc/F1/FPR/FNR、yes/no bias、refusal/other rate、生成长度与 evidence-cue rate；base-error-mined recovery 作为诊断补充；POPE/AMBER 外部 benchmark 已补入主实验汇总。
+- 指标：COCO held-out、Hard COCO、GQA simple 的 Acc/BAcc/F1/FPR/FNR、yes/no bias、refusal/other rate、生成长度与 evidence-cue rate；10k scale-up、base-error-mined recovery 作为诊断补充；POPE/AMBER 外部 benchmark 已补入主实验汇总。
 - 限制：不声称解决计数、多步关系、开放式描述或复杂 grounding。
-- 结论：Evidence-Hint DPO 在 COCO/Hard COCO/GQA 上只表现出小幅 false-positive 下降，
-  整体 Acc/F1 与 base-error recovery 未稳定超过 Answer-DPO，因此论文写成 controlled
-  diagnostic study，而不是强正向方法论文。
+- 结论：Evidence-Hint DPO 在 COCO/Hard COCO/GQA 上只表现出小幅 false-positive 下降；
+  5k 主实验、10k scale-up 与 base-error recovery 都未显示其稳定超过 Answer-DPO，
+  因此论文写成 controlled diagnostic study，而不是强正向方法论文。
 
 论文大纲和任务清单见 `idea-lightweighted-grounded-preference-vlm/paper_outline_and_tasks.md`。

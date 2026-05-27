@@ -141,16 +141,38 @@ results/eval/generations/<eval_name>/phase2/phase2_input_side_evidence_dpo.jsonl
 results/eval/generations/<eval_name>/phase2/phase2_chosen_only_evidence_dpo.jsonl
 ```
 
-2026-05-27 launch status:
+2026-05-27 completed status:
 
 ```text
-64302  RUNNING at launch check  Phase-2 Evidence-Only DPO train
-64303  RUNNING at launch check  Phase-2 Input-Side Evidence DPO train
-64304  RUNNING at launch check  Phase-2 Chosen-Only Evidence DPO train
-64305-64308  PENDING afterok:64302  COCO/GQA/Hard COCO/Base-error evals
-64309-64312  PENDING afterok:64303  COCO/GQA/Hard COCO/Base-error evals
-64313-64316  PENDING afterok:64304  COCO/GQA/Hard COCO/Base-error evals
+64302  COMPLETED  Phase-2 Evidence-Only DPO train
+64303  COMPLETED  Phase-2 Input-Side Evidence DPO train
+64304  COMPLETED  Phase-2 Chosen-Only Evidence DPO train
+64305-64308  COMPLETED  Evidence-Only COCO/GQA/Hard COCO/Base-error evals
+64309-64312  COMPLETED  Input-Side COCO/GQA/Hard COCO/Base-error evals
+64313-64316  COMPLETED  Chosen-Only COCO/GQA/Hard COCO/Base-error evals
 ```
+
+Phase-2 result:
+
+```text
+COCO held-out:
+  Evidence-Only Acc 0.959/F1 0.958/FPR 0.018
+  Input-Side   Acc 0.961/F1 0.960/FPR 0.016
+  Chosen-Only  Acc 0.961/F1 0.960/FPR 0.016
+GQA simple:
+  Evidence-Only Acc 0.765/F1 0.741/FPR 0.142
+  Input-Side   Acc 0.768/F1 0.747/FPR 0.150
+  Chosen-Only  Acc 0.765/F1 0.741/FPR 0.144
+Hard COCO:
+  Evidence-Only Acc 0.942/F1 0.941/FPR 0.040
+  Input-Side   Acc 0.947/F1 0.946/FPR 0.038
+  Chosen-Only  Acc 0.946/F1 0.945/FPR 0.038
+Base-error-mined recovery:
+  Evidence-Only 0.015, Input-Side 0.044, Chosen-Only 0.032
+```
+
+Input-Side Evidence is the best Phase-2 variant, but it remains a diagnostic
+side result rather than a replacement for the three-group main paper table.
 
 ## 10k Mixed Scale-Up
 

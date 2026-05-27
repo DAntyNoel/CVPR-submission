@@ -2,9 +2,9 @@
 
 Updated: 2026-05-27
 
-This file records completed evaluation results and in-progress launches. The
-mixed Evidence-Hint DPO default adapter is the completed ZeRO-2 run from job
-64252. The old ZeRO-3 job 64201 and its dependency queue were cancelled.
+This file records completed evaluation results. The mixed Evidence-Hint DPO
+default adapter is the completed ZeRO-2 run from job 64252. The old ZeRO-3 job
+64201 and its dependency queue were cancelled.
 
 ## Overall Reading
 
@@ -35,6 +35,34 @@ The base-error-mined set is not included in this 10k chain because preserving a
 Conclusion: increasing the mixed preference set from 5k to 10k did not change
 the Evidence-Hint trend. It still lowers false positives, but Acc/F1 remain at
 or below Answer-DPO on all three normal-prompt evals.
+
+Phase-2 method variants also completed. They test whether changing evidence
+placement fixes the weak Evidence-Hint result while keeping the same 5k split,
+backbone, DPO objective, LoRA setup, and ZeRO-2 training. Input-Side Evidence is
+the strongest of the three variants, but it remains close to the main runs and
+does not change the diagnostic conclusion.
+
+Phase-2 normal-prompt results:
+
+| Eval | Phase-2 Method | Job | Acc | F1 | FPR | FNR | Yes | Other |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| COCO held-out | Evidence-Only DPO | 64305 | 0.959 | 0.958 | 0.018 | 0.064 | 0.477 | 0.000 |
+| COCO held-out | Input-Side Evidence DPO | 64309 | 0.961 | 0.960 | 0.016 | 0.062 | 0.477 | 0.000 |
+| COCO held-out | Chosen-Only Evidence DPO | 64313 | 0.961 | 0.960 | 0.016 | 0.062 | 0.477 | 0.000 |
+| GQA simple | Evidence-Only DPO | 64306 | 0.765 | 0.741 | 0.142 | 0.328 | 0.407 | 0.000 |
+| GQA simple | Input-Side Evidence DPO | 64310 | 0.768 | 0.747 | 0.150 | 0.314 | 0.418 | 0.000 |
+| GQA simple | Chosen-Only Evidence DPO | 64314 | 0.765 | 0.741 | 0.144 | 0.326 | 0.409 | 0.000 |
+| Hard COCO | Evidence-Only DPO | 64307 | 0.942 | 0.941 | 0.040 | 0.076 | 0.482 | 0.000 |
+| Hard COCO | Input-Side Evidence DPO | 64311 | 0.947 | 0.946 | 0.038 | 0.068 | 0.485 | 0.000 |
+| Hard COCO | Chosen-Only Evidence DPO | 64315 | 0.946 | 0.945 | 0.038 | 0.070 | 0.484 | 0.000 |
+
+Phase-2 Base-error-mined recovery:
+
+| Method | Job | Rows | Recovery Acc | FP Recovery | FN Recovery | Other |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Evidence-Only DPO | 64308 | 527 | 0.015 | 0.000 | 0.020 | 0.000 |
+| Input-Side Evidence DPO | 64312 | 527 | 0.044 | 0.016 | 0.052 | 0.000 |
+| Chosen-Only Evidence DPO | 64316 | 527 | 0.032 | 0.024 | 0.035 | 0.000 |
 
 Metric refresh for the phase-1/main results: on 2026-05-27, the saved
 generation JSONL files for COCO held-out, GQA simple, Hard COCO, evidence-style
