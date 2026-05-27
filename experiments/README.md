@@ -11,6 +11,15 @@ B. Answer-DPO: experiments/llamafactory_configs/qwen25vl_answer_dpo.yaml
 C. Evidence-Hint DPO: experiments/llamafactory_configs/qwen25vl_evidence_hint_dpo.yaml
 ```
 
+The active V2/CEPO comparison keeps the same three-group discipline but changes
+the trained methods:
+
+```text
+A. Base Instruct: no training
+B. CEPO Answer-DPO: experiments/llamafactory_configs/qwen25vl_cepo_answer_dpo.yaml
+C. CEPO-Latent: experiments/llamafactory_configs/qwen25vl_cepo_latent_dpo.yaml
+```
+
 Use the 7B Qwen2.5-VL model for the main run. The scripts expect it at:
 
 ```text
@@ -23,7 +32,53 @@ If it is not available in `/data1/public/hf`, download it on a CPU node:
 sbatch experiments/slurm/download_qwen25vl7b.slurm
 ```
 
-Then launch training jobs on a GPU partition:
+## CEPO V2 Main Pipeline
+
+CEPO data is generated as an isolated sidecar so it does not overwrite the V1
+mixed-data artifacts:
+
+```bash
+python scripts/data/12_build_cepo_claim_evidence.py
+python scripts/data/13_check_cepo_data.py
+python scripts/experiments/prepare_llamafactory_data_cepo.py
+python scripts/eval/prepare_cepo_evidence_probe.py
+```
+
+The generated files are:
+
+```text
+data/processed/cepo/claim_evidence_canonical.jsonl
+data/processed/cepo/answer_dpo_train.jsonl
+data/processed/cepo/cepo_latent_dpo_train.jsonl
+experiments/llamafactory_data_cepo/dataset_info.json
+data/eval/cepo_evidence_probe.jsonl
+data/eval/cepo_wrong_evidence_probe.jsonl
+```
+
+Launch the two ZeRO-2 training jobs plus dependent eval jobs with:
+
+```bash
+bash experiments/slurm/submit_cepo_pipeline.sh
+```
+
+For training only, use:
+
+```bash
+bash experiments/slurm/submit_cepo_main.sh
+```
+
+Adapters and generations are written to:
+
+```text
+outputs/llamafactory/qwen25vl7b_cepo_answer_dpo_zero2/
+outputs/llamafactory/qwen25vl7b_cepo_latent_dpo_zero2/
+results/eval/generations/<eval_name>/cepo/<model_key>.jsonl
+results/eval/generations/<eval_name>/cepo_external/<model_key>.jsonl
+results/eval/generations/<eval_name>/cepo_evidence_probe/<model_key>.jsonl
+```
+
+For the archived V1 Evidence-Hint startup, launch training jobs on a GPU
+partition:
 
 ```bash
 sbatch experiments/slurm/smoke_dpo.slurm

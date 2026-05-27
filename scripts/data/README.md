@@ -6,6 +6,32 @@ This directory implements the data-processing plan in
 The scripts only use the Python standard library. They do not download data,
 copy large datasets, run GPU jobs, or call model APIs.
 
+## CEPO V2 Claim-Evidence Pipeline
+
+The V2 sidecar pipeline builds the claim-evidence preference data described in
+`idea-evidence-grounded-preference-vlm/experiment_plan.md`. It keeps V1 files
+intact and writes under `data/processed/cepo/`:
+
+```bash
+python scripts/data/12_build_cepo_claim_evidence.py
+python scripts/data/13_check_cepo_data.py
+```
+
+The default split is 6,000 rows: 2,000 COCO object-existence, 1,500 GQA
+attribute, 1,500 GQA left/right relation, and 1,000 wrong-evidence negatives.
+The builder also exports:
+
+```text
+data/processed/cepo/answer_dpo_train.jsonl
+data/processed/cepo/cepo_latent_dpo_train.jsonl
+data/processed/cepo/claim_evidence_audit_200.csv
+data/processed/cepo/claim_evidence_summary.json
+data/processed/cepo/leakage_report.json
+```
+
+`13_check_cepo_data.py` verifies claim fields, same-answer wrong-evidence
+rows, non-identical Answer-DPO exports, and train/eval image overlap.
+
 ## Expected raw data
 
 Link or place the raw annotations/images at:

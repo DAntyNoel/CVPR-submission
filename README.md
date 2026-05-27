@@ -22,8 +22,16 @@ claim-evidence preference:
 > Can VLM preference tuning improve grounding when each visual claim is paired
 > with verifiable object, attribute, or relation evidence?
 
-No new GPU training or large evaluation has been launched for V2 yet. The new
-files are planning documents only.
+V2 now has an executable CEPO pipeline: local data construction and audits are
+lightweight, while 7B training and full evaluation are submitted through Slurm.
+The generated sidecar artifacts live under:
+
+```text
+data/processed/cepo/
+experiments/llamafactory_data_cepo/
+data/eval/cepo_evidence_probe.jsonl
+data/eval/cepo_wrong_evidence_probe.jsonl
+```
 
 ## Project Layout
 
@@ -71,6 +79,14 @@ Shared infrastructure and generated artifacts retained from V1. These remain
 useful for V2, especially the data audit, leakage check, Slurm, LLaMA-Factory,
 and evaluation pipelines.
 
+```text
+data/processed/cepo/
+experiments/llamafactory_data_cepo/
+```
+
+V2 CEPO canonical data, Answer-DPO/CEPO-Latent exports, audit/check summaries,
+and LLaMA-Factory registry files.
+
 ## What Carries Forward From V1
 
 Reusable:
@@ -107,11 +123,30 @@ still asks for short answers. A separate evidence-probe evaluation checks
 whether the model learned evidence consistency rather than merely changing
 yes/no bias.
 
+The fixed V2 run uses 6,000 preference rows:
+
+| Slice | Rows |
+| --- | ---: |
+| COCO object existence | 2,000 |
+| GQA attribute | 1,500 |
+| GQA left/right relation | 1,500 |
+| Wrong-evidence negatives | 1,000 |
+
+The main launch point is:
+
+```bash
+bash experiments/slurm/submit_cepo_pipeline.sh
+```
+
+It submits the two ZeRO-2 LoRA-DPO training jobs and after-ok eval jobs for
+COCO/GQA/Hard COCO/Base-error, POPE/AMBER, and the CEPO evidence probes.
+
 See:
 
 - `idea-evidence-grounded-preference-vlm/reusable_assets.md`
 - `idea-evidence-grounded-preference-vlm/plan.md`
 - `idea-evidence-grounded-preference-vlm/experiment_plan.md`
+- `idea-evidence-grounded-preference-vlm/experiment_run_2026-05-27.md`
 
 ## Environment Rules
 

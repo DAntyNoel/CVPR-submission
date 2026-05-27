@@ -7,11 +7,45 @@ groups:
 base
 answer_dpo
 evidence_hint_dpo
+cepo_answer_dpo
+cepo_latent_dpo
 ```
 
 The scripts are intentionally split into cheap data/metric steps and GPU
 inference. Run the model generation through Slurm; do not launch the 7B model
 directly on the login/current shell.
+
+## CEPO Evidence-Probe Eval
+
+CEPO adds two lightweight eval files derived from the claim-evidence canonical
+data:
+
+```bash
+python scripts/eval/prepare_cepo_evidence_probe.py
+```
+
+This writes:
+
+```text
+data/eval/cepo_evidence_probe.jsonl
+data/eval/cepo_wrong_evidence_probe.jsonl
+```
+
+Run them through Slurm with the CEPO pipeline:
+
+```bash
+bash experiments/slurm/submit_cepo_pipeline.sh
+```
+
+The evidence-probe Slurm entrypoint asks for JSON with `answer`, `claim`,
+`evidence_label`, and `support`, then scores answer accuracy, support accuracy,
+evidence-label match, relation-direction accuracy, wrong-evidence rejection,
+and invalid JSON rate:
+
+```bash
+python scripts/eval/score_cepo_evidence_probe.py \
+  --input results/eval/generations/cepo_evidence_probe/cepo_evidence_probe/base.jsonl
+```
 
 ## COCO Held-Out Eval
 
