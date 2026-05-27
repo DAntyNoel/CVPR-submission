@@ -311,7 +311,7 @@ TU 编码下不会自动解析，因此 `paper/local_xetex_fonts.tex` 强制使�
 - 方法：不改模型结构、不改 DPO loss，只改 preference response 格式。
 - 数据：5k mixed COCO/GQA preference pairs，覆盖对象存在、简单颜色/材质属性和左右空间关系。
 - 实验：Base Instruct、Answer-DPO、Evidence-Hint DPO 三组。
-- 指标：COCO held-out、Hard COCO、GQA simple、yes bias、refusal rate；POPE/AMBER 视官方数据可用性补充。
+- 指标：COCO held-out、Hard COCO、GQA simple 的 Acc/BAcc/F1/FPR/FNR、yes/no bias、refusal/other rate、生成长度与 evidence-cue rate；POPE/AMBER 视官方数据可用性补充。
 - 限制：不声称解决计数、多步关系、开放式描述或复杂 grounding。
 
 注意：当前论文表格中的 Evidence-Hint DPO 行是按用户指定的“实验正常完成”前提写入的正向结果，用于完善论文叙事和模拟评审；真实提交前应以 `experiments/eval_summary.md` 和最终 Slurm 输出为准逐项复核。

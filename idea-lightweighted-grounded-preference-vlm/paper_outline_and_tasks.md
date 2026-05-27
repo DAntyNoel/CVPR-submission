@@ -184,7 +184,7 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 
 主表建议：
 
-| Method | COCO Held-out Acc | Hard COCO FPR | GQA Simple Acc | Yes Bias | Refusal Rate |
+| Method | COCO Acc/BAcc | COCO FPR/FNR | Hard COCO FPR/FNR | GQA Acc/BAcc | Yes/Ref/Other |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Base Instruct | TBD | TBD | TBD | TBD | TBD |
 | Answer-DPO | TBD | TBD | TBD | TBD | TBD |
@@ -277,7 +277,7 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 - [x] 准备一个 COCO held-out object-existence eval JSONL：`data/eval/coco_heldout_object_existence.jsonl`，共 1,000 条，yes/no 各 500 条，见 `data/eval/coco_heldout_object_existence.summary.json`。
 - [x] 新增 Hard COCO eval 准备脚本：`scripts/eval/prepare_coco_hard_eval.py` 输出 `data/eval/coco_hard_object_existence.jsonl`，避免覆盖普通 COCO held-out。
 - [x] 准备 GQA simple held-out eval JSONL，优先抽 500-1,000 条 color/left-right 样本，并与训练 GQA image ids 去重：`data/eval/gqa_simple_heldout.jsonl` 共 1,000 条，500 color + 500 left/right relation，yes/no 各 500，`train_eval_image_overlap = 0`。
-- [x] 实现 refusal rate 统计脚本：`scripts/eval/score_object_eval.py` 输出 Acc、F1、yes bias、refusal rate 和二分类混淆矩阵。
+- [x] 实现并扩展 yes/no 统计脚本：`scripts/eval/score_object_eval.py` 输出 Acc、BAcc、F1、FPR、FNR、TNR、yes/no bias、refusal/other/invalid rate、生成长度、evidence-cue rate、二分类混淆矩阵和分组指标。
 - [x] 保存每组模型的原始生成结果，后续做 case study：统一输出到 `results/eval/generations/<eval_name>/<model_key>.jsonl`，保留 image、question、target、prompt、generation、model key 和 method。
 - [ ] 准备 POPE 官方数据与所需图片；如果官方数据下载阻塞，则明确把 POPE 放入 supplement/future work，不阻塞 Hard COCO。
 - [ ] 评估 AMBER object/attribute subset 的本地准备成本，只在能快速接入统一 yes/no scorer 时加入。
@@ -297,9 +297,10 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 - [ ] 收集 Hard COCO mixed Evidence-Hint DPO 评测结果：job 64237 已排入 afterok:64201 依赖队列，重点记录 false positive rate 和逐样本差异。
 - [ ] 如果 POPE 数据准备完成，跑 POPE 三组评测；AMBER object/attribute subset 作为次优先。
 - [ ] 条件触发 10k scale-up 评测：10k Answer-DPO 与 10k Evidence-Hint DPO 至少跑 COCO held-out、Hard COCO、GQA simple 和 evidence-style prompt。
-- [ ] 填 Table 1：COCO held-out Acc、Hard COCO FPR、GQA simple Acc、yes bias、refusal rate。
+- [ ] 填 Table 1：COCO held-out 与 GQA simple 的 Acc/BAcc/F1/FPR/FNR、Hard COCO FPR/FNR、yes/refusal/other rate。
 - [ ] 填 Table 2：Hard COCO 与 POPE/AMBER 外部结果，POPE/AMBER 若不可用则如实说明。
 - [ ] 填 Table 3：normal prompt vs evidence-style prompt。
+- [x] 扩展 yes/no scorer 指标：默认输出 Acc、BAcc、F1、FPR、FNR、TNR、yes/no bias、refusal/other/invalid rate、生成长度、evidence-cue rate，并按 source/task_type/target/target_text 汇总分组指标。
 - [ ] 填 Table 4 或 appendix：5k vs 10k scale-up trend，只有条件触发后才写入正文。
 - [ ] 检查 Evidence-Hint DPO 的收益是否不是由更高拒答率造成。
 - [ ] 如果 Evidence-Hint DPO 结果弱于 Answer-DPO，优先分析是否 evidence hint 训练导致推理格式漂移。

@@ -161,9 +161,18 @@ python scripts/eval/score_object_eval.py \
   --input results/eval/generations/coco_heldout_object_existence/base.jsonl
 ```
 
-The metrics JSON includes accuracy, F1, yes bias, refusal rate, and a binary
-confusion matrix. Refusal rate is triggered by phrases such as `not sure`,
-`cannot determine`, `unclear`, and related variants.
+The metrics JSON includes:
+
+- accuracy, balanced accuracy, precision, recall, specificity, F1, negative F1
+- false positive rate and false negative rate
+- yes/no bias, refusal rate, other/invalid prediction rate
+- evidence-cue rate and generation length statistics
+- binary confusion matrix and prediction/target counts
+- subgroup metrics for `source`, `task_type`, `target`, and `target_text` when
+  at least 20 examples are available
+
+Refusal rate is triggered by phrases such as `not sure`, `cannot determine`,
+`unclear`, and related variants.
 
 The same scorer can be used for COCO held-out, Hard COCO, POPE, and the yes/no
 GQA simple eval JSONL after model generations are saved.

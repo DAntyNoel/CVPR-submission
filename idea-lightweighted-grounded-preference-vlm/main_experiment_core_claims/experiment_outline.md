@@ -123,21 +123,25 @@ COCO-only held-out 结果只能支持“false positive 略低”，不能单独�
 | 指标 | 含义 | 关注点 |
 | --- | --- | --- |
 | Accuracy | yes/no 判断正确率 | 总体对象存在判断能力 |
+| Balanced Accuracy | yes/no 两类召回的平均 | 类别平衡外也可比较 |
 | F1 | 二分类 F1 | 类别平衡下的稳健性 |
 | False Positive Rate | 对不存在对象回答 yes 的比例 | 对象幻觉是否下降 |
+| False Negative Rate | 对存在对象回答 no/other/refusal 的比例 | 是否牺牲可见对象召回 |
 | Hard COCO FPR | 难负例中对不存在对象回答 yes 的比例 | ceiling effect 下的对象幻觉压力测试 |
 | GQA Simple Accuracy | 属性/左右关系回答正确率 | 简单属性和关系是否改善 |
 | Attribute Mismatch | 属性答错比例 | 颜色/材质幻觉是否下降 |
 | Left/Right Reversal | 左右关系答反比例 | 简单空间关系是否改善 |
 | Yes Bias | 回答 yes 的倾向 | 是否只是更爱回答 yes/no |
 | Refusal Rate | 不确定、无法判断等拒答比例 | 是否靠保守拒答获得收益 |
+| Other/Invalid Rate | 无法解析为 yes/no 的比例 | 是否出现格式漂移 |
+| Evidence Cue / Length | evidence 词汇率与回答长度 | evidence-style prompt 和格式漂移分析 |
 | Evidence-Style Delta | evidence-style prompt 相对 normal prompt 的变化 | 训练期 evidence hint 是否需要推理期显式触发 |
 
 最重要的比较是 Evidence-Hint DPO vs Answer-DPO，而不是只看 Evidence-Hint DPO 是否超过 Base。
 
 ## 7. 主结果表模板
 
-| Method | COCO Held-out Acc | Hard COCO FPR | GQA Simple Acc | Yes Bias | Refusal Rate |
+| Method | COCO Acc/BAcc | COCO FPR/FNR | Hard COCO FPR/FNR | GQA Acc/BAcc | Yes/Ref/Other |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Base Instruct | TBD | TBD | TBD | TBD | TBD |
 | Answer-DPO | TBD | TBD | TBD | TBD | TBD |

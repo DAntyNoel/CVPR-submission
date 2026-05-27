@@ -176,7 +176,9 @@ data/processed/evidence_hint_dpo_train.jsonl
 | POPE accuracy/F1 | POPE subset | 测对象幻觉 |
 | AMBER object/attribute subset | AMBER 小子集 | 测对象和属性幻觉 |
 | GQA simple subset accuracy | 自选 500-1k 条 | 测简单视觉问答 |
-| Hard COCO accuracy/F1/FPR | 常共现难负例 | 测更强对象幻觉压力 |
+| Hard COCO accuracy/F1/FPR/FNR | 常共现难负例 | 测更强对象幻觉压力与可见对象召回 |
+| Balanced accuracy / FPR / FNR | 所有 yes/no eval | 区分整体正确率、幻觉率和漏检率 |
+| Other/invalid rate + response length | 所有 yes/no eval | 检查格式漂移和冗长回答 |
 
 ### 6.2 辅助分析
 
