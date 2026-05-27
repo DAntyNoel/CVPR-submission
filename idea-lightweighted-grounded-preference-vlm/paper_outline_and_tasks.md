@@ -15,7 +15,7 @@
 - 三组主实验：Base Instruct、Answer-DPO、Evidence-Hint DPO。
 - 训练方式：LoRA DPO，1 epoch，`pref_beta=0.1`，LoRA rank 16。
 - 已完成：Answer-DPO job 64167，正常结束。
-- 进行中：Evidence-Hint DPO job 64168。
+- 已完成：Evidence-Hint DPO job 64168，正常结束。
 
 因为 GQA 数据下载在集群镜像路径下失败，第一版论文不要声称覆盖属性、关系或复杂推理。正文结论应收窄为：轻量 evidence hint 对 COCO 风格对象存在幻觉的影响。
 
@@ -200,10 +200,10 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 ### A. 训练收尾
 
 - [x] 确认 job 64167 Answer-DPO 正常完成。
-- [ ] 等待 job 64168 Evidence-Hint DPO 完成。
-- [ ] 检查 `outputs/llamafactory/qwen25vl7b_evidence_hint_dpo/` 是否生成完整 adapter、trainer state 和 train results。
-- [ ] 记录两组训练的 train loss、runtime、steps、samples/sec。
-- [ ] 如果 64168 失败或明显卡住，先查看 `logs/train_evidence_hint_dpo.64168.err`，只修训练/数据格式问题，不扩大实验设定。
+- [x] 等待 job 64168 Evidence-Hint DPO 完成：状态 `COMPLETED`，ExitCode `0:0`，2026-05-27 07:17:55 结束。
+- [x] 检查 `outputs/llamafactory/qwen25vl7b_evidence_hint_dpo/` 是否生成完整 adapter、trainer state 和 train results：`adapter_config.json`、`adapter_model.safetensors`、`trainer_state.json`、`train_results.json` 均已生成。
+- [x] 记录两组训练的 train loss、runtime、steps、samples/sec：见 `experiments/training_summary.md`。Answer-DPO：loss 0.2791，runtime 3449.4s，157 steps，1.450 samples/sec；Evidence-Hint DPO：loss 0.1025，runtime 48163.8s，157 steps，0.104 samples/sec。
+- [x] 如果 64168 失败或明显卡住，先查看 `logs/train_evidence_hint_dpo.64168.err`，只修训练/数据格式问题，不扩大实验设定：64168 未失败；日志健康扫描未发现 Traceback、RuntimeError、CUDA OOM、nan 或 inf。
 
 ### B. 数据质检
 
@@ -215,7 +215,7 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 ### C. 评测脚本
 
 - [x] 准备 Base Instruct、Answer-DPO、Evidence-Hint DPO 的统一推理入口：`scripts/eval/run_vlm_inference.py` + `experiments/slurm/eval_vlm_object_hallucination.slurm`。
-- [x] 确认 LoRA adapter 加载方式，避免评测时只跑到 base 模型：`answer_dpo`/`evidence_hint_dpo` 缺少 `adapter_config.json` 或 `adapter_model.safetensors` 时脚本会直接报错退出；当前 Answer-DPO dry-run 通过，Evidence-Hint DPO 因 A 项训练产物尚不完整而按预期被拦截。
+- [x] 确认 LoRA adapter 加载方式，避免评测时只跑到 base 模型：`answer_dpo`/`evidence_hint_dpo` 缺少 `adapter_config.json` 或 `adapter_model.safetensors` 时脚本会直接报错退出；当前 Answer-DPO 与 Evidence-Hint DPO dry-run 均已通过。
 - [x] 准备 POPE object hallucination 评测：`scripts/eval/prepare_pope_eval.py` 可将官方 POPE JSON/JSONL/CSV 规范化为统一 eval JSONL，后续复用同一推理与打分脚本。
 - [x] 准备一个 COCO held-out object-existence eval JSONL：`data/eval/coco_heldout_object_existence.jsonl`，共 1,000 条，yes/no 各 500 条，见 `data/eval/coco_heldout_object_existence.summary.json`。
 - [x] 实现 refusal rate 统计脚本：`scripts/eval/score_object_eval.py` 输出 Acc、F1、yes bias、refusal rate 和二分类混淆矩阵。
