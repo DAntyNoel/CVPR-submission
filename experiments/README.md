@@ -163,7 +163,7 @@ bash experiments/slurm/submit_mixed10k_scaleup.sh
 ```
 
 The submission chain runs CPU data prep first, then the two 10k DPO trainings,
-then COCO held-out, GQA simple, Hard COCO, and base-error-mined evals with
+then COCO held-out, GQA simple, and Hard COCO evals with
 `OUTPUT_VARIANT=mixed10k`. The 10k configs are:
 
 ```text
@@ -177,6 +177,34 @@ Adapters will be written to:
 outputs/llamafactory/qwen25vl7b_mixed10k_answer_dpo/
 outputs/llamafactory/qwen25vl7b_mixed10k_evidence_hint_dpo_zero2/
 ```
+
+2026-05-27 launch status:
+
+```text
+64272-64282  CANCELLED  first attempt; excluding the base-error-mining image pool left only 4,586 COCO pairs
+64283-64291  CANCELLED  second attempt; replaced to avoid overwriting Phase-2 default DPO sidecar files
+64293-64301  CANCELLED  third attempt; replaced with concurrent GQA/VG downloading
+64321-64329  CANCELLED  fourth attempt; replaced to cap GQA/VG target downloads at 4,300 with a 4,200 success threshold
+64369        COMPLETED  wrote 6k COCO + 4k GQA, 10k DPO exports, audit summary, leakage report, and LLaMA-Factory registry
+64370        CANCELLED  old 10k Answer-DPO ZeRO-3 train; reached the train loop but was too slow on RTX4090
+64371        COMPLETED  10k Evidence-Hint DPO ZeRO-2 train, afterok:64369, runtime 33:51
+64372-64374  CANCELLED  old Answer-DPO eval deps, tied to 64370
+64375-64377  COMPLETED  10k Evidence-Hint COCO/GQA/Hard COCO evals, afterok:64371
+64397        COMPLETED  10k Answer-DPO ZeRO-2 train on A100,L40S,ADA6000, replacing 64370, runtime 30:50
+64398-64400  COMPLETED  10k Answer-DPO COCO/GQA/Hard COCO evals, afterok:64397
+```
+
+10k result:
+
+```text
+COCO held-out:  Answer-DPO Acc 0.965/F1 0.964/FPR 0.018; Evidence-Hint Acc 0.961/F1 0.960/FPR 0.016
+GQA simple:     Answer-DPO Acc 0.769/F1 0.752/FPR 0.164; Evidence-Hint Acc 0.766/F1 0.743/FPR 0.146
+Hard COCO:      Answer-DPO Acc 0.948/F1 0.948/FPR 0.048; Evidence-Hint Acc 0.944/F1 0.943/FPR 0.038
+```
+
+The 10k scale-up preserves the 5k pattern: Evidence-Hint reduces false
+positives, especially on GQA and Hard COCO, but still does not beat Answer-DPO
+on Acc/F1.
 
 ## Evaluation Startup
 

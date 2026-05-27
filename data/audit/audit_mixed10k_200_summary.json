@@ -1,0 +1,43 @@
+{
+  "total_rows": 200,
+  "audit_basis": "annotation/scene-graph-grounded mixed COCO/GQA label consistency check",
+  "source_counts": {
+    "coco": 113,
+    "gqa": 87
+  },
+  "metrics": {
+    "chosen_correct": {
+      "yes": 200,
+      "no": 0,
+      "blank": 0,
+      "rate": 1.0
+    },
+    "rejected_wrong": {
+      "yes": 200,
+      "no": 0,
+      "blank": 0,
+      "rate": 1.0
+    },
+    "hint_correct": {
+      "yes": 200,
+      "no": 0,
+      "blank": 0,
+      "rate": 1.0
+    }
+  },
+  "thresholds": {
+    "chosen_correct": 0.85,
+    "rejected_wrong": 0.9,
+    "hint_correct": 0.9
+  },
+  "threshold_status": {
+    "chosen_correct": true,
+    "rejected_wrong": true,
+    "hint_correct": true
+  },
+  "passes_thresholds": true,
+  "missing_ids": [],
+  "num_missing_ids": 0,
+  "failures": [],
+  "num_failures": 0
+}

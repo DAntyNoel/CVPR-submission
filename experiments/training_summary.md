@@ -4,6 +4,36 @@ Updated: 2026-05-27
 
 ## Slurm Jobs
 
+### 10k Mixed Scale-Up Diagnostic
+
+The 10k scale-up is a diagnostic for whether data size changes the
+Evidence-Hint trend, not a replacement for the 5k main table. It keeps the same
+three method groups and uses separate data, adapters, and `mixed10k` eval
+outputs.
+
+| Method | Job ID | State | Dependency | Notes |
+| --- | ---: | --- | --- | --- |
+| Data prep | 64272 | CANCELLED | none | First attempt excluded both held-out and base-error-mining COCO image pools; local COCO subset only yielded 4,586 / 6,000 pairs. |
+| Answer-DPO | 64273 | CANCELLED | afterok:64272 | Cancelled with first data attempt. |
+| Evidence-Hint DPO | 64274 | CANCELLED | afterok:64272 | Cancelled with first data attempt. |
+| Data prep | 64283 | CANCELLED | none | Second attempt was replaced before export so Phase-2 DPO sidecar files use mixed10k-specific names instead of overwriting defaults. |
+| Answer-DPO | 64284 | CANCELLED | afterok:64283 | Cancelled with second data attempt. |
+| Evidence-Hint DPO | 64285 | CANCELLED | afterok:64283 | Cancelled with second data attempt. |
+| Data prep | 64293 | CANCELLED | none | Third attempt used the correct filenames but single-threaded GQA/VG downloading was too slow. |
+| Answer-DPO | 64294 | CANCELLED | afterok:64293 | Cancelled with third data attempt. |
+| Evidence-Hint DPO | 64295 | CANCELLED | afterok:64293 | Cancelled with third data attempt. |
+| Data prep | 64321 | CANCELLED | none | Fourth attempt used concurrent downloading but still targeted all 5,000 GQA/VG images; replaced after reaching 1,600 / 5,000 with 0 failed downloads. |
+| Answer-DPO | 64322 | CANCELLED | afterok:64321 | Cancelled with fourth data attempt. |
+| Evidence-Hint DPO | 64323 | CANCELLED | afterok:64321 | Cancelled with fourth data attempt. |
+| Data prep | 64369 | COMPLETED | none | Wrote 6,000 COCO + 4,000 GQA pairs, 10k DPO exports, audit summary, leakage report, and LLaMA-Factory registry. GQA/VG image prep finished 4,300 / 4,300 with 0 failed downloads. |
+| Answer-DPO | 64370 | CANCELLED | afterok:64369 | Old ZeRO-3 10k Answer-DPO job; reached the LLaMA-Factory train loop with 10,000 examples and 313 steps, but was cancelled because it was too slow on RTX4090. |
+| Evidence-Hint DPO | 64371 | COMPLETED | afterok:64369 | ZeRO-2 10k Evidence-Hint DPO training completed 313 / 313 steps in 33:51. |
+| Answer-DPO | 64397 | COMPLETED | none | Replacement ZeRO-2 10k Answer-DPO job using `A100,L40S,ADA6000`; completed 313 / 313 steps in 30:50 after 64370 was cancelled. |
+
+The ZeRO-2 replacement solved the Answer-DPO throughput issue: the cancelled
+ZeRO-3 job 64370 was around one step per five minutes, while job 64397 ran at
+roughly five to six seconds per step on ADA6000 and completed normally.
+
 ### Mixed COCO+GQA Main Jobs
 
 These are the jobs to use for the final mixed-data main table.

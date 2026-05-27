@@ -30,6 +30,7 @@ data/audit/*.csv
 data/audit/*.tsv
 data/audit/*.xlsx
 experiments/llamafactory_data/
+experiments/llamafactory_data_10k/
 outputs/
 output/
 results/

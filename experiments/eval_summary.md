@@ -15,6 +15,27 @@ COCO held-out is tied at 0.961, GQA simple is 0.766 vs. Answer-DPO 0.768, Hard
 COCO is 0.946 vs. 0.950, and Base-error-mined recovery is 0.030 vs. 0.063.
 Refusal and other/invalid rates are 0.0 throughout the normal yes/no runs.
 
+10k mixed scale-up completed to test whether this trend changes with data
+size. Data job 64369, Evidence-Hint train 64371, Answer-DPO replacement train
+64397, Evidence-Hint evals 64375-64377, and Answer-DPO evals 64398-64400 all
+completed with exit code 0. The slow Answer-DPO ZeRO-3 train 64370 and its eval
+deps 64372-64374 were cancelled, then replaced by ZeRO-2 train 64397 on
+`A100,L40S,ADA6000`.
+The base-error-mined set is not included in this 10k chain because preserving a
+6k COCO target uses images from that diagnostic pool.
+
+10k normal-prompt results:
+
+| Eval | 10k Answer-DPO Acc / F1 / FPR | 10k Evidence-Hint Acc / F1 / FPR | Delta EH - Answer |
+| --- | --- | --- | --- |
+| COCO held-out | 0.965 / 0.964 / 0.018 | 0.961 / 0.960 / 0.016 | Acc -0.004, F1 -0.004, FPR -0.002 |
+| GQA simple | 0.769 / 0.752 / 0.164 | 0.766 / 0.743 / 0.146 | Acc -0.003, F1 -0.009, FPR -0.018 |
+| Hard COCO | 0.948 / 0.948 / 0.048 | 0.944 / 0.943 / 0.038 | Acc -0.004, F1 -0.005, FPR -0.010 |
+
+Conclusion: increasing the mixed preference set from 5k to 10k did not change
+the Evidence-Hint trend. It still lowers false positives, but Acc/F1 remain at
+or below Answer-DPO on all three normal-prompt evals.
+
 ## Normal Yes/No Prompt
 
 Prompt suffix:

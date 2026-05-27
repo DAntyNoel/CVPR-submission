@@ -116,6 +116,33 @@ GQA simple attribute/relation rows. Its checks are label/scene-graph
 consistency checks for the sampled audit sheet, not independent pixel-level
 relabeling.
 
+## 10k mixed scale-up
+
+The 10k diagnostic keeps the same task families but writes separate artifacts
+so the 5k main run remains untouched. Submit it through Slurm because it may
+download additional GQA/VG images:
+
+```bash
+sbatch scripts/data/prepare_mixed_10k_scaleup.slurm
+```
+
+The target split is 6,000 COCO object-existence pairs plus 4,000 GQA simple
+attribute/relation pairs. It excludes the current COCO held-out and GQA simple
+eval image ids, then exports:
+
+```text
+data/processed/canonical_pairs_mixed10k.jsonl
+data/processed/answer_dpo_train_mixed10k.jsonl
+data/processed/evidence_hint_dpo_train_mixed10k.jsonl
+experiments/llamafactory_data_10k/
+```
+
+When Phase-2 exporters are present, their sidecar DPO files use the same
+`mixed10k` suffix so they do not overwrite the default 5k/phase-2 artifacts.
+The GQA/VG image downloader requests 4,300 target images with a 4,200-image
+success threshold and `--workers 8` in this Slurm path; the script default
+remains sequential for smaller/manual uses.
+
 ## Smoke and fallback options
 
 For the 2k smoke version, change the COCO/GQA limits to `1500` and `500`, and

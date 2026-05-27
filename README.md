@@ -25,6 +25,17 @@
 - 5k mixed preference pairs 已生成：3,500 COCO object-existence + 1,500 GQA simple attribute/relation。
 - 10k mixed scale-up 诊断有独立 Slurm 链路：6,000 COCO + 4,000 GQA，不覆盖 5k
   主线数据、adapter 或评测结果，用于检查数据规模是否改变 Evidence-Hint 趋势。
+  2026-05-27 链路已完成：data 64369、Evidence-Hint ZeRO-2 train 64371、
+  Answer-DPO ZeRO-2 train 64397、eval jobs 64375-64377 和 64398-64400
+  均为 exit 0。Answer-DPO ZeRO-3 job 64370 因 RTX4090 上过慢已取消并被
+  64397（`A100,L40S,ADA6000`）替代。10k 结果未改变 Evidence-Hint 趋势：
+  COCO/GQA/Hard COCO Acc 为 Answer 0.965/0.769/0.948，Evidence-Hint
+  0.961/0.766/0.944；Evidence-Hint 仍降低 FPR，但 Acc/F1 未超过 Answer。
+  旧尝试 64272-64282
+  已取消，因为同时排除 base-error-mining 图像会让本地 COCO 子集不足 6k；64283-64291
+  已取消并改为 10k 专用 Phase-2 sidecar 文件，避免覆盖并行方法改进产物；64293-64301
+  已取消并改用并发 GQA/VG 下载，避免单线程下载拖慢 10k 数据准备；64321-64329
+  已取消并把 GQA/VG 下载目标从 5,000 收到 4,300，保留 4,200 成功阈值。
 - mixed audit 与泄漏检查已完成，审计摘要见 `data/audit/`，当前 train/eval image overlap 为 0。
 - GQA simple held-out eval 已生成：`data/eval/gqa_simple_heldout.jsonl`，共 1,000 条，color 与 left/right relation 各 500 条。
 - Hard COCO held-out eval 已生成：`data/eval/coco_hard_object_existence.jsonl`，共 1,000 条，yes/no 各 500 条，500 张 held-out 图像，train/eval image overlap 为 0。
@@ -161,10 +172,6 @@ data/eval/coco_hard_object_existence.jsonl
 
 如果需要重新生成数据，优先使用已有 Slurm 脚本或轻量 CPU 脚本；大文件建议软链接，不要直接复制进仓库。
 
-10k mixed scale-up 的数据准备会写到独立文件，并可能通过 CPU Slurm 下载额外 GQA/VG 图像：
-
-```bash
-sbatch scripts/data/prepare_mixed_10k_scaleup.slurm
 Phase-2 方法变体复用 `canonical_pairs_main.jsonl` 并额外导出：
 
 ```text
@@ -176,6 +183,10 @@ experiments/llamafactory_data/cvpr_phase2_input_side_evidence_dpo.json
 experiments/llamafactory_data/cvpr_phase2_chosen_only_evidence_dpo.json
 ```
 
+10k mixed scale-up 的数据准备会写到独立文件，并可能通过 CPU Slurm 下载额外 GQA/VG 图像：
+
+```bash
+sbatch scripts/data/prepare_mixed_10k_scaleup.slurm
 ```
 
 ## 训练
@@ -221,7 +232,8 @@ outputs/llamafactory/qwen25vl7b_answer_dpo/
 outputs/llamafactory/qwen25vl7b_evidence_hint_dpo/
 ```
 
-10k mixed scale-up 通过依赖链一次性提交数据、两组 DPO 训练和 normal-prompt 评测：
+10k mixed scale-up 通过依赖链一次性提交数据、两组 DPO 训练和 COCO/GQA/Hard COCO
+normal-prompt 评测：
 
 ```bash
 bash experiments/slurm/submit_mixed10k_scaleup.sh
@@ -235,11 +247,13 @@ outputs/llamafactory/qwen25vl7b_mixed10k_evidence_hint_dpo_zero2/
 results/eval/generations/<eval_name>/mixed10k/<model_key>.jsonl
 ```
 
-## 评测
+2026-05-27 status: the 10k chain completed. Answer-DPO 10k was switched from
+the slow ZeRO-3 job 64370 to ZeRO-2 job 64397 on `A100,L40S,ADA6000`;
+Evidence-Hint used ZeRO-2 job 64371. Answer-DPO evals were jobs 64398-64400,
+and Evidence-Hint evals were jobs 64375-64377. The scale-up did not flip the
+trend: Evidence-Hint still trades lower false-positive rate for no Acc/F1 gain
+over Answer-DPO.
 
-评测入口见 `scripts/eval/README.md`。先准备 COCO held-out object-existence 评测集：
-
-```bash
 Phase-2 第一轮三组方法变体通过独立 Slurm 训练脚本提交，不在交互环境直接运行：
 
 ```bash
@@ -257,6 +271,11 @@ outputs/llamafactory/qwen25vl7b_phase2_input_side_evidence_dpo_zero2/
 outputs/llamafactory/qwen25vl7b_phase2_chosen_only_evidence_dpo_zero2/
 ```
 
+## 评测
+
+评测入口见 `scripts/eval/README.md`。先准备 COCO held-out object-existence 评测集：
+
+```bash
 python scripts/eval/prepare_coco_heldout_eval.py \
   --heldout-image-ids data/eval/heldout_object_existence_image_ids.txt \
   --output data/eval/coco_heldout_object_existence.jsonl \
@@ -406,6 +425,15 @@ GQA simple:    Base Acc 0.764, mixed Answer-DPO Acc 0.768, ZeRO-2 Evidence-Hint 
 Hard COCO:     Base Acc 0.944, mixed Answer-DPO Acc 0.950, ZeRO-2 Evidence-Hint Acc 0.946
 Evidence prompt: COCO ZeRO-2 Evidence-Hint Acc 0.955, GQA ZeRO-2 Evidence-Hint Acc 0.767
 Base-error mined recovery: Answer-DPO 0.063, ZeRO-2 Evidence-Hint 0.030
+```
+
+10k mixed scale-up diagnostic:
+
+```text
+COCO held-out: Answer-DPO Acc 0.965/FPR 0.018, Evidence-Hint Acc 0.961/FPR 0.016
+GQA simple:    Answer-DPO Acc 0.769/FPR 0.164, Evidence-Hint Acc 0.766/FPR 0.146
+Hard COCO:     Answer-DPO Acc 0.948/FPR 0.048, Evidence-Hint Acc 0.944/FPR 0.038
+Conclusion: 10k scale-up preserves the 5k pattern; Evidence-Hint lowers false positives but does not improve Acc/F1 over Answer-DPO.
 ```
 
 生成结果保存到：

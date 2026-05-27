@@ -9,6 +9,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +33,12 @@ def main() -> int:
     parser.add_argument("--timeout", type=int, default=30)
     parser.add_argument("--retries", type=int, default=2)
     parser.add_argument("--sleep", type=float, default=0.2)
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="Number of concurrent downloads. The default preserves sequential behavior.",
+    )
     args = parser.parse_args()
 
     image_root = repo_path(args.image_root)
@@ -39,26 +46,21 @@ def main() -> int:
     image_ids = collect_image_ids(args.input)[: args.limit_images]
     print(f"Need {len(image_ids)} GQA/VG images")
 
-    downloaded: list[dict[str, Any]] = []
     existing: list[str] = []
-    failed: list[dict[str, Any]] = []
-
-    for idx, image_id in enumerate(image_ids, start=1):
+    to_download: list[str] = []
+    for image_id in image_ids:
         if find_existing_image(image_root, image_id):
             existing.append(image_id)
         else:
-            result = download_one(image_id, image_root, args)
-            if result.get("ok"):
-                downloaded.append(result)
-            else:
-                failed.append(result)
-        if idx % 100 == 0:
-            print(
-                f"progress {idx}/{len(image_ids)}: "
-                f"{len(existing)} existing, {len(downloaded)} downloaded, {len(failed)} failed"
-            )
-        if args.sleep > 0:
-            time.sleep(args.sleep)
+            to_download.append(image_id)
+
+    print(f"Found {len(existing)} existing images; downloading {len(to_download)} missing images")
+    downloaded: list[dict[str, Any]] = []
+    failed: list[dict[str, Any]] = []
+    if args.workers <= 1:
+        downloaded, failed = download_sequential(to_download, image_root, args, len(existing), len(image_ids))
+    else:
+        downloaded, failed = download_parallel(to_download, image_root, args, len(existing), len(image_ids))
 
     success = len(existing) + len(downloaded)
     manifest = {
@@ -68,6 +70,7 @@ def main() -> int:
         "existing": len(existing),
         "downloaded": len(downloaded),
         "failed": len(failed),
+        "workers": args.workers,
         "base_urls": args.base_urls,
         "failed_examples": failed[:50],
     }
@@ -81,6 +84,65 @@ def main() -> int:
         )
         return 1
     return 0
+
+
+def download_sequential(
+    image_ids: list[str],
+    image_root: Path,
+    args: argparse.Namespace,
+    existing_count: int,
+    requested_count: int,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    downloaded: list[dict[str, Any]] = []
+    failed: list[dict[str, Any]] = []
+
+    for idx, image_id in enumerate(image_ids, start=1):
+        result = download_one(image_id, image_root, args)
+        if result.get("ok"):
+            downloaded.append(result)
+        else:
+            failed.append(result)
+        completed = existing_count + idx
+        if completed % 100 == 0 or completed == requested_count:
+            print(
+                f"progress {completed}/{requested_count}: "
+                f"{existing_count} existing, {len(downloaded)} downloaded, {len(failed)} failed",
+                flush=True,
+            )
+        if args.sleep > 0:
+            time.sleep(args.sleep)
+    return downloaded, failed
+
+
+def download_parallel(
+    image_ids: list[str],
+    image_root: Path,
+    args: argparse.Namespace,
+    existing_count: int,
+    requested_count: int,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    downloaded: list[dict[str, Any]] = []
+    failed: list[dict[str, Any]] = []
+
+    with ThreadPoolExecutor(max_workers=args.workers) as executor:
+        futures = {
+            executor.submit(download_one, image_id, image_root, args): image_id
+            for image_id in image_ids
+        }
+        for idx, future in enumerate(as_completed(futures), start=1):
+            result = future.result()
+            if result.get("ok"):
+                downloaded.append(result)
+            else:
+                failed.append(result)
+            completed = existing_count + idx
+            if completed % 100 == 0 or completed == requested_count:
+                print(
+                    f"progress {completed}/{requested_count}: "
+                    f"{existing_count} existing, {len(downloaded)} downloaded, {len(failed)} failed",
+                    flush=True,
+                )
+    return downloaded, failed
 
 
 def collect_image_ids(path: str) -> list[str]:
