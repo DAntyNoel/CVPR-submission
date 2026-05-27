@@ -57,7 +57,7 @@ mixed 主训练记录：
 
 | 方法 | Job ID | 状态 | Train loss | Runtime |
 | --- | ---: | --- | ---: | --- |
-| Answer-DPO | 64200 | RUNNING | TBD | TBD |
+| Answer-DPO | 64200 | COMPLETED | 0.3722 | 00:56:57 |
 | Evidence-Hint DPO | 64201 | RUNNING | TBD | TBD |
 
 COCO-only preliminary 训练记录：
@@ -67,7 +67,7 @@ COCO-only preliminary 训练记录：
 | Answer-DPO | 64167 | COMPLETED | 0.2791 | 00:57:29 |
 | Evidence-Hint DPO | 64168 | COMPLETED | 0.1025 | 13:22:44 |
 
-64167/64168 基于旧 5,000 条 COCO-only 数据，不进入 mixed 数据主结果表，但可以作为 COCO-only auxiliary/preliminary result 写入论文额外结果。它们适合在等待 mixed 数据重训时先跑 COCO held-out、POPE、refusal rate 和格式违规检查，用来展示纯对象存在子设定下的趋势。mixed job 64200/64201 已使用 2026-05-27 mixed COCO+GQA 数据启动；Evidence-Hint DPO 更慢仍是预期现象，主要来自 response 变长带来的 DPO 计算成本增加。
+64167/64168 基于旧 5,000 条 COCO-only 数据，不进入 mixed 数据主结果表，但可以作为 COCO-only auxiliary/preliminary result 写入论文额外结果。它们适合在等待 mixed 数据重训时先跑 COCO held-out、POPE、refusal rate 和格式违规检查，用来展示纯对象存在子设定下的趋势。mixed job 64200 已使用 2026-05-27 mixed COCO+GQA 数据完成 Answer-DPO 训练；64201 Evidence-Hint DPO 仍在运行。Evidence-Hint DPO 更慢仍是预期现象，主要来自 response 变长带来的 DPO 计算成本增加。
 
 ## 5. COCO-only 额外结果
 
@@ -151,6 +151,14 @@ COCO-only held-out 结果只能支持“false positive 略低”，不能单独�
 4. 生成 POPE、COCO held-out、GQA simple、refusal rate 主表指标。
 5. 对比错误类型，重点看 false positive object hallucination、attribute mismatch 和 left/right reversal。
 6. 从三组输出中抽取 4-6 个清晰 case study，尽量覆盖 COCO 与 GQA。
+
+当前执行进展：
+
+- mixed Answer-DPO 64200 已完成，adapter 完整性和 COCO/GQA dry-run 已通过。
+- mixed Evidence-Hint DPO 64201 仍在运行，等待完成后检查 adapter、train metrics 和 dry-run。
+- Base GQA 与 mixed Answer-DPO COCO/GQA 评测 jobs 64213-64215 已完成：Base GQA Acc 0.764，mixed Answer-DPO COCO Acc 0.961，mixed Answer-DPO GQA Acc 0.768。
+- Base/Answer-DPO evidence-style prompt jobs 64216-64219 已完成：Base COCO Acc 0.955，Base GQA Acc 0.768，Answer-DPO COCO Acc 0.956，Answer-DPO GQA Acc 0.766，拒答率均为 0。
+- 官方 POPE 数据与 COCO val2014 图像当前不在仓库本地，POPE 暂放入 supplement/future work。
 
 ## 9. 不做的内容
 

@@ -9,12 +9,13 @@
 ## 当前状态
 
 - 研究计划与论文大纲已整理在 `idea-lightweighted-grounded-preference-vlm/`。
+- CVPR LaTeX 初稿已新建在 `paper/`，当前包含 conservative draft 与结果占位。
 - 5k mixed preference pairs 已生成：3,500 COCO object-existence + 1,500 GQA simple attribute/relation。
 - mixed audit 与泄漏检查已完成，审计摘要见 `data/audit/`，当前 train/eval image overlap 为 0。
 - GQA simple held-out eval 已生成：`data/eval/gqa_simple_heldout.jsonl`，共 1,000 条，color 与 left/right relation 各 500 条。
-- mixed Answer-DPO job 64200 与 mixed Evidence-Hint DPO job 64201 已通过 Slurm 启动；旧 job 64167/64168 只作为 COCO-only preliminary 记录。
+- mixed Answer-DPO job 64200 已完成并写出 mixed adapter；mixed Evidence-Hint DPO job 64201 仍在 Slurm 中运行。旧 job 64167/64168 只作为 COCO-only preliminary 记录。
 - 5k COCO-only adapter 的三组 held-out object-existence 验证已完成：Base Acc 0.959、Answer-DPO Acc 0.961、Evidence-Hint DPO Acc 0.960。
-- 统一评测脚本已准备好，下一步等待 mixed adapter 完成后跑 Base / Answer-DPO / Evidence-Hint DPO 的 POPE、COCO held-out、GQA simple 与 refusal-rate 评测。
+- 统一评测脚本已支持输出变体目录和 evidence-style prompt；Base 与 mixed Answer-DPO 的 COCO/GQA normal prompt 及 evidence-style prompt 评测均已完成，partial summary 见 `experiments/eval_summary.md`。Evidence-Hint DPO 评测等待 64201 完成后再提交。
 
 ## 目录结构
 
@@ -39,6 +40,14 @@ experiments/
   llamafactory_configs/            # LLaMA-Factory DPO 配置
   slurm/                           # 训练、下载、评测 Slurm 脚本
   training_summary.md              # 已完成训练的摘要
+  eval_summary.md                  # 已完成评测的摘要
+
+paper/
+  main.tex                         # CVPR 2026 草稿正文，结果待填
+  cvpr.sty                         # CVPR 2026 官方样式
+  ieeenat_fullname.bst             # CVPR 2026 官方引用样式
+  references.bib                   # 初稿引用
+  appendix.tex                     # 可选附录骨架，默认不启用
 
 data/
   processed/                       # canonical pairs 与 DPO 训练 JSONL
@@ -133,19 +142,35 @@ mixed adapter 训练完成后，可以做轻量 dry-run，检查 adapter 路径�
 python scripts/eval/run_vlm_inference.py \
   --model-key answer_dpo \
   --eval data/eval/coco_heldout_object_existence.jsonl \
+  --output results/eval/generations/coco_heldout_object_existence/mixed/answer_dpo.jsonl \
   --dry-run
 ```
 
 完整推理应通过 Slurm 提交：
 
 ```bash
-MODEL_KEY=base EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl \
+MODEL_KEY=base EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl OUTPUT_VARIANT=mixed \
   sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
 
-MODEL_KEY=answer_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl \
+MODEL_KEY=answer_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl OUTPUT_VARIANT=mixed \
   sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
 
-MODEL_KEY=evidence_hint_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl \
+MODEL_KEY=evidence_hint_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl OUTPUT_VARIANT=mixed \
+  sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
+```
+
+可通过 `OUTPUT_VARIANT` 避免覆盖已有结果，例如 mixed 主结果写入：
+
+```text
+results/eval/generations/<eval_name>/mixed/<model_key>.jsonl
+```
+
+evidence-style prompt 评测可复用同一 Slurm 脚本：
+
+```bash
+MODEL_KEY=answer_dpo EVAL_JSONL=data/eval/gqa_simple_heldout.jsonl \
+OUTPUT_VARIANT=evidence_prompt \
+INSTRUCTION_SUFFIX="Answer yes or no, then briefly mention the visual evidence." \
   sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
 ```
 
@@ -170,6 +195,26 @@ ADAPTER_NAME_OR_PATH=outputs/llamafactory/qwen25vl7b_evidence_hint_dpo \
 64207  Evidence-Hint DPO outputs/llamafactory/qwen25vl7b_evidence_hint_dpo
 ```
 
+2026-05-27 等待 mixed Evidence-Hint DPO 64201 时，已提交可先跑的 mixed/evidence-style
+评测。当前这些 job 均已完成：
+
+```text
+64213  COMPLETED  Base Instruct      GQA simple, mixed output variant
+64214  COMPLETED  mixed Answer-DPO   COCO held-out, mixed output variant
+64215  COMPLETED  mixed Answer-DPO   GQA simple, mixed output variant
+64216  COMPLETED  Base Instruct      GQA simple, evidence_prompt output variant
+64217  COMPLETED  Base Instruct      COCO held-out, evidence_prompt output variant
+64218  COMPLETED  mixed Answer-DPO   GQA simple, evidence_prompt output variant
+64219  COMPLETED  mixed Answer-DPO   COCO held-out, evidence_prompt output variant
+```
+
+当前可用的 mixed partial 指标：
+
+```text
+COCO held-out: Base Acc 0.959, mixed Answer-DPO Acc 0.961
+GQA simple:    Base Acc 0.764, mixed Answer-DPO Acc 0.768
+```
+
 生成结果保存到：
 
 ```text
@@ -185,7 +230,9 @@ python scripts/eval/score_object_eval.py \
 
 ## 论文写作
 
-正文建议控制在 6 页以内，只支撑一个小而明确的结论：
+正文采用 CVPR 2026 格式。页数按 6/7/8 页弹性控制：优先压到 6 页，7 页可接受，8 页作为正文硬上限。参考文献加可选附录部分总量不超过 10 页，附录非必须。
+
+正文只支撑一个小而明确的结论：
 
 - 方法：不改模型结构、不改 DPO loss，只改 preference response 格式。
 - 数据：5k mixed COCO/GQA preference pairs，覆盖对象存在、简单颜色/材质属性和左右空间关系。
