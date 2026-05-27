@@ -41,6 +41,10 @@ MODEL_REGISTRY = {
         "method": "Phase-2 Chosen-Only Evidence DPO",
         "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_phase2_chosen_only_evidence_dpo_zero2",
     },
+    "input_side_main_balanced_hard_dpo": {
+        "method": "Balanced Hard Input-Side Evidence DPO",
+        "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_input_side_main_balanced_hard_dpo_zero2",
+    },
 }
 
 

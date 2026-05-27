@@ -19,6 +19,9 @@
   Evidence 是三组里最稳的变体：COCO/GQA/Hard COCO Acc 为
   0.961/0.768/0.947，base-error recovery 为 0.044，但仍未改写主线
   “Evidence-Hint 不稳定超过 Answer-DPO” 的诊断结论。
+- 已在 `tasks/input-side-evidence-main-method/` 新增任务说明，将 Input-Side
+  Evidence DPO 作为下一版主改法候选：短期先用现有 Phase-2 结果做主表替换试算，
+  若仍偏弱，再构造 Balanced Hard Input-Side Evidence DPO。
 - 已在 `tasks/answer-evidence-mix-dpo/` 新增 Answer-Evidence Mix DPO 任务实现：
   默认用 70% plain Answer-DPO + 30% Evidence-Hint DPO 构造 5k mixed rescue run，
   目标是在保留 Answer-DPO Acc/F1 的同时继承一部分 Evidence-Hint 的 FPR 下降。
@@ -90,6 +93,7 @@ idea-imporve-evidence/
 tasks/
   coco-hard-ceiling-diagnosis/      # COCO/Hard COCO ceiling-effect 诊断任务
   base-error-mining/                # Base 错误样本挖掘诊断评测任务
+  input-side-evidence-main-method/  # 将 Input-Side Evidence 提升为主改法候选的任务说明
   answer-evidence-mix-dpo/          # 70/30 Answer/Evidence mixed-format DPO rescue run
   balanced-hard-evidence-dpo/       # Balanced hard evidence preference rescue run
 
