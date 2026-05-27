@@ -9,6 +9,8 @@
 ## 当前状态
 
 - 研究计划与论文大纲已整理在 `idea-lightweighted-grounded-preference-vlm/`。
+- 二期方法改进想法已整理在 `idea-imporve-evidence/`，聚焦 evidence placement、
+  evidence-only preference、chosen-only evidence、counterfactual pairs 和 check-step evidence。
 - COCO Base 分数过高与 Hard COCO ceiling-effect 诊断任务已单独整理在
   `tasks/coco-hard-ceiling-diagnosis/`。
 - Base-error mining 诊断评测任务已单独整理在
@@ -16,6 +18,8 @@
 - CVPR LaTeX 稿件已更新在 `paper/`：`main.tex` 当前已从 assumed-positive 草稿改为
   使用真实结果的 controlled diagnostic study。
 - 5k mixed preference pairs 已生成：3,500 COCO object-existence + 1,500 GQA simple attribute/relation。
+- 10k mixed scale-up 诊断有独立 Slurm 链路：6,000 COCO + 4,000 GQA，不覆盖 5k
+  主线数据、adapter 或评测结果，用于检查数据规模是否改变 Evidence-Hint 趋势。
 - mixed audit 与泄漏检查已完成，审计摘要见 `data/audit/`，当前 train/eval image overlap 为 0。
 - GQA simple held-out eval 已生成：`data/eval/gqa_simple_heldout.jsonl`，共 1,000 条，color 与 left/right relation 各 500 条。
 - Hard COCO held-out eval 已生成：`data/eval/coco_hard_object_existence.jsonl`，共 1,000 条，yes/no 各 500 条，500 张 held-out 图像，train/eval image overlap 为 0。
@@ -47,6 +51,9 @@ idea-lightweighted-grounded-preference-vlm/
   plan.md                         # 项目目标、方法与实验设计
   paper_outline_and_tasks.md       # 论文大纲与后续任务清单
   data_processing_plan.md          # 数据构造方案
+
+idea-imporve-evidence/
+  phase2_method_ideas.md           # 二期 evidence 方法改进方案
 
 tasks/
   coco-hard-ceiling-diagnosis/      # COCO/Hard COCO ceiling-effect 诊断任务
@@ -146,6 +153,12 @@ data/eval/coco_hard_object_existence.jsonl
 
 如果需要重新生成数据，优先使用已有 Slurm 脚本或轻量 CPU 脚本；大文件建议软链接，不要直接复制进仓库。
 
+10k mixed scale-up 的数据准备会写到独立文件，并可能通过 CPU Slurm 下载额外 GQA/VG 图像：
+
+```bash
+sbatch scripts/data/prepare_mixed_10k_scaleup.slurm
+```
+
 ## 训练
 
 训练基于仓库内的 `LLaMA-Factory` 和 `experiments/llamafactory_configs/` 配置。主比较包含：
@@ -187,6 +200,20 @@ sbatch experiments/slurm/train_evidence_hint_dpo_zero2.slurm
 ```text
 outputs/llamafactory/qwen25vl7b_answer_dpo/
 outputs/llamafactory/qwen25vl7b_evidence_hint_dpo/
+```
+
+10k mixed scale-up 通过依赖链一次性提交数据、两组 DPO 训练和 normal-prompt 评测：
+
+```bash
+bash experiments/slurm/submit_mixed10k_scaleup.sh
+```
+
+10k adapter 与评测变体分别写入：
+
+```text
+outputs/llamafactory/qwen25vl7b_mixed10k_answer_dpo/
+outputs/llamafactory/qwen25vl7b_mixed10k_evidence_hint_dpo_zero2/
+results/eval/generations/<eval_name>/mixed10k/<model_key>.jsonl
 ```
 
 ## 评测

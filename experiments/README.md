@@ -76,6 +76,32 @@ The older `qwen25vl7b_answer_dpo/` and `qwen25vl7b_evidence_hint_dpo/`
 directories correspond to COCO-only preliminary jobs 64167 and 64168. Keep
 them out of the mixed-data main table.
 
+## 10k Mixed Scale-Up
+
+Use the scale-up only as a diagnostic for whether data size changes the
+Evidence-Hint trend. It keeps the same three method groups and writes separate
+data, adapter, and eval output variants:
+
+```bash
+bash experiments/slurm/submit_mixed10k_scaleup.sh
+```
+
+The submission chain runs CPU data prep first, then the two 10k DPO trainings,
+then COCO held-out, GQA simple, Hard COCO, and base-error-mined evals with
+`OUTPUT_VARIANT=mixed10k`. The 10k configs are:
+
+```text
+experiments/llamafactory_configs/qwen25vl_answer_dpo_10k.yaml
+experiments/llamafactory_configs/qwen25vl_evidence_hint_dpo_10k.yaml
+```
+
+Adapters will be written to:
+
+```text
+outputs/llamafactory/qwen25vl7b_mixed10k_answer_dpo/
+outputs/llamafactory/qwen25vl7b_mixed10k_evidence_hint_dpo_zero2/
+```
+
 ## Evaluation Startup
 
 The unified eval scripts live in `scripts/eval/`.
