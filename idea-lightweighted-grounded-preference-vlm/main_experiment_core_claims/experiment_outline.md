@@ -99,6 +99,19 @@ object-existence 验证：
 `results/eval/generations/coco_heldout_object_existence/<model_key>.jsonl`，
 并在推理结束后自动生成对应 `.metrics.json`。
 
+2026-05-27 验证结果：
+
+| Method | Acc | F1 | False Positive Rate | Yes Bias | Refusal Rate | Confusion |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Base Instruct | 0.959 | 0.958 | 0.018 | 0.477 | 0.000 | TP 468 / FP 9 / TN 491 / FN 32 |
+| Answer-DPO 64167 | 0.961 | 0.960 | 0.018 | 0.479 | 0.000 | TP 470 / FP 9 / TN 491 / FN 30 |
+| Evidence-Hint DPO 64168 | 0.960 | 0.959 | 0.016 | 0.476 | 0.000 | TP 468 / FP 8 / TN 492 / FN 32 |
+
+Answer-DPO 与 Evidence-Hint DPO 的逐样本预测有 997/1000 条相同。Evidence-Hint
+DPO 比 Answer-DPO 少 1 个 false positive，但多 2 个 false negative，因此
+COCO-only held-out 结果只能支持“false positive 略低”，不能单独支持整体 Acc/F1
+优于 Answer-DPO 的强结论。
+
 ## 6. 评测指标
 
 主表建议包含以下指标：

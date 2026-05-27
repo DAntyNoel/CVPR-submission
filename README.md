@@ -13,7 +13,7 @@
 - mixed audit 与泄漏检查已完成，审计摘要见 `data/audit/`，当前 train/eval image overlap 为 0。
 - GQA simple held-out eval 已生成：`data/eval/gqa_simple_heldout.jsonl`，共 1,000 条，color 与 left/right relation 各 500 条。
 - mixed Answer-DPO job 64200 与 mixed Evidence-Hint DPO job 64201 已通过 Slurm 启动；旧 job 64167/64168 只作为 COCO-only preliminary 记录。
-- 5k COCO-only adapter 的三组 held-out object-existence 验证已启动：Base job 64205、Answer-DPO job 64206、Evidence-Hint DPO job 64207。
+- 5k COCO-only adapter 的三组 held-out object-existence 验证已完成：Base Acc 0.959、Answer-DPO Acc 0.961、Evidence-Hint DPO Acc 0.960。
 - 统一评测脚本已准备好，下一步等待 mixed adapter 完成后跑 Base / Answer-DPO / Evidence-Hint DPO 的 POPE、COCO held-out、GQA simple 与 refusal-rate 评测。
 
 ## 目录结构
