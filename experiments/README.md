@@ -112,11 +112,11 @@ sbatch experiments/slurm/train_evidence_hint_dpo.slurm
 ```
 
 The smoke job runs both DPO variants with `max_samples: 8`, `max_steps: 2`,
-`template: qwen2_vl`, and ZeRO-3. The full jobs use the same fixed template and
-the same LLaMA-Factory data registry. Evidence-Hint now keeps the same data,
-LoRA, and global-batch settings, but uses ZeRO-2 and writes to a `_zero2`
-output directory. `train_evidence_hint_dpo_zero2.slurm` is retained as an
-explicit compatibility wrapper.
+`template: qwen2_vl`, and ZeRO-3. The full mixed Answer-DPO and Evidence-Hint
+DPO jobs now both use ZeRO-2. Evidence-Hint keeps the same data, LoRA, and
+global-batch settings and writes to a `_zero2` output directory.
+`train_evidence_hint_dpo_zero2.slurm` is retained as an explicit compatibility
+wrapper.
 
 Training and smoke scripts use the `verl0.6` conda environment. It is pinned to
 torch 2.8.0 to avoid the LLaMA-Factory torch 2.9 + Conv3D guard for Qwen2.5-VL.
