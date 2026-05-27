@@ -29,6 +29,8 @@ Base-error mining 的目标是构造一个小规模、锁定的诊断评测集�
 ```text
 data/eval/base_error_mining_candidates.jsonl
 data/eval/base_error_mining_candidates.summary.json
+data/eval/base_error_mining_image_ids.txt
+data/eval/base_error_mining_image_ids.summary.json
 results/eval/generations/base_error_mining_candidates/mixed/base.jsonl
 results/eval/generations/base_error_mining_candidates/mixed/base.metrics.json
 data/eval/base_error_mined_object_existence.jsonl
@@ -37,6 +39,8 @@ data/audit/base_error_mined_audit.csv
 results/eval/generations/base_error_mined_object_existence/mixed/base.jsonl
 results/eval/generations/base_error_mined_object_existence/mixed/answer_dpo.jsonl
 results/eval/generations/base_error_mined_object_existence/mixed/evidence_hint_dpo.jsonl
+tasks/base-error-mining/RESULTS.md
+tasks/base-error-mining/results_summary.json
 ```
 
 如果后续把 GQA simple 也纳入 mining，可另存为：
@@ -230,18 +234,41 @@ the same three-group comparison.
 
 ## 9. 最小任务清单
 
-- [ ] 写 `prepare_base_error_mining_candidates.py`，生成 COCO object-existence 候选池。
-- [ ] 跑候选池 summary 与 train/eval image overlap 检查。
-- [ ] 通过 Slurm 跑 Base 候选池推理。
-- [ ] 写 `mine_base_errors.py`，从 Base generation 中筛出 locked set。
+- [x] 写 `prepare_base_error_mining_candidates.py`，生成 COCO object-existence 候选池。
+- [x] 跑候选池 summary 与 train/eval image overlap 检查。
+- [x] 通过 Slurm 跑 Base 候选池推理。
+- [x] 写 `mine_base_errors.py`，从 Base generation 中筛出 locked set。
 - [ ] 人工审计 100 到 200 条 mined 样本。
-- [ ] 锁定 `base_error_mined_object_existence.jsonl` 和 summary。
-- [ ] 通过 Slurm 跑三组 locked-set 复评。
-- [ ] 汇总 recovery、FPR/FNR recovery、refusal/other、类别和策略 breakdown。
+- [x] 锁定 `base_error_mined_object_existence.jsonl` 和 summary。
+- [x] 通过 Slurm 跑三组 locked-set 复评。
+- [x] 汇总 recovery、FPR/FNR recovery、refusal/other、类别和策略 breakdown。
 - [ ] 决定放正文 diagnostic table 还是 appendix。
 
 ## 10. 当前状态
 
-- 本任务已从 COCO Hard ceiling diagnosis 中拆出为独立目录。
-- 当前仅完成任务设计与执行大纲。
-- 尚未新增脚本、未构造候选池、未提交 Slurm job。
+- 已新增 `scripts/eval/prepare_base_error_mining_candidates.py`、
+  `scripts/eval/mine_base_errors.py` 与
+  `scripts/eval/summarize_base_error_mining_results.py`。
+- 已生成 `data/eval/base_error_mining_image_ids.txt`：2,580 张 COCO
+  pool 中未用于训练的图像，train/eval image overlap 为 0。
+- 已生成 `data/eval/base_error_mining_candidates.jsonl`：10,000 条 COCO
+  object-existence candidate rows，yes/no 各 5,000，`heldout_pool_absent_object`
+  与 `same_coarse_group_absent_object` 各 5,000。
+- Base candidate mining job `64251` 已完成：candidate accuracy 0.9472，
+  528 个可解析 Base 错误，refusal/other 均为 0。
+- 已生成 `data/eval/base_error_mined_object_existence.jsonl`：527 条
+  Base-conditioned diagnostic rows，404 false negatives，123 false positives，
+  474 unique images，train/eval image overlap 为 0。
+- 已生成 `data/audit/base_error_mined_audit.csv`：150 条人工审计样本。当前
+  audit pass rate 仍为 `null`，因此结果应标注为 pre-audit diagnostic。
+- locked-set 复评已完成 Base job `64262`、Answer-DPO job `64264` 与
+  Evidence-Hint DPO ZeRO-2 job `64267`。旧 mixed Evidence-Hint ZeRO-3
+  adapter job `64201` 已被取消；其依赖 eval job `64263` 因此没有产出。
+- 当前 Evidence-Hint row 使用 completed ZeRO-2 adapter
+  `outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo_zero2/`，输出到
+  canonical `mixed/evidence_hint_dpo.jsonl`。早先的 job `64266` 也产生了一份
+  同内容的 `mixed_zero2` 变体，保留作追踪用途。
+- 当前结果已写入 `tasks/base-error-mining/RESULTS.md` 与
+  `tasks/base-error-mining/results_summary.json`。结论是 Answer-DPO recovery
+  0.063，Evidence-Hint DPO ZeRO-2 recovery 0.030；Evidence-Hint 在这个
+  pre-audit mined set 上未优于 Answer-DPO。

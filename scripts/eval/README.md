@@ -47,6 +47,54 @@ filtered by default. The current output has 1,000 rows, yes/no balanced, 500
 unique images, and `train_eval_image_overlap = 0`; see
 `data/eval/coco_hard_object_existence.summary.json`.
 
+## Base-Error Mining Eval
+
+Build a larger COCO object-existence candidate pool for Base-conditioned
+diagnostic mining:
+
+```bash
+python scripts/data/09_prepare_eval_image_ids.py \
+  --output data/eval/base_error_mining_image_ids.txt \
+  --report data/eval/base_error_mining_image_ids.summary.json \
+  --max-ids 3000 \
+  --seed 42
+
+python scripts/eval/prepare_base_error_mining_candidates.py \
+  --heldout-image-ids data/eval/base_error_mining_image_ids.txt \
+  --max-rows 10000 \
+  --max-pairs-per-image 8 \
+  --seed 42
+```
+
+Run Base candidate inference through Slurm:
+
+```bash
+MODEL_KEY=base EVAL_JSONL=data/eval/base_error_mining_candidates.jsonl OUTPUT_VARIANT=mixed \
+  sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
+```
+
+After Base generations and metrics are written, mine the locked diagnostic set:
+
+```bash
+python scripts/eval/mine_base_errors.py \
+  --input results/eval/generations/base_error_mining_candidates/mixed/base.jsonl \
+  --max-rows 600 \
+  --audit-sample-size 150 \
+  --seed 42
+```
+
+Then run the locked-set evals through the same Slurm entrypoint. Summarize the
+completed generations with:
+
+```bash
+python scripts/eval/summarize_base_error_mining_results.py
+```
+
+The default Evidence-Hint registry now uses the completed ZeRO-2 adapter from
+job 64252. If an older or alternate Evidence-Hint run uses an explicit
+adapter/output variant, pass `--evidence-file` to point at that generation
+file.
+
 ## GQA Simple Held-Out Eval
 
 Build the small GQA simple eval set from unused GQA candidate pairs:

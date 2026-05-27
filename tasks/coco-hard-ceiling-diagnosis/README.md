@@ -30,8 +30,10 @@ false negatives divided by the 500 positive questions.
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | COCO held-out | Base Instruct | 64205 | 0.959 | 0.958 | 0.477 | 0.018 | 0.064 | TP 468 / FP 9 / TN 491 / FN 32 |
 | COCO held-out | mixed Answer-DPO | 64214 | 0.961 | 0.960 | 0.479 | 0.018 | 0.060 | TP 470 / FP 9 / TN 491 / FN 30 |
+| COCO held-out | mixed Evidence-Hint DPO | 64255 | 0.961 | 0.960 | 0.477 | 0.016 | 0.062 | TP 469 / FP 8 / TN 492 / FN 31 |
 | Hard COCO | Base Instruct | 64233 | 0.944 | 0.943 | 0.482 | 0.038 | 0.074 | TP 463 / FP 19 / TN 481 / FN 37 |
 | Hard COCO | mixed Answer-DPO | 64234 | 0.950 | 0.949 | 0.490 | 0.040 | 0.060 | TP 470 / FP 20 / TN 480 / FN 30 |
+| Hard COCO | mixed Evidence-Hint DPO | 64257 | 0.946 | 0.945 | 0.484 | 0.038 | 0.070 | TP 465 / FP 19 / TN 481 / FN 35 |
 
 Auxiliary COCO-only preliminary validation, not for the mixed main table:
 
@@ -39,9 +41,9 @@ Auxiliary COCO-only preliminary validation, not for the mixed main table:
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | COCO held-out | COCO-only Evidence-Hint DPO | 0.960 | 0.959 | 0.476 | 0.016 | 0.064 | TP 468 / FP 8 / TN 492 / FN 32 |
 
-The final mixed Evidence-Hint DPO row is not available yet. At the status check
-above, training job 64201 was still running, and dependent eval jobs 64235 to
-64239 were pending on `afterok:64201`.
+The final mixed Evidence-Hint DPO row now uses the completed ZeRO-2 adapter
+from job 64252. The old ZeRO-3 job 64201 and dependent eval jobs 64235 to 64239
+were cancelled after replacement by the ZeRO-2 run.
 
 ## Hard COCO Construction
 
@@ -216,10 +218,12 @@ OUTPUT_VARIANT=mixed \
 
 - Normal COCO Base and mixed Answer-DPO results are recorded.
 - Hard COCO Base and mixed Answer-DPO results are recorded.
+- Normal COCO and Hard COCO mixed Evidence-Hint DPO results use the completed
+  ZeRO-2 adapter from job 64252.
 - COCO-only Evidence-Hint DPO preliminary result is recorded only as auxiliary
   context.
-- mixed Evidence-Hint DPO training job 64201 is still running at the last check.
-- Dependent mixed Evidence-Hint DPO eval jobs 64235 to 64239 are still pending.
+- Old mixed Evidence-Hint DPO ZeRO-3 training job 64201 and dependent eval jobs
+  64235 to 64239 were cancelled after zero2 replacement.
 - No new Slurm jobs were submitted for this diagnosis update.
 - Task conclusion: current COCO/Hard COCO evidence is sufficient to justify a
   ceiling-effect note and does not require expanding the main experiment set.

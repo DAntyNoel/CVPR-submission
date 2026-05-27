@@ -1,0 +1,297 @@
+{
+  "eval_name": "base_error_mined_object_existence",
+  "variant": "mixed",
+  "model_files": {
+    "base": "/home/fhshao/CVPR-submission/results/eval/generations/base_error_mined_object_existence/mixed/base.jsonl",
+    "answer_dpo": "/home/fhshao/CVPR-submission/results/eval/generations/base_error_mined_object_existence/mixed/answer_dpo.jsonl",
+    "evidence_hint_dpo": "/home/fhshao/CVPR-submission/results/eval/generations/base_error_mined_object_existence/mixed/evidence_hint_dpo.jsonl"
+  },
+  "models": {
+    "base": {
+      "label": "Base Instruct",
+      "path": "/home/fhshao/CVPR-submission/results/eval/generations/base_error_mined_object_existence/mixed/base.jsonl",
+      "total": 527,
+      "recovery": {
+        "overall": 0.0,
+        "false_positive": 0.0,
+        "false_negative": 0.0
+      },
+      "accuracy": 0.0,
+      "balanced_accuracy": 0.0,
+      "false_positive_rate": 1.0,
+      "false_negative_rate": 1.0,
+      "refusal_rate": 0.0,
+      "other_rate": 0.0,
+      "invalid_prediction_rate": 0.0,
+      "confusion": {
+        "tp": 0,
+        "fp": 123,
+        "tn": 0,
+        "fn": 404
+      },
+      "target_counts": {
+        "no": 123,
+        "yes": 404
+      },
+      "prediction_counts": {
+        "no": 404,
+        "yes": 123
+      },
+      "base_error_type_counts": {
+        "false_negative": 404,
+        "false_positive": 123
+      },
+      "category_breakdown": {
+        "car": {
+          "n": 26,
+          "accuracy": 0.0,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "chair": {
+          "n": 41,
+          "accuracy": 0.0,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "dining table": {
+          "n": 32,
+          "accuracy": 0.0,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "oven": {
+          "n": 28,
+          "accuracy": 0.0,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "person": {
+          "n": 27,
+          "accuracy": 0.0,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "sink": {
+          "n": 39,
+          "accuracy": 0.0,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "truck": {
+          "n": 80,
+          "accuracy": 0.0,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        }
+      },
+      "strategy_breakdown": {
+        "heldout_pool_absent_object": {
+          "n": 183,
+          "accuracy": 0.0,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "same_coarse_group_absent_object": {
+          "n": 344,
+          "accuracy": 0.0,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        }
+      }
+    },
+    "answer_dpo": {
+      "label": "Answer-DPO",
+      "path": "/home/fhshao/CVPR-submission/results/eval/generations/base_error_mined_object_existence/mixed/answer_dpo.jsonl",
+      "total": 527,
+      "recovery": {
+        "overall": 0.062619,
+        "false_positive": 0.00813,
+        "false_negative": 0.079208
+      },
+      "accuracy": 0.062619,
+      "balanced_accuracy": 0.043669,
+      "false_positive_rate": 0.99187,
+      "false_negative_rate": 0.920792,
+      "refusal_rate": 0.0,
+      "other_rate": 0.0,
+      "invalid_prediction_rate": 0.0,
+      "confusion": {
+        "tp": 32,
+        "fp": 122,
+        "tn": 1,
+        "fn": 372
+      },
+      "target_counts": {
+        "no": 123,
+        "yes": 404
+      },
+      "prediction_counts": {
+        "no": 373,
+        "yes": 154
+      },
+      "base_error_type_counts": {
+        "false_negative": 404,
+        "false_positive": 123
+      },
+      "category_breakdown": {
+        "car": {
+          "n": 26,
+          "accuracy": 0.038462,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "chair": {
+          "n": 41,
+          "accuracy": 0.121951,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "dining table": {
+          "n": 32,
+          "accuracy": 0.03125,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "oven": {
+          "n": 28,
+          "accuracy": 0.035714,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "person": {
+          "n": 27,
+          "accuracy": 0.0,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "sink": {
+          "n": 39,
+          "accuracy": 0.051282,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "truck": {
+          "n": 80,
+          "accuracy": 0.1,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        }
+      },
+      "strategy_breakdown": {
+        "heldout_pool_absent_object": {
+          "n": 183,
+          "accuracy": 0.032787,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "same_coarse_group_absent_object": {
+          "n": 344,
+          "accuracy": 0.078488,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        }
+      }
+    },
+    "evidence_hint_dpo": {
+      "label": "Evidence-Hint DPO",
+      "path": "/home/fhshao/CVPR-submission/results/eval/generations/base_error_mined_object_existence/mixed/evidence_hint_dpo.jsonl",
+      "total": 527,
+      "recovery": {
+        "overall": 0.030361,
+        "false_positive": 0.01626,
+        "false_negative": 0.034653
+      },
+      "accuracy": 0.030361,
+      "balanced_accuracy": 0.025457,
+      "false_positive_rate": 0.98374,
+      "false_negative_rate": 0.965347,
+      "refusal_rate": 0.0,
+      "other_rate": 0.0,
+      "invalid_prediction_rate": 0.0,
+      "confusion": {
+        "tp": 14,
+        "fp": 121,
+        "tn": 2,
+        "fn": 390
+      },
+      "target_counts": {
+        "no": 123,
+        "yes": 404
+      },
+      "prediction_counts": {
+        "no": 392,
+        "yes": 135
+      },
+      "base_error_type_counts": {
+        "false_negative": 404,
+        "false_positive": 123
+      },
+      "category_breakdown": {
+        "car": {
+          "n": 26,
+          "accuracy": 0.0,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "chair": {
+          "n": 41,
+          "accuracy": 0.02439,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "dining table": {
+          "n": 32,
+          "accuracy": 0.0,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "oven": {
+          "n": 28,
+          "accuracy": 0.035714,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "person": {
+          "n": 27,
+          "accuracy": 0.0,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "sink": {
+          "n": 39,
+          "accuracy": 0.025641,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "truck": {
+          "n": 80,
+          "accuracy": 0.0625,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        }
+      },
+      "strategy_breakdown": {
+        "heldout_pool_absent_object": {
+          "n": 183,
+          "accuracy": 0.021858,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        },
+        "same_coarse_group_absent_object": {
+          "n": 344,
+          "accuracy": 0.034884,
+          "refusal_rate": 0.0,
+          "other_rate": 0.0
+        }
+      }
+    }
+  },
+  "deltas": {
+    "evidence_hint_minus_answer_dpo": {
+      "false_negative": -0.044555,
+      "false_positive": 0.00813,
+      "overall": -0.032258
+    }
+  }
+}

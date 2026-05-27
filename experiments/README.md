@@ -31,9 +31,18 @@ sbatch experiments/slurm/train_answer_dpo.slurm
 sbatch experiments/slurm/train_evidence_hint_dpo.slurm
 ```
 
+Mixed Evidence-Hint DPO uses ZeRO-2 by default. The default wrapper is:
+
+```bash
+sbatch experiments/slurm/train_evidence_hint_dpo.slurm
+```
+
 The smoke job runs both DPO variants with `max_samples: 8`, `max_steps: 2`,
 `template: qwen2_vl`, and ZeRO-3. The full jobs use the same fixed template and
-the same LLaMA-Factory data registry.
+the same LLaMA-Factory data registry. Evidence-Hint now keeps the same data,
+LoRA, and global-batch settings, but uses ZeRO-2 and writes to a `_zero2`
+output directory. `train_evidence_hint_dpo_zero2.slurm` is retained as an
+explicit compatibility wrapper.
 
 Training and smoke scripts use the `verl0.6` conda environment. It is pinned to
 torch 2.8.0 to avoid the LLaMA-Factory torch 2.9 + Conv3D guard for Qwen2.5-VL.
@@ -53,8 +62,15 @@ The mixed jobs write to:
 
 ```text
 outputs/llamafactory/qwen25vl7b_mixed_answer_dpo/
-outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo/
+outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo_zero2/
 ```
+
+2026-05-27 ZeRO-2 status: job 64252 completed on RTX4090 from
+`experiments/slurm/train_evidence_hint_dpo_zero2.slurm` and replaces the old
+ZeRO-3 job 64201. The run used about 15.6GB allocated memory at optimizer
+initialization and finished in 00:17:13 wall time (`train_runtime` 950.96s,
+train loss 0.1347). The zero2 adapter dry-run passed, and the eval registry now
+uses this adapter by default.
 
 The older `qwen25vl7b_answer_dpo/` and `qwen25vl7b_evidence_hint_dpo/`
 directories correspond to COCO-only preliminary jobs 64167 and 64168. Keep
@@ -164,15 +180,21 @@ ADAPTER_NAME_OR_PATH=outputs/llamafactory/qwen25vl7b_evidence_hint_dpo \
 64234  COMPLETED  mixed Answer-DPO   Acc 0.950, F1 0.949
 ```
 
-Submit the mixed Evidence-Hint DPO Hard COCO job after 64201 finishes and the
-adapter dry-run passes. Current dependent eval queue:
+Current Evidence-Hint eval status:
 
 ```text
-64235  PENDING afterok:64201  Evidence-Hint DPO COCO held-out, mixed
-64236  PENDING afterok:64201  Evidence-Hint DPO GQA simple, mixed
-64237  PENDING afterok:64201  Evidence-Hint DPO Hard COCO, mixed
-64238  PENDING afterok:64201  Evidence-Hint DPO GQA simple, evidence_prompt
-64239  PENDING afterok:64201  Evidence-Hint DPO COCO held-out, evidence_prompt
+64201  CANCELLED            old ZeRO-3 training, replaced by 64252
+64235  CANCELLED            old afterok:64201 COCO held-out
+64236  CANCELLED            old afterok:64201 GQA simple
+64237  CANCELLED            old afterok:64201 Hard COCO
+64238  CANCELLED            old afterok:64201 GQA evidence-style
+64239  CANCELLED            old afterok:64201 COCO evidence-style
+64255  COMPLETED            Evidence-Hint DPO COCO held-out, mixed_zero2, Acc 0.961
+64256  COMPLETED            Evidence-Hint DPO GQA simple, mixed_zero2, Acc 0.766
+64257  COMPLETED            Evidence-Hint DPO Hard COCO, mixed_zero2, Acc 0.946
+64258  COMPLETED            Evidence-Hint DPO COCO held-out, evidence_prompt_zero2, Acc 0.955
+64259  COMPLETED            Evidence-Hint DPO GQA simple, evidence_prompt_zero2, Acc 0.767
+64263  CANCELLED            old afterok:64201 base-error-mined eval
 ```
 
 Raw generations and metadata are written to:

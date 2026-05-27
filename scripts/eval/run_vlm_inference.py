@@ -23,7 +23,7 @@ MODEL_REGISTRY = {
     },
     "evidence_hint_dpo": {
         "method": "Evidence-Hint DPO",
-        "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo",
+        "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo_zero2",
     },
 }
 

@@ -19,11 +19,19 @@
 - mixed audit 与泄漏检查已完成，审计摘要见 `data/audit/`，当前 train/eval image overlap 为 0。
 - GQA simple held-out eval 已生成：`data/eval/gqa_simple_heldout.jsonl`，共 1,000 条，color 与 left/right relation 各 500 条。
 - Hard COCO held-out eval 已生成：`data/eval/coco_hard_object_existence.jsonl`，共 1,000 条，yes/no 各 500 条，500 张 held-out 图像，train/eval image overlap 为 0。
-- mixed Answer-DPO job 64200 已完成并写出 mixed adapter；真实 mixed Evidence-Hint DPO job 64201
-  在现有实验记录中仍等待最终核验。论文正文中的 Evidence-Hint 主结果用于本轮“实验一切正常”写作与评审模拟，真实投稿前需用最终评测日志替换核对。
+- mixed Answer-DPO job 64200 已完成并写出 mixed adapter；mixed Evidence-Hint DPO 改用
+  已完成的 ZeRO-2 job 64252 作为默认结果，原 ZeRO-3 job 64201 已取消。
+- 由于 64201 的 ZeRO-3 run 在 RTX4090 上显存占用偏低，独立 ZeRO-2 run 64252 已完成，
+  输出到 `outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo_zero2/`：训练 runtime
+  950.96s、train loss 0.1347，adapter dry-run 已通过；`evidence_hint_dpo` 默认评测
+  registry 已切到该 adapter。
 - 5k COCO-only adapter 的三组 held-out object-existence 验证已完成：Base Acc 0.959、Answer-DPO Acc 0.961、Evidence-Hint DPO Acc 0.960。
-- 统一评测脚本已支持输出变体目录和 evidence-style prompt；Base 与 mixed Answer-DPO 的 COCO/GQA normal prompt 及 evidence-style prompt 评测均已完成，partial summary 见 `experiments/eval_summary.md`。Evidence-Hint DPO 评测等待 64201 完成后再提交。
-- 等待 64201 时，Hard COCO 的 Base 与 mixed Answer-DPO 评测 jobs 64233/64234 已完成：Base Acc 0.944，mixed Answer-DPO Acc 0.950；mixed Evidence-Hint DPO 的 COCO/GQA、Hard COCO 与 evidence-style prompt 评测已排入 afterok:64201 依赖队列。
+- 统一评测脚本已支持输出变体目录和 evidence-style prompt；Base 与 mixed Answer-DPO 的 COCO/GQA normal prompt 及 evidence-style prompt 评测均已完成，partial summary 见 `experiments/eval_summary.md`。
+- Hard COCO 的 Base 与 mixed Answer-DPO 评测 jobs 64233/64234 已完成：Base Acc 0.944，
+  mixed Answer-DPO Acc 0.950；原 `afterok:64201` 依赖评测 jobs 64235-64239 和 64263
+  已取消。ZeRO-2 Evidence-Hint 的 normal-prompt 评测 jobs 64255-64257 已完成：COCO Acc
+  0.961、GQA Acc 0.766、Hard COCO Acc 0.946；evidence-style jobs 64258/64259 也已完成：
+  COCO Acc 0.955、GQA Acc 0.767。
 
 ## 目录结构
 
@@ -148,11 +156,23 @@ sbatch experiments/slurm/train_answer_dpo.slurm
 sbatch experiments/slurm/train_evidence_hint_dpo.slurm
 ```
 
+mixed Evidence-Hint DPO 默认使用 ZeRO-2。默认脚本为：
+
+```bash
+sbatch experiments/slurm/train_evidence_hint_dpo.slurm
+```
+
 mixed 主实验 adapter 默认位于：
 
 ```text
 outputs/llamafactory/qwen25vl7b_mixed_answer_dpo/
-outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo/
+outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo_zero2/
+```
+
+显式 ZeRO-2 wrapper 仍保留为兼容入口：
+
+```bash
+sbatch experiments/slurm/train_evidence_hint_dpo_zero2.slurm
 ```
 
 旧 COCO-only preliminary adapter 位于：
@@ -254,8 +274,7 @@ ADAPTER_NAME_OR_PATH=outputs/llamafactory/qwen25vl7b_evidence_hint_dpo \
 64207  Evidence-Hint DPO outputs/llamafactory/qwen25vl7b_evidence_hint_dpo
 ```
 
-2026-05-27 等待 mixed Evidence-Hint DPO 64201 时，已提交可先跑的 mixed/evidence-style
-评测；Hard COCO 前两组也已提交。当前状态：
+2026-05-27 mixed/evidence-style 评测当前状态：
 
 ```text
 64213  COMPLETED  Base Instruct      GQA simple, mixed output variant
@@ -267,19 +286,27 @@ ADAPTER_NAME_OR_PATH=outputs/llamafactory/qwen25vl7b_evidence_hint_dpo \
 64219  COMPLETED  mixed Answer-DPO   COCO held-out, evidence_prompt output variant
 64233  COMPLETED  Base Instruct      Hard COCO, mixed output variant
 64234  COMPLETED  mixed Answer-DPO   Hard COCO, mixed output variant
-64235  PENDING    mixed Evidence-Hint DPO  COCO held-out, mixed, afterok:64201
-64236  PENDING    mixed Evidence-Hint DPO  GQA simple, mixed, afterok:64201
-64237  PENDING    mixed Evidence-Hint DPO  Hard COCO, mixed, afterok:64201
-64238  PENDING    mixed Evidence-Hint DPO  GQA simple, evidence_prompt, afterok:64201
-64239  PENDING    mixed Evidence-Hint DPO  COCO held-out, evidence_prompt, afterok:64201
+64201  CANCELLED  replaced by ZeRO-2 job 64252
+64235  CANCELLED  old afterok:64201 COCO held-out
+64236  CANCELLED  old afterok:64201 GQA simple
+64237  CANCELLED  old afterok:64201 Hard COCO
+64238  CANCELLED  old afterok:64201 GQA evidence-style
+64239  CANCELLED  old afterok:64201 COCO evidence-style
+64255  COMPLETED  mixed Evidence-Hint DPO  COCO held-out, mixed_zero2
+64256  COMPLETED  mixed Evidence-Hint DPO  GQA simple, mixed_zero2
+64257  COMPLETED  mixed Evidence-Hint DPO  Hard COCO, mixed_zero2
+64258  COMPLETED  mixed Evidence-Hint DPO  COCO held-out, evidence_prompt_zero2
+64259  COMPLETED  mixed Evidence-Hint DPO  GQA simple, evidence_prompt_zero2
+64263  CANCELLED  old afterok:64201 base-error-mined eval
 ```
 
 当前可用的 mixed partial 指标：
 
 ```text
-COCO held-out: Base Acc 0.959, mixed Answer-DPO Acc 0.961
-GQA simple:    Base Acc 0.764, mixed Answer-DPO Acc 0.768
-Hard COCO:     Base Acc 0.944, mixed Answer-DPO Acc 0.950
+COCO held-out: Base Acc 0.959, mixed Answer-DPO Acc 0.961, ZeRO-2 Evidence-Hint Acc 0.961
+GQA simple:    Base Acc 0.764, mixed Answer-DPO Acc 0.768, ZeRO-2 Evidence-Hint Acc 0.766
+Hard COCO:     Base Acc 0.944, mixed Answer-DPO Acc 0.950, ZeRO-2 Evidence-Hint Acc 0.946
+Evidence prompt: COCO ZeRO-2 Evidence-Hint Acc 0.955, GQA ZeRO-2 Evidence-Hint Acc 0.767
 ```
 
 生成结果保存到：

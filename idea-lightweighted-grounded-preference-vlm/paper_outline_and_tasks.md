@@ -20,14 +20,14 @@
 - 已完成：mixed audit 重新汇总，`data/audit/audit_200_summary.json` 显示 200/200 chosen correctness、200/200 rejected wrongness、200/200 hint correctness，抽样中包含 139 条 COCO 和 61 条 GQA。
 - 已完成：GQA simple held-out eval，`data/eval/gqa_simple_heldout.jsonl` 共 1,000 条，color 与 left/right relation 各 500 条，yes/no 各 500 条，训练 GQA image overlap 为 0。
 - 已完成：mixed Answer-DPO job 64200，输出目录为 `outputs/llamafactory/qwen25vl7b_mixed_answer_dpo/`，train loss 0.3722，runtime 3417.2s。
-- 训练中：mixed Evidence-Hint DPO job 64201，默认输出到 `outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo/`；完成后再记录 train metrics 并启动 mixed 主评测。
+- 已完成：mixed Evidence-Hint DPO 改用 ZeRO-2 job 64252 作为默认结果，输出到 `outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo_zero2/`；原 ZeRO-3 job 64201 已取消。
 - 历史训练：Answer-DPO job 64167 和 Evidence-Hint DPO job 64168 是旧 COCO-only 数据上的训练结果，只作为 preliminary/旧设置记录，不放入 mixed 数据论文主结果。
 - 已完成 COCO-only auxiliary eval：Base Acc 0.959、Answer-DPO Acc 0.961、Evidence-Hint DPO Acc 0.960；Evidence-Hint DPO false positive rate 从 0.018 降到 0.016，但整体 Acc/F1 未超过 Answer-DPO。
 - 已完成：mixed Answer-DPO 在 COCO held-out 和 GQA simple 上的 adapter dry-run，确认默认 registry 指向 mixed adapter 且不会误跑 base。
-- 已完成：等待 64201 时先跑的 Base GQA 与 mixed Answer-DPO COCO/GQA 评测 jobs 64213-64215；Base GQA Acc 0.764，mixed Answer-DPO COCO Acc 0.961，mixed Answer-DPO GQA Acc 0.768。
+- 已完成：Base GQA 与 mixed Answer-DPO COCO/GQA 评测 jobs 64213-64215；Base GQA Acc 0.764，mixed Answer-DPO COCO Acc 0.961，mixed Answer-DPO GQA Acc 0.768。
 - 已完成：Base/Answer-DPO 的 evidence-style prompt 评测 jobs 64216-64219；Base COCO Acc 0.955，Base GQA Acc 0.768，Answer-DPO COCO Acc 0.956，Answer-DPO GQA Acc 0.766，拒答率均为 0。
 - 已完成：Hard COCO held-out eval 构造，`data/eval/coco_hard_object_existence.jsonl` 共 1,000 条、yes/no 各 500、500 张 held-out 图像、train/eval image overlap = 0；Base 和 mixed Answer-DPO 评测 jobs 64233/64234 已完成，Base Acc 0.944，mixed Answer-DPO Acc 0.950。
-- 已提交：mixed Evidence-Hint DPO 的下游评测 jobs 64235-64239，均使用 `--dependency=afterok:64201`，覆盖 COCO/GQA normal prompt、Hard COCO 和 COCO/GQA evidence-style prompt。
+- 已完成：mixed Evidence-Hint DPO ZeRO-2 normal-prompt 评测 jobs 64255-64257：COCO Acc 0.961，GQA Acc 0.766，Hard COCO Acc 0.946；evidence-style jobs 64258/64259：COCO Acc 0.955，GQA Acc 0.767。旧 `afterok:64201` jobs 64235-64239 已取消。
 - 已完成：新建 `paper/` CVPR LaTeX 草稿目录，写入 Abstract、Introduction、Related Work、Method、Experiment Setup、Limitations 与结果占位。
 - 新决策：在不增加方法组的前提下，允许新增少量更大实验来丰富论文。优先级为 Hard COCO Eval、Evidence-Style Prompt Eval 补全、POPE/AMBER 小子集、10k mixed scale-up。所有新增实验仍围绕 Base / Answer-DPO / Evidence-Hint DPO 三组，不加入 SFT、critic、多 backbone 或 3D。
 
@@ -229,8 +229,8 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 | --- | --- | --- | --- |
 | Figure 1 | 方法图 | Answer-DPO vs Evidence-Hint DPO 数据格式对比 | LaTeX 初稿已放入 `paper/main.tex` |
 | Table 1 | 主结果表 | Base / Answer-DPO / Evidence-Hint DPO | 等评测 |
-| Table 2 | Hard / external eval | Hard COCO，POPE/AMBER 小子集视数据可用性加入 | Hard COCO Base/Answer-DPO 已完成，Evidence-Hint job 64237 pending 64201 |
-| Table 3 | Prompt-mode analysis | normal prompt vs evidence-style prompt | Base/Answer-DPO 已完成，Evidence-Hint 待 64201 |
+| Table 2 | Hard / external eval | Hard COCO，POPE/AMBER 小子集视数据可用性加入 | Hard COCO Base/Answer-DPO/Evidence-Hint 已完成 |
+| Table 3 | Prompt-mode analysis | normal prompt vs evidence-style prompt | Base/Answer-DPO/Evidence-Hint 已完成 |
 | Table 4 | Scale-up trend | 5k vs 10k mixed Answer-DPO/Evidence-Hint DPO | 条件触发 |
 | Appendix Table | COCO-only auxiliary | 旧 5k COCO-only adapter 的 sanity check | 已有结果，视篇幅放正文或补充 |
 | Figure 2 | Case study | 4-6 个对象/属性/关系幻觉例子 | 等推理输出 |
@@ -251,9 +251,9 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 - [x] 记录两组训练的 train loss、runtime、steps、samples/sec：见 `experiments/training_summary.md`。Answer-DPO：loss 0.2791，runtime 3449.4s，157 steps，1.450 samples/sec；Evidence-Hint DPO：loss 0.1025，runtime 48163.8s，157 steps，0.104 samples/sec。
 - [x] 如果 64168 失败或明显卡住，先查看 `logs/train_evidence_hint_dpo.64168.err`，只修训练/数据格式问题，不扩大实验设定：64168 未失败；日志健康扫描未发现 Traceback、RuntimeError、CUDA OOM、nan 或 inf。
 - [x] 基于 2026-05-27 的 mixed COCO+GQA 数据重新跑 Answer-DPO：Slurm job 64200 已完成，ExitCode `0:0`，输出目录为 `outputs/llamafactory/qwen25vl7b_mixed_answer_dpo/`，train loss 0.3722，runtime 3417.2s。
-- [x] 基于 2026-05-27 的 mixed COCO+GQA 数据重新跑 Evidence-Hint DPO：已重新导出 mixed LLaMA-Factory 数据并启动 Slurm job 64201，状态检查时为 `RUNNING`，输出目录为 `outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo/`。
+- [x] 基于 2026-05-27 的 mixed COCO+GQA 数据重新跑 Evidence-Hint DPO：ZeRO-2 job 64252 已完成，ExitCode `0:0`，输出目录为 `outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo_zero2/`；原 ZeRO-3 job 64201 已取消。
 - [x] 将 64167/64168 标记为 COCO-only preliminary run，不放入 mixed 数据主表：见 `experiments/training_summary.md`，旧输出目录保留为 preliminary/auxiliary 记录。
-- [ ] 等 mixed Evidence-Hint DPO job 64201 完成后，记录 train loss、runtime、adapter 完整性和日志健康状态。
+- [x] 记录 mixed Evidence-Hint DPO ZeRO-2 train loss、runtime、adapter 完整性和日志健康状态：train loss 0.1347，runtime 950.96s，adapter 完整，日志健康扫描无训练失败。
 - [ ] 条件触发 10k scale-up：如果 Hard COCO / evidence-style / POPE 后主结论仍不够稳，重新导出 10k mixed 数据，并只重训 10k Answer-DPO 与 10k Evidence-Hint DPO；Base 不变，不新增方法组。
 
 ### B. 数据质检
@@ -271,7 +271,7 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 ### C. 评测脚本
 
 - [x] 准备 Base Instruct、Answer-DPO、Evidence-Hint DPO 的统一推理入口：`scripts/eval/run_vlm_inference.py` + `experiments/slurm/eval_vlm_object_hallucination.slurm`。
-- [x] 确认 LoRA adapter 加载方式，避免评测时只跑到 base 模型：`answer_dpo`/`evidence_hint_dpo` 缺少 `adapter_config.json` 或 `adapter_model.safetensors` 时脚本会直接报错退出；默认 adapter 路径已切到 mixed 输出目录，需在 64200/64201 完成后重跑 dry-run。
+- [x] 确认 LoRA adapter 加载方式，避免评测时只跑到 base 模型：`answer_dpo`/`evidence_hint_dpo` 缺少 `adapter_config.json` 或 `adapter_model.safetensors` 时脚本会直接报错退出；默认 `evidence_hint_dpo` 路径已切到 ZeRO-2 mixed 输出目录。
 - [x] 支持评测输出变体和 evidence-style prompt：Slurm 脚本新增 `OUTPUT_VARIANT` 和 `INSTRUCTION_SUFFIX`，避免 mixed 主结果、COCO-only auxiliary 和 evidence-style prompt 互相覆盖。
 - [x] 准备 POPE object hallucination 评测：`scripts/eval/prepare_pope_eval.py` 可将官方 POPE JSON/JSONL/CSV 规范化为统一 eval JSONL，后续复用同一推理与打分脚本。
 - [x] 准备一个 COCO held-out object-existence eval JSONL：`data/eval/coco_heldout_object_existence.jsonl`，共 1,000 条，yes/no 各 500 条，见 `data/eval/coco_heldout_object_existence.summary.json`。
@@ -287,14 +287,14 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 - [x] 跑 COCO-only auxiliary Base / Answer-DPO / Evidence-Hint DPO 评测：jobs 64205/64206/64207 均已完成，三组各 1,000 条输出。
 - [x] 汇总 COCO-only auxiliary 表：Base Acc 0.959、Answer-DPO Acc 0.961、Evidence-Hint DPO Acc 0.960；Evidence-Hint DPO false positive rate 0.016，低于 Answer-DPO 的 0.018。
 - [x] 对 mixed Answer-DPO 做 COCO held-out 与 GQA simple dry-run，确认 adapter registry 和路径正确：输出变体为 `mixed`。
-- [ ] 等 mixed Evidence-Hint DPO 64201 完成后，对 mixed Evidence-Hint DPO 做 dry-run，确认 adapter registry 和路径正确。
+- [x] 对 mixed Evidence-Hint DPO ZeRO-2 做 dry-run，确认 adapter registry 和路径正确。
 - [x] 跑 mixed Base Instruct 评测，至少覆盖 COCO held-out 与 GQA simple：COCO held-out 复用已完成 Base 输出，Acc 0.959；GQA simple job 64213 已完成，Acc 0.764。
 - [x] 跑 mixed Answer-DPO 评测，至少覆盖 COCO held-out 与 GQA simple：jobs 64214/64215 已完成，COCO Acc 0.961，GQA Acc 0.768。
-- [ ] 跑 mixed Evidence-Hint DPO 评测，至少覆盖 COCO held-out 与 GQA simple：jobs 64235/64236 已排入 afterok:64201 依赖队列。
+- [x] 跑 mixed Evidence-Hint DPO 评测，至少覆盖 COCO held-out 与 GQA simple：ZeRO-2 jobs 64255/64256 已完成，COCO Acc 0.961，GQA Acc 0.766。
 - [x] 检查 POPE 官方数据本地可用性：当前仓库未发现官方 POPE 标注或 COCO val2014 图像；本轮先把 POPE 放入 supplement/future work，除非后续单独准备官方数据。
-- [ ] 额外补一组 evidence-style prompt eval：提示模型回答 yes/no 后简短说明视觉证据，再复用 yes/no parser，检查 Evidence-Hint DPO 的训练信号是否需要在推理格式中被激活；Base/Answer-DPO jobs 64216-64219 已完成，Base COCO Acc 0.955，Base GQA Acc 0.768，Answer-DPO COCO Acc 0.956，Answer-DPO GQA Acc 0.766；Evidence-Hint DPO jobs 64238/64239 已排入 afterok:64201 依赖队列。
+- [x] 额外补一组 evidence-style prompt eval：提示模型回答 yes/no 后简短说明视觉证据，再复用 yes/no parser，检查 Evidence-Hint DPO 的训练信号是否需要在推理格式中被激活；Base/Answer-DPO jobs 64216-64219 已完成，Base COCO Acc 0.955，Base GQA Acc 0.768，Answer-DPO COCO Acc 0.956，Answer-DPO GQA Acc 0.766；Evidence-Hint DPO ZeRO-2 jobs 64258/64259 已完成，COCO Acc 0.955，GQA Acc 0.767。
 - [x] 完成 Hard COCO Base 与 mixed Answer-DPO 评测：jobs 64233/64234，Base Acc 0.944，mixed Answer-DPO Acc 0.950，输出变体为 `mixed`。
-- [ ] 收集 Hard COCO mixed Evidence-Hint DPO 评测结果：job 64237 已排入 afterok:64201 依赖队列，重点记录 false positive rate 和逐样本差异。
+- [x] 收集 Hard COCO mixed Evidence-Hint DPO 评测结果：ZeRO-2 job 64257 已完成，Acc 0.946，FPR 0.038，FNR 0.070。
 - [ ] 如果 POPE 数据准备完成，跑 POPE 三组评测；AMBER object/attribute subset 作为次优先。
 - [ ] 条件触发 10k scale-up 评测：10k Answer-DPO 与 10k Evidence-Hint DPO 至少跑 COCO held-out、Hard COCO、GQA simple 和 evidence-style prompt。
 - [ ] 填 Table 1：COCO held-out 与 GQA simple 的 Acc/BAcc/F1/FPR/FNR、Hard COCO FPR/FNR、yes/refusal/other rate。
@@ -331,7 +331,7 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 - [x] Plan B 写作路线：若 mixed 结果仍然差异很小，主文收窄为 controlled diagnostic study，明确说明 Base/Answer-DPO 已接近 ceiling、yes/no-only 推理弱化了 evidence hint 信号，并把 Hard COCO Eval、evidence-style prompt 与 10k scale-up 作为后续验证。
 - [ ] Plan B 实验补强：保留三组主实验不变，只增加评测视角，不新增训练组；evidence-style prompt 入口已完成并提交 Base/Answer-DPO，Hard COCO eval 已构造并提交前两组，paired bootstrap/McNemar 仍待主结果后决定。
 - [ ] 少量大实验优先级：Hard COCO Eval > Evidence-Style Prompt Eval 补全 > POPE/AMBER 小子集 > 10k mixed scale-up。除 10k scale-up 外都不需要新训练。
-- [ ] 若 64201 训练失败：先用已完成的 COCO-only adapter 和 mixed Answer-DPO 结果完成评测链路，修复 mixed Evidence-Hint DPO 训练后再补主表。
+- [x] 若 64201 训练失败或被替代：已用完成的 ZeRO-2 mixed Evidence-Hint adapter 作为默认主线，旧 64201 与依赖队列已取消。
 - [ ] 若 POPE 数据准备耗时：先用自建 held-out object-existence eval 出趋势表。
 - [ ] 若 Evidence-Hint DPO 生成时总带 evidence：在评测 prompt 中明确要求 `Answer with a short yes/no sentence only.`，并统计格式违规率。
 - [ ] 若 Answer-DPO 与 Evidence-Hint DPO 都退化：检查 DPO 数据中 rejected 是否过于模板化，必要时降低学习率或减少 epoch 后重训。

@@ -8,7 +8,7 @@
 
 数据侧已经完成 mixed 主训练集构造。当前 `data/processed/canonical_pairs_main.jsonl` 共 5,000 条，其中 3,500 条来自 COCO object existence，1,500 条来自 GQA simple attribute/relation。GQA 部分包括 986 条 color attribute、64 条 material attribute 和 450 条 left/right spatial relation。Answer-DPO 与 Evidence-Hint DPO 仍来自同一份 canonical pairs，只改变 response 中是否加入 evidence hint。`data/processed/check_report_main.json` 显示 0 error、0 warning，训练与评测图片去重检查通过，当前 train/eval image overlap 为 0。mixed audit 已重新汇总，`data/audit/audit_200_summary.json` 中 chosen correctness、rejected wrongness、hint correctness 三项均为 200/200。
 
-训练侧需要区分旧结果和新主实验。Answer-DPO job 64167 与 Evidence-Hint DPO job 64168 已正常结束，它们基于旧 5,000 条 COCO-only 数据，不应放入 mixed 数据论文主表。不过这两组 adapter 仍然有价值，可以作为 COCO-only auxiliary/preliminary result 写入论文补充结果或分析部分，用来展示 evidence hint 在纯对象存在设定下的先行趋势。2026-05-27 mixed LLaMA-Factory 数据已重新导出，两组 mixed DPO 已通过 Slurm 启动：Answer-DPO job 64200，Evidence-Hint DPO job 64201。训练设置保持 LoRA DPO、1 epoch、`pref_beta=0.1`、LoRA rank 16。
+训练侧需要区分旧结果和新主实验。Answer-DPO job 64167 与 Evidence-Hint DPO job 64168 已正常结束，它们基于旧 5,000 条 COCO-only 数据，不应放入 mixed 数据论文主表。不过这两组 adapter 仍然有价值，可以作为 COCO-only auxiliary/preliminary result 写入论文补充结果或分析部分，用来展示 evidence hint 在纯对象存在设定下的先行趋势。2026-05-27 mixed LLaMA-Factory 数据已重新导出，两组 mixed DPO 已完成：Answer-DPO job 64200，Evidence-Hint DPO ZeRO-2 job 64252。训练设置保持 LoRA DPO、1 epoch、`pref_beta=0.1`、LoRA rank 16；原 Evidence-Hint ZeRO-3 job 64201 已取消。
 
 评测侧已经准备好 1,000 条 COCO held-out object-existence eval，yes/no 各 500 条；也已准备好 `data/eval/gqa_simple_heldout.jsonl`，共 1,000 条，500 条 color attribute 和 500 条 left/right relation，yes/no 各 500 条，且训练 GQA image overlap 为 0。统一推理入口和 adapter 加载检查已有基础。等待 mixed 训练完成期间，可以先把旧 COCO-only adapter 的后续评测跑完，包括 COCO held-out、POPE、refusal rate 和格式违规检查。这些结果可作为额外表格或 appendix 结果，但表头必须标注为 `COCO-only training`。
 
@@ -26,7 +26,7 @@
 
 ## 4. 潜在问题和解决方案
 
-1. mixed 数据上的正式主训练尚未完成。当前状态是 64167/64168 已明确标记为 COCO-only auxiliary/preliminary run，mixed Answer-DPO 64200 和 mixed Evidence-Hint DPO 64201 已启动；后续需要等待完成并记录 mixed train metrics。
+1. mixed 数据上的正式主训练已完成。当前状态是 64167/64168 已明确标记为 COCO-only auxiliary/preliminary run，mixed Answer-DPO 64200 和 mixed Evidence-Hint DPO ZeRO-2 64252 已完成；后续聚焦补齐 evidence-style 评测与论文表格。
 
 2. GQA simple held-out eval 已准备完成。后续风险转为评测噪声：如果 GQA eval 噪声较高，主结论按 COCO/POPE 收窄，GQA 作为补充分析。
 

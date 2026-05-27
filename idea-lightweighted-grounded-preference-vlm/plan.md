@@ -158,7 +158,7 @@ data/processed/evidence_hint_dpo_train.jsonl
 
 如果资源充足但希望保持论文主线清楚，优先增加“评测视角”和“数据规模”，不要增加第四个方法组。推荐扩展仍围绕三组主实验：
 
-1. **Hard COCO Eval**：从现有 COCO annotation/held-out pool 构造更难的 absent-object negative，优先选择常共现、易混淆但未标注为可见的同粗类类别，用来缓解普通 COCO held-out 接近 ceiling 的问题；当前已生成 1,000 条 yes/no balanced Hard COCO eval，Base Acc 0.944，mixed Answer-DPO Acc 0.950，mixed Evidence-Hint DPO job 64237 已排入 afterok:64201 依赖队列。
+1. **Hard COCO Eval**：从现有 COCO annotation/held-out pool 构造更难的 absent-object negative，优先选择常共现、易混淆但未标注为可见的同粗类类别，用来缓解普通 COCO held-out 接近 ceiling 的问题；当前已生成 1,000 条 yes/no balanced Hard COCO eval，Base Acc 0.944，mixed Answer-DPO Acc 0.950，mixed Evidence-Hint DPO ZeRO-2 Acc 0.946。
 2. **Evidence-Style Prompt Eval**：评测时要求模型回答 yes/no 后简短说明视觉证据，比较 normal prompt 与 evidence-style prompt。它对应 future work 中 explicit/latent evidence 的简化版，不需要新训练。
 3. **POPE/AMBER 小子集**：尽量补一个外部 hallucination benchmark。POPE 优先级高于 AMBER；AMBER object/attribute subset 只在数据准备顺利时加入。
 4. **10k Mixed Scale-Up**：只扩大数据，不增加方法组。Base 不变，重训 10k Answer-DPO 与 10k Evidence-Hint DPO，用于观察 evidence hint 是否随数据规模更稳定。
