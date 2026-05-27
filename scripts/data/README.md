@@ -19,6 +19,18 @@ data/raw/gqa/images/
 
 Large files should be symlinked instead of copied.
 
+Official external benchmark images are prepared separately:
+
+```bash
+sbatch scripts/data/prepare_external_eval_images.slurm
+```
+
+This CPU Slurm job creates `data/raw/coco/val2014` for POPE and
+`data/raw/amber/images` for AMBER, then verifies the normalized external eval
+files with `--require-images`. AMBER image prep first tries the official Google
+Drive archive and falls back to the `visual-preference/AMBER` HF parquet mirror
+when Google Drive is unreachable from the cluster.
+
 If raw COCO/GQA files are not already available, submit the CPU-only HF
 download-and-process job:
 

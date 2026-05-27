@@ -60,6 +60,8 @@ def main() -> int:
     parser.add_argument("--max-new-tokens", type=int, default=32)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--top-p", type=float, default=1.0)
+    parser.add_argument("--image-min-pixels", type=int, default=None)
+    parser.add_argument("--image-max-pixels", type=int, default=None)
     parser.add_argument("--device-map", default="auto")
     parser.add_argument("--torch-dtype", default="bfloat16", choices=("auto", "float16", "bfloat16", "float32"))
     parser.add_argument(
@@ -204,11 +206,16 @@ def generate_one(model: Any, processor: Any, record: dict[str, Any], args: argpa
     from qwen_vl_utils import process_vision_info
 
     image_path = str(repo_path(record["image"]))
+    image_content: dict[str, Any] = {"type": "image", "image": image_path}
+    if args.image_min_pixels is not None:
+        image_content["min_pixels"] = args.image_min_pixels
+    if args.image_max_pixels is not None:
+        image_content["max_pixels"] = args.image_max_pixels
     messages = [
         {
             "role": "user",
             "content": [
-                {"type": "image", "image": image_path},
+                image_content,
                 {"type": "text", "text": build_prompt(record["question"], args.instruction_suffix)},
             ],
         }
@@ -272,6 +279,8 @@ def build_metadata(
         "max_new_tokens": args.max_new_tokens,
         "temperature": args.temperature,
         "top_p": args.top_p,
+        "image_min_pixels": args.image_min_pixels,
+        "image_max_pixels": args.image_max_pixels,
         "instruction_suffix": args.instruction_suffix,
         "dry_run": args.dry_run,
     }

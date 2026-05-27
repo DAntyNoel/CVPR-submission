@@ -146,6 +146,18 @@ val2014 images under `data/raw/coco/val2014`; AMBER images should be unpacked
 under `data/raw/amber/images`. Missing image counts are reported in each
 summary JSON.
 
+Prepare those image roots through the CPU Slurm image job:
+
+```bash
+sbatch scripts/data/prepare_external_eval_images.slurm
+```
+
+The job downloads the POPE-referenced COCO val2014 images from the COCO image
+server, then prepares AMBER images from the official Google Drive archive or,
+when Google Drive is unreachable, from the `visual-preference/AMBER` HF parquet
+mirror. It writes images into the expected roots and reruns the POPE/AMBER
+normalizers with `--require-images`.
+
 For a small wiring check of AMBER only, cap each dimension:
 
 ```bash
@@ -186,6 +198,20 @@ Slurm:
 ```bash
 DRY_RUN=1 scripts/eval/submit_external_benchmark_evals.sh
 scripts/eval/submit_external_benchmark_evals.sh
+```
+
+To submit the GPU evals after an image-prep job finishes:
+
+```bash
+DEPENDENCY=afterok:<image_job_id> scripts/eval/submit_external_benchmark_evals.sh
+```
+
+AMBER includes a few high-resolution images. To keep full AMBER inference
+tractable, cap Qwen visual input resolution through the Slurm environment:
+
+```bash
+IMAGE_MAX_PIXELS=1003520 EVALS=data/eval/amber_discriminative.jsonl \
+  scripts/eval/submit_external_benchmark_evals.sh
 ```
 
 ## Unified Inference

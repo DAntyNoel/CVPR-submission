@@ -32,6 +32,11 @@ def main() -> int:
     parser.add_argument("--skip-amber", action="store_true")
     parser.add_argument("--refresh", action="store_true", help="Run git pull in existing sparse checkouts.")
     parser.add_argument(
+        "--require-images",
+        action="store_true",
+        help="Fail if any normalized eval row still points to a missing image.",
+    )
+    parser.add_argument(
         "--amber-max-records-per-dimension",
         type=int,
         default=None,
@@ -126,24 +131,25 @@ def prepare_pope(args: argparse.Namespace, output_dir: Path) -> list[dict[str, A
         input_path = repo_path(args.pope_raw_root) / "output" / "coco" / f"coco_pope_{strategy}.json"
         output_path = output_dir / f"pope_coco_{strategy}.jsonl"
         summary_path = output_dir / f"pope_coco_{strategy}.summary.json"
-        run(
-            [
-                sys.executable,
-                str(SCRIPT_DIR / "prepare_pope_eval.py"),
-                "--input",
-                str(input_path),
-                "--image-root",
-                args.pope_image_root,
-                "--output",
-                str(output_path),
-                "--summary",
-                str(summary_path),
-                "--source-name",
-                f"pope_coco_{strategy}",
-                "--sampling-strategy",
-                strategy,
-            ]
-        )
+        command = [
+            sys.executable,
+            str(SCRIPT_DIR / "prepare_pope_eval.py"),
+            "--input",
+            str(input_path),
+            "--image-root",
+            args.pope_image_root,
+            "--output",
+            str(output_path),
+            "--summary",
+            str(summary_path),
+            "--source-name",
+            f"pope_coco_{strategy}",
+            "--sampling-strategy",
+            strategy,
+        ]
+        if args.require_images:
+            command.append("--require-images")
+        run(command)
         outputs.append(
             {
                 "benchmark": "pope",
@@ -177,6 +183,8 @@ def prepare_amber(args: argparse.Namespace, output_dir: Path) -> dict[str, Any]:
     ]
     if args.amber_max_records_per_dimension is not None:
         command.extend(["--max-records-per-dimension", str(args.amber_max_records_per_dimension)])
+    if args.require_images:
+        command.append("--require-images")
     run(command)
     return {
         "benchmark": "amber",

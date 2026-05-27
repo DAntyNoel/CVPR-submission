@@ -13,6 +13,8 @@ EVALS=(${EVALS:- \
   data/eval/amber_discriminative.jsonl \
 })
 DRY_RUN="${DRY_RUN:-0}"
+DEPENDENCY="${DEPENDENCY:-}"
+SBATCH_ARGS=(${SBATCH_ARGS:-})
 
 cd "${ROOT_DIR}"
 
@@ -24,9 +26,19 @@ for eval_jsonl in "${EVALS[@]}"; do
   for model_key in "${MODELS[@]}"; do
     cmd=(
       sbatch
+      "${SBATCH_ARGS[@]}"
       --export="ALL,MODEL_KEY=${model_key},EVAL_JSONL=${ROOT_DIR}/${eval_jsonl},OUTPUT_VARIANT=${OUTPUT_VARIANT}"
       experiments/slurm/eval_vlm_object_hallucination.slurm
     )
+    if [[ -n "${DEPENDENCY}" ]]; then
+      cmd=(
+        sbatch
+        "${SBATCH_ARGS[@]}"
+        --dependency="${DEPENDENCY}"
+        --export="ALL,MODEL_KEY=${model_key},EVAL_JSONL=${ROOT_DIR}/${eval_jsonl},OUTPUT_VARIANT=${OUTPUT_VARIANT}"
+        experiments/slurm/eval_vlm_object_hallucination.slurm
+      )
+    fi
     if [[ "${DRY_RUN}" == "1" ]]; then
       printf '+'
       printf ' %q' "${cmd[@]}"

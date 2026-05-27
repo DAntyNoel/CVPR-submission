@@ -254,13 +254,23 @@ python scripts/eval/prepare_official_external_benchmarks.py
 This produces POPE random/popular/adversarial and AMBER discriminative eval
 files under `data/eval/`. It only downloads official annotations/query files.
 Before GPU evaluation, place COCO val2014 images at `data/raw/coco/val2014`
-and AMBER official images at `data/raw/amber/images`. Submit the fixed
-Base/Answer-DPO/Evidence-Hint DPO comparison with:
+and AMBER images at `data/raw/amber/images`; the CPU Slurm helper fills those
+roots and falls back to the `visual-preference/AMBER` HF parquet mirror if
+Google Drive is blocked:
+
+```bash
+sbatch scripts/data/prepare_external_eval_images.slurm
+```
+
+Submit the fixed Base/Answer-DPO/Evidence-Hint DPO comparison with:
 
 ```bash
 DRY_RUN=1 scripts/eval/submit_external_benchmark_evals.sh
 scripts/eval/submit_external_benchmark_evals.sh
 ```
+
+For the full AMBER split, set `IMAGE_MAX_PIXELS=1003520` to avoid very large
+visual-token counts on high-resolution AMBER images.
 
 After the mixed adapter directories are written, check adapter wiring without
 loading the model:

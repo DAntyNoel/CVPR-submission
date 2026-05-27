@@ -17,6 +17,8 @@ EVAL_JSONL="${EVAL_JSONL:-/home/fhshao/CVPR-submission/data/eval/coco_heldout_ob
 ADAPTER_NAME_OR_PATH="${ADAPTER_NAME_OR_PATH:-}"
 MAX_SAMPLES="${MAX_SAMPLES:-}"
 MAX_NEW_TOKENS="${MAX_NEW_TOKENS:-32}"
+IMAGE_MIN_PIXELS="${IMAGE_MIN_PIXELS:-}"
+IMAGE_MAX_PIXELS="${IMAGE_MAX_PIXELS:-}"
 INSTRUCTION_SUFFIX="${INSTRUCTION_SUFFIX:-Answer with a short yes/no sentence only.}"
 OUTPUT_VARIANT="${OUTPUT_VARIANT:-}"
 
@@ -48,6 +50,14 @@ ARGS=(
 
 if [[ -n "${MAX_SAMPLES}" ]]; then
   ARGS+=(--max-samples "${MAX_SAMPLES}")
+fi
+
+if [[ -n "${IMAGE_MIN_PIXELS}" ]]; then
+  ARGS+=(--image-min-pixels "${IMAGE_MIN_PIXELS}")
+fi
+
+if [[ -n "${IMAGE_MAX_PIXELS}" ]]; then
+  ARGS+=(--image-max-pixels "${IMAGE_MAX_PIXELS}")
 fi
 
 if [[ -n "${ADAPTER_NAME_OR_PATH}" ]]; then

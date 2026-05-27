@@ -36,6 +36,18 @@ Conclusion: increasing the mixed preference set from 5k to 10k did not change
 the Evidence-Hint trend. It still lowers false positives, but Acc/F1 remain at
 or below Answer-DPO on all three normal-prompt evals.
 
+Metric refresh for the phase-1/main results: on 2026-05-27, the saved
+generation JSONL files for COCO held-out, GQA simple, Hard COCO, evidence-style
+prompting, the Base-error mining candidate pool, and the Base-error-mined
+locked set were rescored with the current `score_object_eval.py`. The headline
+numbers below are unchanged. Official POPE/AMBER evals were then run on the
+same three phase-1 model groups with `OUTPUT_VARIANT=mixed_external`; POPE uses
+the prepared COCO val2014 image root, and AMBER uses the prepared 1,004-image
+root with `IMAGE_MAX_PIXELS=1003520` to keep high-resolution images tractable.
+The external results reinforce the main reading: Answer-DPO has the small edge,
+while Evidence-Hint DPO stays close to Base and does not produce a consistent
+metric gain.
+
 ## Normal Yes/No Prompt
 
 Prompt suffix:
@@ -69,6 +81,35 @@ same-coarse-group absent-object negatives, and `train_eval_image_overlap = 0`.
 | Base Instruct | 64233 | COMPLETED | 0.944 | 0.944 | 0.943 | 0.038 | 0.074 | 0.482 | 0.000 | 0.000 | TP 463 / FP 19 / TN 481 / FN 37 |
 | mixed Answer-DPO | 64234 | COMPLETED | 0.950 | 0.950 | 0.949 | 0.040 | 0.060 | 0.490 | 0.000 | 0.000 | TP 470 / FP 20 / TN 480 / FN 30 |
 | mixed Evidence-Hint DPO | 64257 | COMPLETED | 0.946 | 0.946 | 0.945 | 0.038 | 0.070 | 0.484 | 0.000 | 0.000 | TP 465 / FP 19 / TN 481 / FN 35 |
+
+## External POPE/AMBER
+
+Image roots are now resolved: POPE has 500 referenced COCO val2014 images under
+`data/raw/coco/val2014`, and AMBER has 1,004 images under
+`data/raw/amber/images`. The image-prep job 64378 completed with 0 missing eval
+image references. POPE evals used the standard yes/no suffix. AMBER evals used
+the same suffix plus `IMAGE_MAX_PIXELS=1003520` for Qwen visual preprocessing.
+
+| Eval | Method | Job | N | Acc | BAcc | F1 | Neg-F1 | FPR | FNR | Yes | Other |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| POPE random | Base Instruct | 64379 | 3000 | 0.887 | 0.887 | 0.874 | 0.898 | 0.009 | 0.217 | 0.396 | 0.000 |
+| POPE random | mixed Answer-DPO | 64380 | 3000 | 0.889 | 0.889 | 0.876 | 0.899 | 0.011 | 0.212 | 0.399 | 0.000 |
+| POPE random | mixed Evidence-Hint DPO | 64381 | 3000 | 0.887 | 0.887 | 0.874 | 0.897 | 0.010 | 0.217 | 0.397 | 0.000 |
+| POPE popular | Base Instruct | 64382 | 3000 | 0.877 | 0.877 | 0.865 | 0.888 | 0.029 | 0.217 | 0.406 | 0.000 |
+| POPE popular | mixed Answer-DPO | 64383 | 3000 | 0.878 | 0.878 | 0.866 | 0.888 | 0.031 | 0.212 | 0.410 | 0.000 |
+| POPE popular | mixed Evidence-Hint DPO | 64384 | 3000 | 0.877 | 0.877 | 0.865 | 0.888 | 0.029 | 0.217 | 0.406 | 0.000 |
+| POPE adversarial | Base Instruct | 64385 | 3000 | 0.867 | 0.867 | 0.855 | 0.878 | 0.049 | 0.217 | 0.416 | 0.000 |
+| POPE adversarial | mixed Answer-DPO | 64386 | 3000 | 0.869 | 0.869 | 0.857 | 0.879 | 0.050 | 0.212 | 0.419 | 0.000 |
+| POPE adversarial | mixed Evidence-Hint DPO | 64387 | 3000 | 0.867 | 0.867 | 0.855 | 0.877 | 0.049 | 0.217 | 0.416 | 0.000 |
+| AMBER discr. | Base Instruct | 64392 | 14216 | 0.879 | 0.852 | 0.810 | 0.911 | 0.066 | 0.230 | 0.303 | 0.000 |
+| AMBER discr. | mixed Answer-DPO | 64393 | 14216 | 0.881 | 0.858 | 0.817 | 0.912 | 0.070 | 0.214 | 0.311 | 0.000 |
+| AMBER discr. | mixed Evidence-Hint DPO | 64394 | 14216 | 0.879 | 0.852 | 0.811 | 0.911 | 0.068 | 0.227 | 0.305 | 0.000 |
+
+AMBER dimension slices follow the same pattern. Answer-DPO is highest on the
+relation subset (0.791 Acc vs. Base 0.774 and Evidence-Hint 0.775) and slightly
+higher on attribute (0.861 vs. 0.857/0.857), while Base is marginally higher on
+existence (0.948 vs. 0.944/0.946). No external run produced refusals or other
+invalid answers.
 
 ## Evidence-Style Prompt
 
