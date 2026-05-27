@@ -14,10 +14,12 @@
 - 5k mixed preference pairs 已生成：3,500 COCO object-existence + 1,500 GQA simple attribute/relation。
 - mixed audit 与泄漏检查已完成，审计摘要见 `data/audit/`，当前 train/eval image overlap 为 0。
 - GQA simple held-out eval 已生成：`data/eval/gqa_simple_heldout.jsonl`，共 1,000 条，color 与 left/right relation 各 500 条。
+- Hard COCO held-out eval 已生成：`data/eval/coco_hard_object_existence.jsonl`，共 1,000 条，yes/no 各 500 条，500 张 held-out 图像，train/eval image overlap 为 0。
 - mixed Answer-DPO job 64200 已完成并写出 mixed adapter；真实 mixed Evidence-Hint DPO job 64201
   在现有实验记录中仍等待最终核验。论文正文中的 Evidence-Hint 主结果用于本轮“实验一切正常”写作与评审模拟，真实投稿前需用最终评测日志替换核对。
 - 5k COCO-only adapter 的三组 held-out object-existence 验证已完成：Base Acc 0.959、Answer-DPO Acc 0.961、Evidence-Hint DPO Acc 0.960。
 - 统一评测脚本已支持输出变体目录和 evidence-style prompt；Base 与 mixed Answer-DPO 的 COCO/GQA normal prompt 及 evidence-style prompt 评测均已完成，partial summary 见 `experiments/eval_summary.md`。Evidence-Hint DPO 评测等待 64201 完成后再提交。
+- 等待 64201 时，Hard COCO 的 Base 与 mixed Answer-DPO 评测 jobs 64233/64234 已完成：Base Acc 0.944，mixed Answer-DPO Acc 0.950；mixed Evidence-Hint DPO 的 Hard COCO、COCO/GQA normal prompt 与 evidence-style prompt 评测仍等待最终 adapter。
 
 ## 目录结构
 
@@ -46,13 +48,14 @@ experiments/
 
 paper/
   main.tex                         # CVPR 2026 完整草稿，含 assumed-normal 主结果
+  main_full.tex                    # 独立完整稿入口，编译时包含 appendix
   preamble.tex                     # 与 cvpr-org/author-kit 对齐的 preamble helper
   local_xetex_fonts.tex            # Tectonic/XeTeX T1 编码修正，恢复 Times/Helvetica 粗体
   rebuttal.tex                     # cvpr-org/author-kit 官方 author-response 模板
   cvpr.sty                         # CVPR 2026 官方样式
   ieeenat_fullname.bst             # CVPR 2026 官方引用样式
   references.bib                   # 初稿引用
-  appendix.tex                     # 可选附录骨架，默认不启用
+  appendix.tex                     # full-paper build 使用的补充材料
   Makefile                         # Tectonic 论文编译入口
   rebuttal/                        # 两位模拟 reviewer 的评审结果
 
@@ -92,6 +95,18 @@ conda create -n cvpr-latex -c conda-forge tectonic=0.16.9
 
 默认编译器为 Tectonic 0.16.9，输出文件为 `paper/build/main.pdf`。第一次编译会在 `~/.cache/Tectonic/` 缓存 TeX 资源；后续编译可直接复用。由于当前账号没有免密 sudo，未安装系统级 TeX Live，仓库默认不依赖 `apt install` 或系统 `latexmk`。
 
+如需独立编译带附录的完整稿：
+
+```bash
+conda activate cvpr-latex
+cd paper
+make full
+```
+
+输出文件为 `paper/build/main_full.pdf`。2026-05-27 已验证：普通 `make pdf`
+生成 4 页 `paper/build/main.pdf`，`make full` 生成 5 页带附录
+`paper/build/main_full.pdf`。
+
 ## 数据流水线
 
 详细命令见 `scripts/data/README.md`。核心产物是：
@@ -103,6 +118,7 @@ data/processed/evidence_hint_dpo_train.jsonl
 data/audit/audit_200.csv
 data/processed/check_report_main.json
 data/eval/gqa_simple_heldout.jsonl
+data/eval/coco_hard_object_existence.jsonl
 ```
 
 如果需要重新生成数据，优先使用已有 Slurm 脚本或轻量 CPU 脚本；大文件建议软链接，不要直接复制进仓库。
@@ -158,6 +174,16 @@ python scripts/eval/prepare_gqa_simple_heldout_eval.py \
   --train data/processed/canonical_pairs_main.jsonl \
   --output data/eval/gqa_simple_heldout.jsonl \
   --max-rows 1000 \
+  --seed 42
+```
+
+Hard COCO held-out eval 已准备好；如需重建：
+
+```bash
+python scripts/eval/prepare_coco_hard_eval.py \
+  --heldout-image-ids data/eval/heldout_object_existence_image_ids.txt \
+  --output data/eval/coco_hard_object_existence.jsonl \
+  --max-pairs 500 \
   --seed 42
 ```
 
@@ -221,7 +247,7 @@ ADAPTER_NAME_OR_PATH=outputs/llamafactory/qwen25vl7b_evidence_hint_dpo \
 ```
 
 2026-05-27 等待 mixed Evidence-Hint DPO 64201 时，已提交可先跑的 mixed/evidence-style
-评测。当前这些 job 均已完成：
+评测；Hard COCO 前两组也已提交。当前状态：
 
 ```text
 64213  COMPLETED  Base Instruct      GQA simple, mixed output variant
@@ -231,6 +257,8 @@ ADAPTER_NAME_OR_PATH=outputs/llamafactory/qwen25vl7b_evidence_hint_dpo \
 64217  COMPLETED  Base Instruct      COCO held-out, evidence_prompt output variant
 64218  COMPLETED  mixed Answer-DPO   GQA simple, evidence_prompt output variant
 64219  COMPLETED  mixed Answer-DPO   COCO held-out, evidence_prompt output variant
+64233  COMPLETED  Base Instruct      Hard COCO, mixed output variant
+64234  COMPLETED  mixed Answer-DPO   Hard COCO, mixed output variant
 ```
 
 当前可用的 mixed partial 指标：
@@ -238,6 +266,7 @@ ADAPTER_NAME_OR_PATH=outputs/llamafactory/qwen25vl7b_evidence_hint_dpo \
 ```text
 COCO held-out: Base Acc 0.959, mixed Answer-DPO Acc 0.961
 GQA simple:    Base Acc 0.764, mixed Answer-DPO Acc 0.768
+Hard COCO:     Base Acc 0.944, mixed Answer-DPO Acc 0.950
 ```
 
 生成结果保存到：
@@ -272,7 +301,7 @@ TU 编码下不会自动解析，因此 `paper/local_xetex_fonts.tex` 强制使�
 - 方法：不改模型结构、不改 DPO loss，只改 preference response 格式。
 - 数据：5k mixed COCO/GQA preference pairs，覆盖对象存在、简单颜色/材质属性和左右空间关系。
 - 实验：Base Instruct、Answer-DPO、Evidence-Hint DPO 三组。
-- 指标：POPE、COCO held-out accuracy/F1、GQA simple accuracy、yes bias、refusal rate。
+- 指标：COCO held-out、Hard COCO、GQA simple、yes bias、refusal rate；POPE/AMBER 视官方数据可用性补充。
 - 限制：不声称解决计数、多步关系、开放式描述或复杂 grounding。
 
 注意：当前论文表格中的 Evidence-Hint DPO 行是按用户指定的“实验正常完成”前提写入的正向结果，用于完善论文叙事和模拟评审；真实提交前应以 `experiments/eval_summary.md` 和最终 Slurm 输出为准逐项复核。

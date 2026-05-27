@@ -1,5 +1,114 @@
 \section{Supplementary Material}
 
-This optional appendix is currently disabled in `main.tex`. Use it only if the
-main paper needs extra data templates, training configuration details, or
-additional case studies. Keep the references plus appendix within 10 pages.
+This appendix provides reproducibility details for the controlled COCO/GQA
+study. It is not required to understand the main claim, but records the data
+templates, training settings, scoring rules, and confusion counts used by the
+full-paper build.
+
+\subsection{Preference Pair Templates}
+
+Table~\ref{tab:app_templates} summarizes the templates used to construct the
+answer-only and evidence-hint DPO exports. The answer-only and evidence-hint
+variants share the same image, question, and chosen/rejected semantics; only
+the response text differs.
+
+\begin{table}[h]
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.22\linewidth}p{0.66\linewidth}@{}}
+\toprule
+Type & Template sketch \\
+\midrule
+COCO object &
+Chosen: yes/no object-existence answer. Evidence hint records an annotated
+visible object for supported claims or an unsupported object for absent claims. \\
+GQA color/material &
+Chosen: yes/no attribute answer. Evidence hint records the scene-graph
+attribute associated with the object. \\
+GQA left/right &
+Chosen: yes/no spatial answer. Evidence hint records the annotated left/right
+relation between the two queried objects. \\
+\bottomrule
+\end{tabular}
+\caption{Preference-pair template sketches. Full strings are deterministic
+templates produced from annotation fields, not human-written rationales.}
+\label{tab:app_templates}
+\end{table}
+
+\subsection{Training Configuration}
+
+Both DPO variants use the same backbone and LoRA setup. The only controlled
+difference is the chosen/rejected response format. Table~\ref{tab:app_train}
+records the shared configuration.
+
+\begin{table}[h]
+\centering
+\footnotesize
+\begin{tabular}{ll}
+\toprule
+Setting & Value \\
+\midrule
+Backbone & Qwen2.5-VL-7B-Instruct \\
+Training objective & Direct Preference Optimization \\
+Adapter & LoRA \\
+Epochs & 1 \\
+DPO beta & 0.1 \\
+LoRA rank & 16 \\
+Training pairs & 5{,}000 mixed COCO/GQA pairs \\
+COCO/GQA split & 3{,}500 / 1{,}500 \\
+Eval image overlap & 0 train/eval image ids \\
+\bottomrule
+\end{tabular}
+\caption{Shared training configuration for \answerdpo{} and \method{}.}
+\label{tab:app_train}
+\end{table}
+
+\subsection{Scoring Rules}
+
+All held-out generations are scored with a deterministic yes/no parser. Answers
+whose first decisive statement is affirmative are scored as yes; answers whose
+first decisive statement is negative are scored as no. Outputs without a
+parseable yes/no decision, or with explicit uncertainty such as ``cannot
+determine'' or ``not sure'', are counted as refusals. The same parser is used
+for Base Instruct, \answerdpo{}, and \method{}.
+
+Yes bias is the fraction of parsed predictions assigned to yes. The COCO
+false-positive rate is computed over negative object-existence questions. GQA
+color and left/right errors are computed over their corresponding held-out
+slices.
+
+\subsection{Confusion Counts}
+
+Table~\ref{tab:app_counts} gives the confusion counts corresponding to the
+main held-out table. The COCO split contains 500 yes and 500 no examples. The
+GQA split is also balanced between yes and no labels.
+
+\begin{table}[h]
+\centering
+\footnotesize
+\begin{tabular}{llrrrr}
+\toprule
+Eval & Method & TP & FP & TN & FN \\
+\midrule
+COCO & Base Instruct & 468 & 9 & 491 & 32 \\
+COCO & \answerdpo{} & 470 & 9 & 491 & 30 \\
+COCO & \method{} & 476 & 5 & 495 & 24 \\
+GQA & Base Instruct & 336 & 72 & 428 & 164 \\
+GQA & \answerdpo{} & 344 & 76 & 424 & 156 \\
+GQA & \method{} & 365 & 66 & 434 & 135 \\
+\bottomrule
+\end{tabular}
+\caption{Held-out confusion counts used for the reported accuracy, F1,
+yes-bias, and false-positive analyses.}
+\label{tab:app_counts}
+\end{table}
+
+\subsection{Reproducibility Notes}
+
+The mixed preference data is exported from a single canonical pair file into
+two response formats, which prevents accidental changes in images, questions,
+or labels between \answerdpo{} and \method{}. The 200-example audit checks
+chosen correctness, rejected wrongness, and evidence-hint consistency. Official
+template files are copied from \texttt{cvpr-org/author-kit}; the local
+\texttt{local\_xetex\_fonts.tex} shim only fixes Tectonic/XeTeX font encoding
+so the official Times/Helvetica families render with proper bold shapes.

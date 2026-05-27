@@ -9,6 +9,8 @@ positive trend.
 Current files:
 
 - `main.tex`: paper body with assumed-normal main results and analysis.
+- `main_full.tex`: standalone entry point that enables the appendix and writes
+  `build/main_full.pdf`.
 - `preamble.tex`: CVPR author-kit preamble helper, kept aligned with the
   official template structure.
 - `local_xetex_fonts.tex`: local Tectonic/XeTeX font shim that forces T1 font
@@ -20,7 +22,7 @@ Current files:
   (<https://github.com/cvpr-org/author-kit>).
 - `ieeenat_fullname.bst`: official bibliography style from `cvpr-org/author-kit`.
 - `references.bib`: minimal bibliography entries used by the draft.
-- `appendix.tex`: optional appendix skeleton, currently disabled in `main.tex`.
+- `appendix.tex`: supplementary material included by `main_full.tex`.
 - `Makefile`: Tectonic-based local build entry point.
 - `rebuttal/`: simulated reviewer reports for the current PDF.
 
@@ -47,8 +49,8 @@ Page budget:
 - Main body target: 6 pages preferred, with 7 pages acceptable and 8 pages as
   the hard CVPR-style upper bound.
 - References plus optional appendix: keep within 10 pages.
-- Appendix is optional and should remain disabled unless extra templates,
-  training details, or case studies are genuinely needed.
+- The normal review PDF excludes the appendix; the independent full-paper build
+  includes it for internal review and supplementary inspection.
 
 Build locally on the current machine with the user-level conda environment:
 
@@ -57,11 +59,20 @@ conda activate cvpr-latex
 make pdf
 ```
 
-This writes `build/main.pdf`. The environment currently uses Tectonic 0.16.9
+This writes `build/main.pdf`. To compile the independent full paper with
+appendix:
+
+```bash
+conda activate cvpr-latex
+make full
+```
+
+This writes `build/main_full.pdf`. The environment currently uses Tectonic 0.16.9
 because system-level TeX Live cannot be installed without sudo on this machine.
-The PDF build was verified on 2026-05-27. The remaining non-fatal warning is
-the upstream `lineno.sty` UTF-8 warning from the bundled review style; there
-are no current overfull table warnings or Times/Helvetica font-substitution
+The PDF builds were verified on 2026-05-27: `build/main.pdf` is 4 pages and
+`build/main_full.pdf` is 5 pages. The remaining non-fatal warning is the
+upstream `lineno.sty` UTF-8 warning from the bundled review style; there are
+no current overfull table warnings or Times/Helvetica font-substitution
 warnings.
 
 The draft currently uses review mode:

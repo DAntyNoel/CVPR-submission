@@ -343,10 +343,12 @@ evidence can make preference tuning less dependent on answer style alone.
     \bibliography{references}
 }
 
-% Optional supplementary material. Keep references plus appendix within the
-% user-requested 10-page post-body budget if this block is enabled.
-% \clearpage
-% \appendix
-% \input{appendix}
+% Optional supplementary material. Compile `main_full.tex` or run `make full`
+% to include the appendix without changing the main review PDF.
+\ifdefined\cvprincludeappendix
+  \clearpage
+  \appendix
+  \input{appendix}
+\fi
 
 \end{document}
