@@ -214,12 +214,12 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 
 ### C. 评测脚本
 
-- [ ] 准备 Base Instruct、Answer-DPO、Evidence-Hint DPO 的统一推理入口。
-- [ ] 确认 LoRA adapter 加载方式，避免评测时只跑到 base 模型。
-- [ ] 准备 POPE object hallucination 评测。
-- [ ] 准备一个 COCO held-out object-existence eval JSONL，用于快速复核趋势。
-- [ ] 实现 refusal rate 统计脚本。
-- [ ] 保存每组模型的原始生成结果，后续做 case study。
+- [x] 准备 Base Instruct、Answer-DPO、Evidence-Hint DPO 的统一推理入口：`scripts/eval/run_vlm_inference.py` + `experiments/slurm/eval_vlm_object_hallucination.slurm`。
+- [x] 确认 LoRA adapter 加载方式，避免评测时只跑到 base 模型：`answer_dpo`/`evidence_hint_dpo` 缺少 `adapter_config.json` 或 `adapter_model.safetensors` 时脚本会直接报错退出；当前 Answer-DPO dry-run 通过，Evidence-Hint DPO 因 A 项训练产物尚不完整而按预期被拦截。
+- [x] 准备 POPE object hallucination 评测：`scripts/eval/prepare_pope_eval.py` 可将官方 POPE JSON/JSONL/CSV 规范化为统一 eval JSONL，后续复用同一推理与打分脚本。
+- [x] 准备一个 COCO held-out object-existence eval JSONL：`data/eval/coco_heldout_object_existence.jsonl`，共 1,000 条，yes/no 各 500 条，见 `data/eval/coco_heldout_object_existence.summary.json`。
+- [x] 实现 refusal rate 统计脚本：`scripts/eval/score_object_eval.py` 输出 Acc、F1、yes bias、refusal rate 和二分类混淆矩阵。
+- [x] 保存每组模型的原始生成结果，后续做 case study：统一输出到 `results/eval/generations/<eval_name>/<model_key>.jsonl`，保留 image、question、target、prompt、generation、model key 和 method。
 
 ### D. 主结果
 

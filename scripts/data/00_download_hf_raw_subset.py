@@ -204,6 +204,7 @@ def main() -> int:
     parser.add_argument("--gqa-images", type=int, default=4000)
     parser.add_argument("--max-scan", type=int, default=50000)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--skip-coco", action="store_true")
     parser.add_argument("--skip-gqa", action="store_true")
     parser.add_argument("--manifest", default="data/raw/download_manifest.json")
     parser.add_argument("--allow-empty-gqa", action="store_true")
@@ -212,11 +213,15 @@ def main() -> int:
     print_env()
     random.seed(args.seed)
 
-    try:
-        coco_manifest = download_coco(args)
-    except Exception as exc:  # noqa: BLE001
-        print(f"COCO download/normalization failed: {exc}", file=sys.stderr)
-        raise
+    existing_manifest = load_existing_manifest(args.manifest)
+    if args.skip_coco:
+        coco_manifest = existing_manifest.get("coco", {"status": "skipped"})
+    else:
+        try:
+            coco_manifest = download_coco(args)
+        except Exception as exc:  # noqa: BLE001
+            print(f"COCO download/normalization failed: {exc}", file=sys.stderr)
+            raise
 
     if args.skip_gqa:
         gqa_manifest = {"status": "skipped"}
@@ -245,6 +250,18 @@ def print_env() -> None:
     print("http_proxy=", os.environ.get("http_proxy", ""))
     print("https_proxy=", os.environ.get("https_proxy", ""))
     print("all_proxy=", os.environ.get("all_proxy", ""))
+
+
+def load_existing_manifest(path: str | Path) -> dict[str, Any]:
+    path = repo_path(path)
+    if not path.exists():
+        return {}
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            payload = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
 
 
 def download_coco(args: argparse.Namespace) -> dict[str, Any]:
@@ -790,4 +807,3 @@ def as_list(value: Any) -> list[Any]:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

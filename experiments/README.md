@@ -41,3 +41,67 @@ torch 2.8.0 to avoid the LLaMA-Factory torch 2.9 + Conv3D guard for Qwen2.5-VL.
 The current processed data is COCO-only because GQA download failed under the
 cluster HF mirror path. This matches the fallback in the data plan and narrows
 the first conclusion to simple object hallucination.
+
+## Evaluation Startup
+
+The unified eval scripts live in `scripts/eval/`.
+
+Build the lightweight held-out eval set:
+
+```bash
+python scripts/eval/prepare_coco_heldout_eval.py \
+  --heldout-image-ids data/eval/heldout_object_existence_image_ids.txt \
+  --output data/eval/coco_heldout_object_existence.jsonl \
+  --max-pairs 500 \
+  --seed 42
+```
+
+Normalize POPE annotations when the official POPE file is available:
+
+```bash
+python scripts/eval/prepare_pope_eval.py \
+  --input path/to/pope.jsonl \
+  --image-root data/raw/coco/val2014 \
+  --output data/eval/pope_object_hallucination.jsonl
+```
+
+Check adapter wiring without loading the model:
+
+```bash
+python scripts/eval/run_vlm_inference.py \
+  --model-key answer_dpo \
+  --eval data/eval/coco_heldout_object_existence.jsonl \
+  --dry-run
+```
+
+The inference script refuses to run `answer_dpo` or `evidence_hint_dpo` unless
+the LoRA adapter directory contains both `adapter_config.json` and
+`adapter_model.safetensors`, preventing adapter rows from silently evaluating
+the base model.
+
+Submit GPU eval jobs with:
+
+```bash
+MODEL_KEY=base EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl \
+  sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
+
+MODEL_KEY=answer_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl \
+  sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
+
+MODEL_KEY=evidence_hint_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl \
+  sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
+```
+
+Raw generations and metadata are written to:
+
+```text
+results/eval/generations/<eval_name>/<model_key>.jsonl
+results/eval/generations/<eval_name>/<model_key>.metadata.json
+```
+
+Score saved generations with:
+
+```bash
+python scripts/eval/score_object_eval.py \
+  --input results/eval/generations/coco_heldout_object_existence/base.jsonl
+```
