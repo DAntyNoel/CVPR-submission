@@ -17,6 +17,8 @@ EVAL_JSONL="${EVAL_JSONL:-/home/fhshao/CVPR-submission/data/eval/coco_heldout_ob
 ADAPTER_NAME_OR_PATH="${ADAPTER_NAME_OR_PATH:-}"
 MAX_SAMPLES="${MAX_SAMPLES:-}"
 MAX_NEW_TOKENS="${MAX_NEW_TOKENS:-32}"
+INSTRUCTION_SUFFIX="${INSTRUCTION_SUFFIX:-Answer with a short yes/no sentence only.}"
+OUTPUT_VARIANT="${OUTPUT_VARIANT:-}"
 
 cd /home/fhshao/CVPR-submission
 unset http_proxy
@@ -28,7 +30,11 @@ export PYTHONPATH=/home/fhshao/CVPR-submission/LLaMA-Factory/src:/home/fhshao/CV
 export PATH=/home/fhshao/miniconda3/envs/verl0.6/bin:$PATH
 
 EVAL_NAME="$(basename "${EVAL_JSONL}" .jsonl)"
-OUTPUT="/home/fhshao/CVPR-submission/results/eval/generations/${EVAL_NAME}/${MODEL_KEY}.jsonl"
+OUTPUT_DIR="/home/fhshao/CVPR-submission/results/eval/generations/${EVAL_NAME}"
+if [[ -n "${OUTPUT_VARIANT}" ]]; then
+  OUTPUT_DIR="${OUTPUT_DIR}/${OUTPUT_VARIANT}"
+fi
+OUTPUT="${OUTPUT_DIR}/${MODEL_KEY}.jsonl"
 mkdir -p "$(dirname "${OUTPUT}")"
 
 ARGS=(
@@ -37,6 +43,7 @@ ARGS=(
   --eval "${EVAL_JSONL}"
   --output "${OUTPUT}"
   --max-new-tokens "${MAX_NEW_TOKENS}"
+  --instruction-suffix "${INSTRUCTION_SUFFIX}"
 )
 
 if [[ -n "${MAX_SAMPLES}" ]]; then

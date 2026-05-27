@@ -93,13 +93,13 @@ outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo/
 GPU generation should be submitted with:
 
 ```bash
-MODEL_KEY=base EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl \
+MODEL_KEY=base EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl OUTPUT_VARIANT=mixed \
   sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
 
-MODEL_KEY=answer_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl \
+MODEL_KEY=answer_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl OUTPUT_VARIANT=mixed \
   sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
 
-MODEL_KEY=evidence_hint_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl \
+MODEL_KEY=evidence_hint_dpo EVAL_JSONL=data/eval/coco_heldout_object_existence.jsonl OUTPUT_VARIANT=mixed \
   sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
 ```
 
@@ -107,10 +107,24 @@ Raw generations are saved under:
 
 ```text
 results/eval/generations/<eval_name>/<model_key>.jsonl
+results/eval/generations/<eval_name>/<output_variant>/<model_key>.jsonl
 ```
 
 Those files keep the image, question, target, prompt, raw generation, model key,
 and method name so they can be reused for Table 1 and case study selection.
+Use `OUTPUT_VARIANT` whenever a run should not overwrite an existing result,
+for example `mixed` for the current COCO+GQA adapters or `evidence_prompt` for
+an alternate prompting view.
+
+Evidence-style prompt evaluation reuses the same inference and scoring scripts,
+but changes the instruction suffix and writes to a separate variant directory:
+
+```bash
+MODEL_KEY=answer_dpo EVAL_JSONL=data/eval/gqa_simple_heldout.jsonl \
+OUTPUT_VARIANT=evidence_prompt \
+INSTRUCTION_SUFFIX="Answer yes or no, then briefly mention the visual evidence." \
+  sbatch experiments/slurm/eval_vlm_object_hallucination.slurm
+```
 
 ## Metrics
 
