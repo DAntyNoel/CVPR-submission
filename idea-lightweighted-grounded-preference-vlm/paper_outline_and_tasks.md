@@ -17,7 +17,10 @@
 - 训练方式：LoRA DPO，1 epoch，`pref_beta=0.1`，LoRA rank 16。
 - 已完成：GQA scene graph 与 2,500 张对应 VG 图像下载，`canonical_gqa_main.jsonl` 已生成 1,500 条。
 - 已完成：重新生成 mixed `canonical_pairs_main.jsonl`、Answer-DPO/Evidence-Hint DPO JSONL，并通过 leakage check；`train_eval_image_overlap = 0`。
-- 历史训练：Answer-DPO job 64167 和 Evidence-Hint DPO job 64168 是旧 COCO-only 数据上的训练结果，只能作为 preliminary/旧设置记录，不应作为 mixed 数据论文主结果。
+- 已完成：mixed audit 重新汇总，`data/audit/audit_200_summary.json` 显示 200/200 chosen correctness、200/200 rejected wrongness、200/200 hint correctness，抽样中包含 139 条 COCO 和 61 条 GQA。
+- 已完成：GQA simple held-out eval，`data/eval/gqa_simple_heldout.jsonl` 共 1,000 条，color 与 left/right relation 各 500 条，yes/no 各 500 条，训练 GQA image overlap 为 0。
+- 训练中：mixed Answer-DPO job 64200 与 mixed Evidence-Hint DPO job 64201 已通过 Slurm 启动，默认输出到 mixed adapter 目录；完成后再记录 mixed train metrics。
+- 历史训练：Answer-DPO job 64167 和 Evidence-Hint DPO job 64168 是旧 COCO-only 数据上的训练结果，只作为 preliminary/旧设置记录，不放入 mixed 数据论文主结果。
 
 因此实验规划需要相应调整：主实验仍保持三组不扩张，但两组 DPO 需要在当前 mixed 数据上重新训练。论文结论可以从“只验证 COCO 对象存在幻觉”扩展为“验证对象存在、简单属性和简单左右空间关系上的轻量 evidence hint”，但仍不能声称覆盖复杂推理、计数、多步关系或开放式描述。
 
@@ -208,9 +211,9 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 - [x] 检查 `outputs/llamafactory/qwen25vl7b_evidence_hint_dpo/` 是否生成完整 adapter、trainer state 和 train results：`adapter_config.json`、`adapter_model.safetensors`、`trainer_state.json`、`train_results.json` 均已生成。
 - [x] 记录两组训练的 train loss、runtime、steps、samples/sec：见 `experiments/training_summary.md`。Answer-DPO：loss 0.2791，runtime 3449.4s，157 steps，1.450 samples/sec；Evidence-Hint DPO：loss 0.1025，runtime 48163.8s，157 steps，0.104 samples/sec。
 - [x] 如果 64168 失败或明显卡住，先查看 `logs/train_evidence_hint_dpo.64168.err`，只修训练/数据格式问题，不扩大实验设定：64168 未失败；日志健康扫描未发现 Traceback、RuntimeError、CUDA OOM、nan 或 inf。
-- [ ] 基于 2026-05-27 的 mixed COCO+GQA 数据重新跑 Answer-DPO。
-- [ ] 基于 2026-05-27 的 mixed COCO+GQA 数据重新跑 Evidence-Hint DPO。
-- [ ] 将 64167/64168 标记为 COCO-only preliminary run，不放入 mixed 数据主表。
+- [x] 基于 2026-05-27 的 mixed COCO+GQA 数据重新跑 Answer-DPO：已重新导出 mixed LLaMA-Factory 数据并启动 Slurm job 64200，状态检查时为 `RUNNING`，输出目录为 `outputs/llamafactory/qwen25vl7b_mixed_answer_dpo/`。
+- [x] 基于 2026-05-27 的 mixed COCO+GQA 数据重新跑 Evidence-Hint DPO：已重新导出 mixed LLaMA-Factory 数据并启动 Slurm job 64201，状态检查时为 `RUNNING`，输出目录为 `outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo/`。
+- [x] 将 64167/64168 标记为 COCO-only preliminary run，不放入 mixed 数据主表：见 `experiments/training_summary.md`，旧输出目录保留为 preliminary/auxiliary 记录。
 
 ### B. 数据质检
 
@@ -219,16 +222,16 @@ Evidence hint: unsupported object: cat is not annotated as visible.
 - [x] GQA 训练构成已记录：986 color、64 material、450 left/right relation。
 - [x] 完成 `data/audit/audit_200.csv` 抽查标注；需要重新人工扫一遍 mixed 版本，重点看 GQA 属性和 relation 噪声。
 - [x] 汇总 chosen correctness、rejected wrongness、hint correctness：三项均为 200/200 = 100.0%，见 `data/audit/audit_200_summary.json`。
-- [ ] 重新汇总 mixed audit 的 chosen correctness、rejected wrongness、hint correctness；阈值仍为 chosen correctness 高于 85%，hint correctness 高于 90%。
+- [x] 重新汇总 mixed audit 的 chosen correctness、rejected wrongness、hint correctness；阈值仍为 chosen correctness 高于 85%，hint correctness 高于 90%：`data/audit/audit_200_summary.json` 中三项均为 200/200 = 100.0%，抽样来源为 139 COCO + 61 GQA。
 - [x] 准备评测 image-id overlap 文件 `data/eval/heldout_object_existence_image_ids.txt`，并重跑 leakage check；当前 train/eval image overlap = 0，eval image-id warning 已解决。
 
 ### C. 评测脚本
 
 - [x] 准备 Base Instruct、Answer-DPO、Evidence-Hint DPO 的统一推理入口：`scripts/eval/run_vlm_inference.py` + `experiments/slurm/eval_vlm_object_hallucination.slurm`。
-- [x] 确认 LoRA adapter 加载方式，避免评测时只跑到 base 模型：`answer_dpo`/`evidence_hint_dpo` 缺少 `adapter_config.json` 或 `adapter_model.safetensors` 时脚本会直接报错退出；当前 Answer-DPO 与 Evidence-Hint DPO dry-run 均已通过。
+- [x] 确认 LoRA adapter 加载方式，避免评测时只跑到 base 模型：`answer_dpo`/`evidence_hint_dpo` 缺少 `adapter_config.json` 或 `adapter_model.safetensors` 时脚本会直接报错退出；默认 adapter 路径已切到 mixed 输出目录，需在 64200/64201 完成后重跑 dry-run。
 - [x] 准备 POPE object hallucination 评测：`scripts/eval/prepare_pope_eval.py` 可将官方 POPE JSON/JSONL/CSV 规范化为统一 eval JSONL，后续复用同一推理与打分脚本。
 - [x] 准备一个 COCO held-out object-existence eval JSONL：`data/eval/coco_heldout_object_existence.jsonl`，共 1,000 条，yes/no 各 500 条，见 `data/eval/coco_heldout_object_existence.summary.json`。
-- [ ] 准备 GQA simple held-out eval JSONL，优先抽 500-1,000 条 color/left-right 样本，并与训练 GQA image ids 去重。
+- [x] 准备 GQA simple held-out eval JSONL，优先抽 500-1,000 条 color/left-right 样本，并与训练 GQA image ids 去重：`data/eval/gqa_simple_heldout.jsonl` 共 1,000 条，500 color + 500 left/right relation，yes/no 各 500，`train_eval_image_overlap = 0`。
 - [x] 实现 refusal rate 统计脚本：`scripts/eval/score_object_eval.py` 输出 Acc、F1、yes bias、refusal rate 和二分类混淆矩阵。
 - [x] 保存每组模型的原始生成结果，后续做 case study：统一输出到 `results/eval/generations/<eval_name>/<model_key>.jsonl`，保留 image、question、target、prompt、generation、model key 和 method。
 

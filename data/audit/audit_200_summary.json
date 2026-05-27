@@ -1,6 +1,10 @@
 {
   "total_rows": 200,
-  "audit_basis": "annotation-grounded COCO label consistency check",
+  "audit_basis": "annotation/scene-graph-grounded mixed COCO/GQA label consistency check",
+  "source_counts": {
+    "coco": 139,
+    "gqa": 61
+  },
   "metrics": {
     "chosen_correct": {
       "yes": 200,

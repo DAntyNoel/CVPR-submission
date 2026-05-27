@@ -1,6 +1,6 @@
 # Data Audit Summary
 
-Updated: 2026-05-26
+Updated: 2026-05-27
 
 ## Current Training Data
 
@@ -10,8 +10,12 @@ Updated: 2026-05-26
 - Human audit sheet: `data/audit/audit_200.csv`
 
 All three JSONL files contain 5,000 aligned records. The final data is
-COCO-only object-existence data because the GQA HF source failed under the
-cluster mirror path and the project fallback was applied.
+mixed COCO+GQA data:
+
+- 3,500 COCO object-existence pairs.
+- 1,500 GQA simple attribute/relation pairs.
+- GQA composition: 986 color attribute, 64 material attribute, 450 left/right
+  spatial relation.
 
 ## Cleaning Applied
 
@@ -28,20 +32,15 @@ were selected with:
   `toothbrush`,
 - positive/negative object caps of 650 per category.
 
-The largest positive class is `person` with 650 examples after capping.
+After the mixed refresh, `data/processed/stats_main.json` reports 5,000 total
+records with 3,500 COCO and 1,500 GQA rows.
 
 ## Automatic QC
 
 `scripts/data/06_check_data_leakage.py` reports:
 
 - blocking errors: 0
-- warnings: 1
-
-Warnings:
-
-- `object_existence ratio is 1.000; target is roughly 0.70`
-
-The remaining warning is expected for the COCO-only fallback.
+- warnings: 0
 
 The leakage check now receives
 `data/eval/heldout_object_existence_image_ids.txt`, which contains 1,000
@@ -50,10 +49,11 @@ pool. The reported train/eval image overlap is 0.
 
 ## Human Audit
 
-`data/audit/audit_200.csv` has been completed with an annotation-grounded COCO
-label consistency audit. This checks that each sampled row's chosen answer,
-rejected answer, and evidence hint match the canonical COCO-derived labels; it
-is not an independent pixel-level relabeling pass.
+`data/audit/audit_200.csv` has been completed with an annotation/scene-graph
+label consistency audit. The current sample contains 139 COCO rows and 61 GQA
+rows. This checks that each sampled row's chosen answer, rejected answer, and
+evidence hint match the canonical labels; it is not an independent pixel-level
+relabeling pass.
 
 The audit columns are:
 

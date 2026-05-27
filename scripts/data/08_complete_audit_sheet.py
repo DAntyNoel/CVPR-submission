@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Complete and summarize the audit sheet using canonical COCO labels."""
+"""Complete and summarize the audit sheet using canonical mixed labels."""
 
 from __future__ import annotations
 
@@ -98,6 +98,12 @@ def main() -> int:
 
 
 def audit_record(record: dict[str, Any], row: dict[str, str]) -> tuple[dict[str, str], list[str]]:
+    if record.get("source") == "gqa":
+        return audit_gqa_record(record, row)
+    return audit_coco_record(record, row)
+
+
+def audit_coco_record(record: dict[str, Any], row: dict[str, str]) -> tuple[dict[str, str], list[str]]:
     label = record.get("label") or {}
     visible = {clean_name(value) for value in (label.get("visible_objects") or [])}
     positive = clean_name(label.get("positive_object"))
@@ -132,11 +138,131 @@ def audit_record(record: dict[str, Any], row: dict[str, str]) -> tuple[dict[str,
     return labels, reasons
 
 
+def audit_gqa_record(record: dict[str, Any], row: dict[str, str]) -> tuple[dict[str, str], list[str]]:
+    task_type = str(record.get("task_type") or "")
+    if task_type.startswith("attribute_"):
+        return audit_gqa_attribute_record(record, row)
+    if task_type == "relation_spatial":
+        return audit_gqa_relation_record(record, row)
+    return failed_labels(f"unsupported GQA task_type: {task_type}")
+
+
+def audit_gqa_attribute_record(
+    record: dict[str, Any],
+    row: dict[str, str],
+) -> tuple[dict[str, str], list[str]]:
+    label = record.get("label") or {}
+    obj = clean_name(label.get("object"))
+    positive = clean_name(label.get("positive_attribute"))
+    negative = clean_name(label.get("negative_attribute"))
+
+    chosen = row.get("chosen") or record.get("chosen_answer", "")
+    rejected = row.get("rejected") or record.get("rejected_answer", "")
+    chosen_hint = row.get("chosen_hint") or record.get("evidence_hint_chosen", "")
+    rejected_hint = row.get("rejected_hint") or record.get("evidence_hint_rejected", "")
+
+    chosen_correct = bool(obj and positive and mentions(chosen, obj) and mentions(chosen, positive))
+    rejected_wrong = bool(obj and negative and mentions(rejected, obj) and mentions(rejected, negative))
+    hint_correct = bool(
+        mentions(chosen_hint, obj)
+        and mentions(chosen_hint, positive)
+        and mentions(rejected_hint, obj)
+        and mentions(rejected_hint, negative)
+        and "annotated attribute" in chosen_hint.lower()
+        and "mismatched attribute" in rejected_hint.lower()
+    )
+
+    labels = {
+        "chosen_correct": yes_no(chosen_correct),
+        "rejected_wrong": yes_no(rejected_wrong),
+        "hint_correct": yes_no(hint_correct),
+    }
+    reasons = []
+    if not chosen_correct:
+        reasons.append("chosen answer does not match annotated GQA attribute")
+    if not rejected_wrong:
+        reasons.append("rejected answer does not match the mismatched GQA attribute")
+    if not hint_correct:
+        reasons.append("evidence hint does not match GQA attribute labels")
+    return labels, reasons
+
+
+def audit_gqa_relation_record(
+    record: dict[str, Any],
+    row: dict[str, str],
+) -> tuple[dict[str, str], list[str]]:
+    label = record.get("label") or {}
+    subject = clean_name(label.get("subject"))
+    obj = clean_name(label.get("object"))
+    relation = clean_name(label.get("relation"))
+    negative_relation = clean_name(label.get("negative_relation"))
+
+    chosen = row.get("chosen") or record.get("chosen_answer", "")
+    rejected = row.get("rejected") or record.get("rejected_answer", "")
+    chosen_hint = row.get("chosen_hint") or record.get("evidence_hint_chosen", "")
+    rejected_hint = row.get("rejected_hint") or record.get("evidence_hint_rejected", "")
+
+    chosen_correct = bool(
+        subject
+        and obj
+        and relation
+        and mentions(chosen, subject)
+        and mentions(chosen, obj)
+        and mentions_relation(chosen, relation)
+    )
+    rejected_wrong = bool(
+        subject
+        and obj
+        and negative_relation
+        and mentions(rejected, subject)
+        and mentions(rejected, obj)
+        and mentions_relation(rejected, negative_relation)
+    )
+    hint_correct = bool(
+        mentions(chosen_hint, subject)
+        and mentions(chosen_hint, obj)
+        and mentions_relation(chosen_hint, relation)
+        and mentions(rejected_hint, subject)
+        and mentions(rejected_hint, obj)
+        and mentions_relation(rejected_hint, negative_relation)
+        and "annotated relation" in chosen_hint.lower()
+        and "contradicted relation" in rejected_hint.lower()
+    )
+
+    labels = {
+        "chosen_correct": yes_no(chosen_correct),
+        "rejected_wrong": yes_no(rejected_wrong),
+        "hint_correct": yes_no(hint_correct),
+    }
+    reasons = []
+    if not chosen_correct:
+        reasons.append("chosen answer does not match annotated GQA relation")
+    if not rejected_wrong:
+        reasons.append("rejected answer does not match the flipped GQA relation")
+    if not hint_correct:
+        reasons.append("evidence hint does not match GQA relation labels")
+    return labels, reasons
+
+
+def failed_labels(reason: str) -> tuple[dict[str, str], list[str]]:
+    return (
+        {column: "no" for column in AUDIT_COLUMNS},
+        [reason],
+    )
+
+
 def mentions(text: Any, name: str) -> bool:
     name = clean_name(name)
     if not name:
         return False
     return f" {name} " in f" {clean_name(text)} "
+
+
+def mentions_relation(text: Any, relation: str) -> bool:
+    relation = clean_name(relation)
+    if relation in {"left", "right"}:
+        return mentions(text, relation)
+    return mentions(text, relation)
 
 
 def yes_no(value: bool) -> str:
@@ -176,7 +302,8 @@ def build_summary(
     }
     return {
         "total_rows": len(rows),
-        "audit_basis": "annotation-grounded COCO label consistency check",
+        "audit_basis": "annotation/scene-graph-grounded mixed COCO/GQA label consistency check",
+        "source_counts": dict(sorted(Counter(row.get("source", "unknown") for row in rows).items())),
         "metrics": metrics,
         "thresholds": DEFAULT_THRESHOLDS,
         "threshold_status": threshold_status,

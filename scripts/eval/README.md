@@ -28,6 +28,27 @@ python scripts/eval/prepare_coco_heldout_eval.py \
 Each selected pool pair contributes one yes question for the annotated object
 and one no question for the unannotated negative object.
 
+## GQA Simple Held-Out Eval
+
+Build the small GQA simple eval set from unused GQA candidate pairs:
+
+```bash
+python scripts/eval/prepare_gqa_simple_heldout_eval.py \
+  --candidates data/processed/canonical_gqa_candidates.jsonl \
+  --train data/processed/canonical_pairs_main.jsonl \
+  --output data/eval/gqa_simple_heldout.jsonl \
+  --max-rows 1000 \
+  --seed 42
+```
+
+The default output is yes/no balanced and uses only color attributes plus
+left/right spatial relations. It excludes all GQA image ids used by the mixed
+training set and writes a summary to:
+
+```text
+data/eval/gqa_simple_heldout.summary.json
+```
+
 ## POPE Eval
 
 Normalize an official POPE object-hallucination annotation file:
@@ -47,7 +68,8 @@ id, image, image_id, question, target, task_type
 
 ## Unified Inference
 
-Dry-run setup checks are cheap and verify adapter wiring:
+Once the mixed adapter directories exist, dry-run setup checks are cheap and
+verify adapter wiring:
 
 ```bash
 python scripts/eval/run_vlm_inference.py \
@@ -60,6 +82,13 @@ For `answer_dpo` and `evidence_hint_dpo`, the script refuses to run unless the
 LoRA directory contains both `adapter_config.json` and
 `adapter_model.safetensors`. This prevents accidentally evaluating the base
 model for an adapter row.
+
+The default adapter paths point to the mixed-data main adapters:
+
+```text
+outputs/llamafactory/qwen25vl7b_mixed_answer_dpo/
+outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo/
+```
 
 GPU generation should be submitted with:
 
@@ -96,3 +125,5 @@ The metrics JSON includes accuracy, F1, yes bias, refusal rate, and a binary
 confusion matrix. Refusal rate is triggered by phrases such as `not sure`,
 `cannot determine`, `unclear`, and related variants.
 
+The same scorer can be used for COCO held-out, POPE, and the yes/no GQA simple
+eval JSONL after model generations are saved.

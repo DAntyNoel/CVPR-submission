@@ -36,11 +36,11 @@ Answer-DPO 和 Evidence-Hint DPO 使用同一份 mixed `canonical_pairs_main.jso
 评测数据：
 
 - COCO held-out：`data/eval/coco_heldout_object_existence.jsonl`，1,000 条，yes/no 各 500 条
-- GQA simple held-out：待准备，优先 500-1,000 条 color/left-right 样本
+- GQA simple held-out：`data/eval/gqa_simple_heldout.jsonl`，1,000 条，500 color + 500 left/right relation，yes/no 各 500 条
 - POPE object hallucination：作为外部对象幻觉补充评测
 - 图片重叠：train/eval image overlap = 0
 
-如果 POPE 或 GQA simple 准备成本过高，第一版主表至少保留 COCO held-out，并把未完成部分写入 limitation；但优先级上 GQA simple 应尽量补齐，因为当前训练数据已经包含 GQA。
+如果 POPE 准备成本过高，第一版主表至少保留 COCO held-out + GQA simple，并把 POPE 写入补充或 limitation。
 
 ## 4. 训练设置
 
@@ -53,14 +53,21 @@ Answer-DPO 和 Evidence-Hint DPO 使用同一份 mixed `canonical_pairs_main.jso
 - LoRA rank：16
 - 推理时不要求输出 evidence hint，只回答普通短答案
 
-历史训练记录：
+mixed 主训练记录：
+
+| 方法 | Job ID | 状态 | Train loss | Runtime |
+| --- | ---: | --- | ---: | --- |
+| Answer-DPO | 64200 | RUNNING | TBD | TBD |
+| Evidence-Hint DPO | 64201 | RUNNING | TBD | TBD |
+
+COCO-only preliminary 训练记录：
 
 | 方法 | Job ID | 状态 | Train loss | Runtime |
 | --- | ---: | --- | ---: | --- |
 | Answer-DPO | 64167 | COMPLETED | 0.2791 | 00:57:29 |
 | Evidence-Hint DPO | 64168 | COMPLETED | 0.1025 | 13:22:44 |
 
-这两个 job 基于旧 5,000 条 COCO-only 数据，不进入 mixed 数据主结果表，但可以作为 COCO-only auxiliary/preliminary result 写入论文额外结果。它们适合在等待 mixed 数据重训时先跑 COCO held-out、POPE、refusal rate 和格式违规检查，用来展示纯对象存在子设定下的趋势。主实验仍需要基于 2026-05-27 mixed COCO+GQA 数据重新训练 Answer-DPO 与 Evidence-Hint DPO。Evidence-Hint DPO 更慢仍是预期现象，主要来自 response 变长带来的 DPO 计算成本增加。
+64167/64168 基于旧 5,000 条 COCO-only 数据，不进入 mixed 数据主结果表，但可以作为 COCO-only auxiliary/preliminary result 写入论文额外结果。它们适合在等待 mixed 数据重训时先跑 COCO held-out、POPE、refusal rate 和格式违规检查，用来展示纯对象存在子设定下的趋势。mixed job 64200/64201 已使用 2026-05-27 mixed COCO+GQA 数据启动；Evidence-Hint DPO 更慢仍是预期现象，主要来自 response 变长带来的 DPO 计算成本增加。
 
 ## 5. COCO-only 额外结果
 
@@ -112,14 +119,12 @@ Answer-DPO 和 Evidence-Hint DPO 使用同一份 mixed `canonical_pairs_main.jso
 
 ## 8. 执行顺序
 
-1. 先跑旧 COCO-only Answer-DPO/Evidence-Hint DPO 的 COCO held-out、POPE 和 refusal/format 检查，形成 auxiliary result。
-2. 基于 mixed `answer_dpo_train.jsonl` 重训 Answer-DPO。
-3. 基于 mixed `evidence_hint_dpo_train.jsonl` 重训 Evidence-Hint DPO。
-4. 准备 GQA simple held-out eval，并与训练 GQA image ids 去重。
-5. 跑 Base Instruct、mixed Answer-DPO、mixed Evidence-Hint DPO 的正式推理。
-6. 生成 POPE、COCO held-out、GQA simple、refusal rate 主表指标。
-7. 对比错误类型，重点看 false positive object hallucination、attribute mismatch 和 left/right reversal。
-8. 从三组输出中抽取 4-6 个清晰 case study，尽量覆盖 COCO 与 GQA。
+1. 等 mixed Answer-DPO 64200 与 mixed Evidence-Hint DPO 64201 完成，并记录 train metrics。
+2. 完成 mixed adapter dry-run，确认默认 `answer_dpo`/`evidence_hint_dpo` 指向 mixed 输出目录。
+3. 跑 Base Instruct、mixed Answer-DPO、mixed Evidence-Hint DPO 的正式推理。
+4. 生成 POPE、COCO held-out、GQA simple、refusal rate 主表指标。
+5. 对比错误类型，重点看 false positive object hallucination、attribute mismatch 和 left/right reversal。
+6. 从三组输出中抽取 4-6 个清晰 case study，尽量覆盖 COCO 与 GQA。
 
 ## 9. 不做的内容
 

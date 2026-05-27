@@ -4,15 +4,16 @@
 
 > 在 VLM 回答级 DPO 中加入模板化的轻量视觉证据提示，是否能比普通 Answer-DPO 更稳定地减少简单对象幻觉。
 
-当前项目聚焦 **COCO object-existence** 场景，主实验控制为三组：Base Instruct、Answer-DPO、Evidence-Hint DPO。第一版论文不扩展到复杂属性、关系、计数或多 backbone 对比。
+当前项目聚焦一个小规模 **mixed COCO/GQA** 设定：COCO object-existence 加 GQA simple attribute / left-right relation。主实验仍控制为三组：Base Instruct、Answer-DPO、Evidence-Hint DPO。第一版论文不扩展到复杂推理、计数、多 backbone 或多 seed 对比。
 
 ## 当前状态
 
 - 研究计划与论文大纲已整理在 `idea-lightweighted-grounded-preference-vlm/`。
-- 5k COCO-only preference pairs 已生成，并导出为 Answer-DPO 与 Evidence-Hint DPO 两种格式。
-- 数据抽查与泄漏检查已完成，审计摘要见 `data/audit/`。
-- Qwen2.5-VL-7B-Instruct 的 Answer-DPO 与 Evidence-Hint DPO LoRA 训练已完成，摘要见 `experiments/training_summary.md`。
-- 统一评测脚本已准备好，下一步主要是跑 Base / Answer-DPO / Evidence-Hint DPO 的 object hallucination 评测并整理表格。
+- 5k mixed preference pairs 已生成：3,500 COCO object-existence + 1,500 GQA simple attribute/relation。
+- mixed audit 与泄漏检查已完成，审计摘要见 `data/audit/`，当前 train/eval image overlap 为 0。
+- GQA simple held-out eval 已生成：`data/eval/gqa_simple_heldout.jsonl`，共 1,000 条，color 与 left/right relation 各 500 条。
+- mixed Answer-DPO job 64200 与 mixed Evidence-Hint DPO job 64201 已通过 Slurm 启动；旧 job 64167/64168 只作为 COCO-only preliminary 记录。
+- 统一评测脚本已准备好，下一步等待 mixed adapter 完成后跑 Base / Answer-DPO / Evidence-Hint DPO 的 POPE、COCO held-out、GQA simple 与 refusal-rate 评测。
 
 ## 目录结构
 
@@ -44,7 +45,7 @@ data/
   eval/                            # held-out object-existence 评测集
 
 outputs/
-  llamafactory/                    # LoRA adapter 输出
+  llamafactory/                    # LoRA adapter 输出，mixed 与 COCO-only preliminary 分目录保存
 
 results/
   eval/                            # 评测生成结果与元信息
@@ -66,6 +67,7 @@ data/processed/answer_dpo_train.jsonl
 data/processed/evidence_hint_dpo_train.jsonl
 data/audit/audit_200.csv
 data/processed/check_report_main.json
+data/eval/gqa_simple_heldout.jsonl
 ```
 
 如果需要重新生成数据，优先使用已有 Slurm 脚本或轻量 CPU 脚本；大文件建议软链接，不要直接复制进仓库。
@@ -87,7 +89,14 @@ sbatch experiments/slurm/train_answer_dpo.slurm
 sbatch experiments/slurm/train_evidence_hint_dpo.slurm
 ```
 
-已完成训练的 adapter 默认位于：
+mixed 主实验 adapter 默认位于：
+
+```text
+outputs/llamafactory/qwen25vl7b_mixed_answer_dpo/
+outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo/
+```
+
+旧 COCO-only preliminary adapter 位于：
 
 ```text
 outputs/llamafactory/qwen25vl7b_answer_dpo/
@@ -106,7 +115,18 @@ python scripts/eval/prepare_coco_heldout_eval.py \
   --seed 42
 ```
 
-推理前可以做轻量 dry-run，检查 adapter 路径是否正确：
+GQA simple held-out eval 已准备好；如需重建：
+
+```bash
+python scripts/eval/prepare_gqa_simple_heldout_eval.py \
+  --candidates data/processed/canonical_gqa_candidates.jsonl \
+  --train data/processed/canonical_pairs_main.jsonl \
+  --output data/eval/gqa_simple_heldout.jsonl \
+  --max-rows 1000 \
+  --seed 42
+```
+
+mixed adapter 训练完成后，可以做轻量 dry-run，检查 adapter 路径是否正确：
 
 ```bash
 python scripts/eval/run_vlm_inference.py \
@@ -146,9 +166,9 @@ python scripts/eval/score_object_eval.py \
 正文建议控制在 6 页以内，只支撑一个小而明确的结论：
 
 - 方法：不改模型结构、不改 DPO loss，只改 preference response 格式。
-- 数据：5k COCO object-existence preference pairs。
+- 数据：5k mixed COCO/GQA preference pairs，覆盖对象存在、简单颜色/材质属性和左右空间关系。
 - 实验：Base Instruct、Answer-DPO、Evidence-Hint DPO 三组。
-- 指标：POPE 或 COCO held-out accuracy/F1、yes bias、refusal rate。
-- 限制：不声称解决属性、关系、计数、开放式描述或复杂 grounding。
+- 指标：POPE、COCO held-out accuracy/F1、GQA simple accuracy、yes bias、refusal rate。
+- 限制：不声称解决计数、多步关系、开放式描述或复杂 grounding。
 
 论文大纲和任务清单见 `idea-lightweighted-grounded-preference-vlm/paper_outline_and_tasks.md`。

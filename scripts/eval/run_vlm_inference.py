@@ -19,11 +19,11 @@ MODEL_REGISTRY = {
     },
     "answer_dpo": {
         "method": "Answer-DPO",
-        "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_answer_dpo",
+        "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_mixed_answer_dpo",
     },
     "evidence_hint_dpo": {
         "method": "Evidence-Hint DPO",
-        "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_evidence_hint_dpo",
+        "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo",
     },
 }
 
@@ -271,4 +271,3 @@ def now_iso() -> str:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

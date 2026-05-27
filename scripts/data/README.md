@@ -98,6 +98,11 @@ python scripts/data/06_check_data_leakage.py \
 Pass `--eval-image-ids path/to/eval_ids.txt` to the build/check scripts when
 POPE, AMBER, or GQA eval image ids are available.
 
+`08_complete_audit_sheet.py` summarizes both COCO object-existence rows and
+GQA simple attribute/relation rows. Its checks are label/scene-graph
+consistency checks for the sampled audit sheet, not independent pixel-level
+relabeling.
+
 ## Smoke and fallback options
 
 For the 2k smoke version, change the COCO/GQA limits to `1500` and `500`, and

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=cvpr_ans_dpo
+#SBATCH --job-name=cvpr_mix_ans_dpo
 #SBATCH --partition=A100,RTX4090,ADA6000,L40S
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -7,8 +7,8 @@
 #SBATCH --gres=gpu:4
 #SBATCH --mem=160G
 #SBATCH --time=1-00:00:00
-#SBATCH --output=/home/fhshao/CVPR-submission/logs/train_answer_dpo.%j.out
-#SBATCH --error=/home/fhshao/CVPR-submission/logs/train_answer_dpo.%j.err
+#SBATCH --output=/home/fhshao/CVPR-submission/logs/train_mixed_answer_dpo.%j.out
+#SBATCH --error=/home/fhshao/CVPR-submission/logs/train_mixed_answer_dpo.%j.err
 
 set -xeuo pipefail
 
@@ -18,7 +18,7 @@ unset https_proxy
 unset all_proxy
 export HF_ENDPOINT=https://hf-mirror.com
 export HF_HOME=/home/fhshao/CVPR-submission/.cache/hf
-export TRITON_CACHE_DIR=/tmp/triton-${SLURM_JOB_ID:-cvpr_ans_dpo}
+export TRITON_CACHE_DIR=/tmp/triton-${SLURM_JOB_ID:-cvpr_mix_ans_dpo}
 export PYTHONPATH=/home/fhshao/CVPR-submission/LLaMA-Factory/src
 export PATH=/home/fhshao/miniconda3/envs/verl0.6/bin:$PATH
 export FORCE_TORCHRUN=1

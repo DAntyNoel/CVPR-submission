@@ -38,9 +38,27 @@ the same LLaMA-Factory data registry.
 Training and smoke scripts use the `verl0.6` conda environment. It is pinned to
 torch 2.8.0 to avoid the LLaMA-Factory torch 2.9 + Conv3D guard for Qwen2.5-VL.
 
-The current processed data is COCO-only because GQA download failed under the
-cluster HF mirror path. This matches the fallback in the data plan and narrows
-the first conclusion to simple object hallucination.
+The current processed data is the 2026-05-27 mixed COCO+GQA split: 3,500 COCO
+object-existence pairs plus 1,500 GQA simple attribute/relation pairs. Before
+launching training, regenerate the LLaMA-Factory JSON export with:
+
+```bash
+python scripts/experiments/prepare_llamafactory_data.py \
+  --answer-input data/processed/answer_dpo_train.jsonl \
+  --evidence-input data/processed/evidence_hint_dpo_train.jsonl \
+  --output-dir experiments/llamafactory_data
+```
+
+The mixed jobs write to:
+
+```text
+outputs/llamafactory/qwen25vl7b_mixed_answer_dpo/
+outputs/llamafactory/qwen25vl7b_mixed_evidence_hint_dpo/
+```
+
+The older `qwen25vl7b_answer_dpo/` and `qwen25vl7b_evidence_hint_dpo/`
+directories correspond to COCO-only preliminary jobs 64167 and 64168. Keep
+them out of the mixed-data main table.
 
 ## Evaluation Startup
 
@@ -56,6 +74,17 @@ python scripts/eval/prepare_coco_heldout_eval.py \
   --seed 42
 ```
 
+Build the GQA simple held-out eval set:
+
+```bash
+python scripts/eval/prepare_gqa_simple_heldout_eval.py \
+  --candidates data/processed/canonical_gqa_candidates.jsonl \
+  --train data/processed/canonical_pairs_main.jsonl \
+  --output data/eval/gqa_simple_heldout.jsonl \
+  --max-rows 1000 \
+  --seed 42
+```
+
 Normalize POPE annotations when the official POPE file is available:
 
 ```bash
@@ -65,7 +94,8 @@ python scripts/eval/prepare_pope_eval.py \
   --output data/eval/pope_object_hallucination.jsonl
 ```
 
-Check adapter wiring without loading the model:
+After the mixed adapter directories are written, check adapter wiring without
+loading the model:
 
 ```bash
 python scripts/eval/run_vlm_inference.py \

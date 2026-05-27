@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Score object-existence generations and compute refusal rate."""
+"""Score yes/no eval generations and compute refusal rate."""
 
 from __future__ import annotations
 
@@ -132,4 +132,3 @@ def default_metrics_path(input_path: str) -> str:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
