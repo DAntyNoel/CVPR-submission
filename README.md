@@ -79,6 +79,20 @@ benchmark. `final_results.md` records the selected three-group comparison and
 the numbers now ported into `paper/main.tex`.
 
 ```text
+cepo-probe-benchmark-improve/
+  README.md
+  project_plan.md
+  experiment_outline.md
+  operation_checklist.md
+  artifacts/
+```
+
+Review-driven next-step plan based on `official-review/20260528.md`. It keeps
+the main paper benchmark-first while planning confidence intervals, parser/BEM
+clarification, CEPO-Dual verifier-count ablations, and relation-failure
+analysis needed to strengthen the draft toward a 6-page CVPR-style submission.
+
+```text
 futurework-grounded-preference-vlm/
   experiment_plan.md
   index.html

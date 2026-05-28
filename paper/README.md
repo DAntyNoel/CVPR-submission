@@ -44,7 +44,9 @@ The paper now follows the completed CEPO-Probe interpretation: CEPO Answer-DPO
 improves ordinary yes/no accuracy but weakens wrong-evidence rejection, while
 CEPO-Dual preserves the short-answer gains and improves explicit evidence
 consistency from 34.3% to 70.2% wrong-evidence rejection. Relation reversals
-remain the main failure slice.
+remain the main failure slice. POPE/AMBER are reported only as external sanity
+checks: CEPO-Dual stays close to CEPO Answer-DPO, so the paper does not claim a
+general hallucination-benchmark win.
 
 Page budget:
 

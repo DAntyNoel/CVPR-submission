@@ -50,7 +50,9 @@ answer-only baseline improves short-answer accuracy but increases yes bias on
 GQA, while \cepodual{} preserves the short-answer gains and improves
 wrong-evidence rejection from 34.3\% to 70.2\%. The improvement is uneven:
 object and attribute mismatches become much easier to reject, but relation
-reversals remain fragile. These results show that short-answer preference
+reversals remain fragile. External POPE and AMBER checks stay close to the
+answer-only baseline, so the supported claim is diagnostic rather than a broad
+hallucination-benchmark win. These results show that short-answer preference
 tuning and evidence consistency are separable and should be reported together.
 \end{abstract}
 
@@ -88,7 +90,9 @@ compare a base model, \answerdpo{}, and \cepodual{} under the same backbone,
 data source, and evaluation suite. The results support a useful but bounded
 conclusion: \cepodual{} improves explicit evidence verification while leaving
 relation-level mismatches difficult, so evidence consistency should be measured
-directly rather than inferred from answer accuracy.
+directly rather than inferred from answer accuracy. We therefore do not frame
+\cepodual{} as a general external-benchmark winner; its main value is exposing
+and improving a failure mode that ordinary short-answer metrics can miss.
 
 Our contributions are:
 \begin{itemize}
@@ -103,7 +107,8 @@ Our contributions are:
     invalid-format rates.
     \item We show that \answerdpo{} improves short-answer behavior without
     reliably improving wrong-evidence rejection, while \cepodual{} improves the
-    explicit probe but still struggles on relation reversals.
+    explicit probe but still struggles on relation reversals and remains close
+    to \answerdpo{} on POPE/AMBER sanity checks.
 \end{itemize}
 
 \section{Related Work}
@@ -305,10 +310,12 @@ direct verifier preferences help and where a model still fails.
 On POPE random/popular/adversarial, \cepodual{} reaches 89.8\%, 88.7\%, and
 87.3\% accuracy, respectively, compared with 89.6\%, 88.5\%, and 87.1\% for
 \answerdpo{}. On AMBER discriminative, \cepodual{} reaches 88.2\% accuracy
-versus 88.2\% for \answerdpo{} after rounding. These external checks suggest
-that the verifier rows do not cause a large out-of-distribution collapse, but
-they mirror the internal trade-off: the trained models lower FNR while raising
-FPR relative to Base Instruct.
+versus 88.2\% for \answerdpo{} after rounding. We treat these as sanity
+checks, not as the main source of improvement. They show that adding verifier
+rows does not cause a large out-of-distribution short-answer collapse, but the
+differences from \answerdpo{} are small. They also mirror the internal
+short-answer trade-off: the trained models lower FNR while raising FPR
+relative to Base Instruct.
 
 \section{Discussion}
 
@@ -327,7 +334,10 @@ a model is trained to reason about claims but tested only with short answers,
 improvements can be invisible or confused with yes/no bias. If it improves
 structured evidence probes while failing ordinary answers, it is better
 understood as an evidence verifier than as a general answerer. Reporting both
-views prevents overclaiming.
+views prevents overclaiming. The synchronized claim of this paper is therefore
+not that \cepodual{} solves object hallucination or dominates POPE/AMBER; it is
+that explicit verifier preferences can improve a separately measured
+claim-evidence consistency skill that answer-only DPO can weaken.
 
 \section{Limitations}
 
@@ -350,9 +360,12 @@ short-answer performance from the ability to verify whether a visual claim is
 supported by the correct evidence. In a controlled three-group experiment,
 \answerdpo{} improves short-answer accuracy while weakening wrong-evidence
 rejection, whereas \cepodual{} preserves the answer gains and substantially
-improves explicit evidence consistency. The remaining relation failures are
-the point of the benchmark: short-answer gains alone can hide persistent
-wrong-evidence errors, so evidence consistency should be measured directly.
+improves explicit evidence consistency. External POPE/AMBER results remain
+close to the answer-only baseline, so the result should be read as a diagnostic
+separation rather than a general hallucination solution. The remaining relation
+failures are the point of the benchmark: short-answer gains alone can hide
+persistent wrong-evidence errors, so evidence consistency should be measured
+directly.
 
 {
     \small
