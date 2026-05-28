@@ -1,0 +1,14 @@
+{
+  "input": "data/eval/gqa_simple_heldout.jsonl",
+  "output": "v2/tasks/review-convergence-experiments/results/relation_stress/relation_stress_probe.jsonl",
+  "max_rows": 240,
+  "seed": 42,
+  "total": 240,
+  "by_stress_type": {
+    "left_right_reversal": 120,
+    "subject_object_swap": 120
+  },
+  "unique_images": 169,
+  "source_relation_rows": 250,
+  "candidate_rows": 430
+}

@@ -1,0 +1,22 @@
+{
+  "created_at": "2026-05-28T05:30:06.717956+00:00",
+  "model_key": "cepo_dual_dpo",
+  "method": "CEPO-Dual DPO",
+  "model_name_or_path": "/home/fhshao/CVPR-submission/models/Qwen2.5-VL-7B-Instruct",
+  "adapter_name_or_path": "/home/fhshao/CVPR-submission/outputs/llamafactory/qwen25vl7b_cepo_dual_dpo_zero2",
+  "adapter_status": {
+    "status": "ready",
+    "message": "Adapter ready at /home/fhshao/CVPR-submission/outputs/llamafactory/qwen25vl7b_cepo_dual_dpo_zero2."
+  },
+  "eval_file": "/home/fhshao/CVPR-submission/v2/tasks/review-convergence-experiments/results/relation_stress/relation_stress_probe.jsonl",
+  "output_file": "/home/fhshao/CVPR-submission/results/eval/generations/relation_stress_probe/relation_stress/cepo_dual_dpo.jsonl",
+  "num_records": 240,
+  "max_new_tokens": 96,
+  "temperature": 0.0,
+  "top_p": 1.0,
+  "image_min_pixels": null,
+  "image_max_pixels": null,
+  "instruction_suffix": "Return JSON with answer, claim, evidence_label, support. Use support as supported, contradicted, or wrong_evidence.",
+  "dry_run": false,
+  "finished_at": "2026-05-28T05:41:47.484347+00:00"
+}

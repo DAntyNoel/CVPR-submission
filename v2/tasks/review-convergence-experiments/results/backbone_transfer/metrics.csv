@@ -1,0 +1,1 @@
+backbone,seed,model_key,train_job,output_variant,coco_acc,gqa_acc,hard_acc,bem_recovery,supported_acc,wrong_rejection,object_wrong,attribute_wrong,relation_wrong,pope_random,pope_popular,pope_adversarial,amber_discriminative,parse_fail,notes

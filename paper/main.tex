@@ -40,12 +40,13 @@
 \begin{abstract}
 Preference tuning can improve the short answers of vision-language models, but
 a correct answer does not guarantee that the model has verified the right
-visual evidence. We introduce \benchmark{}, a compact diagnostic benchmark for
-claim-evidence consistency, built from \dataset{}, a 6k-row annotation-derived
-collection of object, attribute, relation, and wrong-evidence examples from
-COCO and GQA. Unlike ordinary yes/no evaluation, the benchmark asks whether a
-candidate visual claim is supported by a specific evidence label or relation,
-including same-answer cases where only the evidence is wrong. Under a fixed
+visual evidence. We introduce \emph{Claim-Evidence Preference Optimization}
+Probe (\benchmark{}), a controlled diagnostic benchmark for claim-evidence
+consistency, built from \dataset{}, a 6k-row annotation-derived collection of
+object, attribute, relation, and wrong-evidence examples from COCO and GQA.
+Unlike ordinary yes/no evaluation, the benchmark asks whether a candidate
+visual claim is supported by a specific evidence label or relation, including
+same-answer cases where only the evidence is wrong. Under a fixed
 Qwen2.5-VL-7B backbone, we compare a base model, an answer-only tuned model, a
 verifier-only control, and two mixed answer/verifier settings. The results show
 that answer preference and evidence verification can move in opposite
@@ -78,7 +79,8 @@ accepting evidence that contradicts the intended visual claim. This raises a
 diagnostic question: when preference tuning improves ordinary answers, does it
 also improve the ability to verify claim-evidence consistency?
 
-We introduce \benchmark{}, a compact benchmark designed to isolate this
+We introduce \emph{Claim-Evidence Preference Optimization Probe}
+(\benchmark{}), a controlled diagnostic benchmark designed to isolate this
 question. Each example contains an image, a question, a candidate claim, and a
 candidate evidence item. The model returns a structured judgment indicating
 whether the evidence supports the claim. The key split is wrong-evidence
@@ -173,31 +175,31 @@ The expected output is a JSON object with fields such as
 \texttt{contradicted}, or \texttt{wrong\_evidence}. On wrong-evidence rows,
 both \texttt{contradicted} and \texttt{wrong\_evidence} count as rejecting the
 candidate evidence, because either decision means the evidence should not be
-accepted as support for the claim.
+accepted as support for the claim. Figure~\ref{fig:overview} contrasts this
+probe with ordinary answer-level evaluation.
 
-\begin{table*}[t]
+\begin{figure}[t]
 \centering
 \small
-\setlength{\tabcolsep}{5pt}
-\begin{tabular}{@{}p{0.19\linewidth}p{0.24\linewidth}p{0.24\linewidth}p{0.24\linewidth}@{}}
-\toprule
-View & Input & Positive behavior & What the metric can miss \\
+\setlength{\fboxsep}{5pt}
+\fbox{%
+\begin{minipage}{0.91\linewidth}
+\begin{tabular}{@{}p{0.96\linewidth}@{}}
+\textbf{Answer-level evaluation:}
+image + question $\rightarrow$ yes/no answer. \\
 \midrule
-Short-answer evaluation &
-Image and question &
-Correct yes/no answer &
-Whether the accepted answer is tied to the right visual evidence \\
-Claim-evidence probe &
-Image, question, candidate claim, candidate evidence &
-Reject unsupported or mismatched evidence while accepting supported evidence &
-Fine-grained localization beyond the annotation-derived evidence label \\
-\bottomrule
+\textbf{\benchmark{} claim-evidence probe:}
+image + question $\rightarrow$ candidate claim $\rightarrow$ candidate evidence
+$\rightarrow$ \texttt{supported}, \texttt{contradicted}, or
+\texttt{wrong\_evidence}. \\
 \end{tabular}
-\caption{Two complementary views used in this paper. The first measures
-ordinary answer transfer; the second directly probes whether a specific
-evidence item supports the claim.}
-\label{tab:views}
-\end{table*}
+\end{minipage}%
+}
+\caption{\benchmark{} overview. Ordinary evaluation scores only the final
+answer, while \benchmark{} scores whether a specific candidate evidence item
+supports a candidate claim, including same-answer wrong-evidence cases.}
+\label{fig:overview}
+\end{figure}
 
 \subsection{Data Construction}
 

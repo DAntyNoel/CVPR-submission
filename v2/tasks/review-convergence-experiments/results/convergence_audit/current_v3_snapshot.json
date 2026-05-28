@@ -1,0 +1,244 @@
+{
+  "rows": {
+    "base": {
+      "label": "Base Instruct",
+      "answer_rows": 0,
+      "verifier_rows": 0,
+      "variant": "cepo_dual",
+      "probe_variant": "cepo_dual_evidence_probe",
+      "model_key": "base",
+      "short_answer": {
+        "coco": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/coco_heldout_object_existence/cepo_dual/base.metrics.json",
+          "accuracy": 0.96,
+          "false_positive_rate": 0.016,
+          "status": "ready"
+        },
+        "gqa": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/gqa_simple_heldout/cepo_dual/base.metrics.json",
+          "accuracy": 0.762,
+          "false_positive_rate": 0.144,
+          "status": "ready"
+        },
+        "hard": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/coco_hard_object_existence/cepo_dual/base.metrics.json",
+          "accuracy": 0.944,
+          "false_positive_rate": 0.038,
+          "status": "ready"
+        }
+      },
+      "evidence_probe": {
+        "supported_path": "/home/fhshao/CVPR-submission/results/eval/generations/cepo_evidence_probe/cepo_dual_evidence_probe/base.metrics.json",
+        "wrong_path": "/home/fhshao/CVPR-submission/results/eval/generations/cepo_wrong_evidence_probe/cepo_dual_evidence_probe/base.metrics.json",
+        "supported_accuracy": 0.865,
+        "wrong_rejection": 0.4425,
+        "object_wrong_rejection": 0.595238,
+        "attribute_wrong_rejection": 0.536913,
+        "relation_wrong_rejection": 0.176,
+        "parse_failure_rate": 0.0,
+        "status": "ready"
+      }
+    },
+    "cepo_answer_dpo": {
+      "label": "CEPO Answer-DPO",
+      "answer_rows": 6000,
+      "verifier_rows": 0,
+      "variant": "cepo_dual",
+      "probe_variant": "cepo_dual_evidence_probe",
+      "model_key": "cepo_answer_dpo",
+      "short_answer": {
+        "coco": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/coco_heldout_object_existence/cepo_dual/cepo_answer_dpo.metrics.json",
+          "accuracy": 0.97,
+          "false_positive_rate": 0.018,
+          "status": "ready"
+        },
+        "gqa": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/gqa_simple_heldout/cepo_dual/cepo_answer_dpo.metrics.json",
+          "accuracy": 0.768,
+          "false_positive_rate": 0.236,
+          "status": "ready"
+        },
+        "hard": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/coco_hard_object_existence/cepo_dual/cepo_answer_dpo.metrics.json",
+          "accuracy": 0.95,
+          "false_positive_rate": 0.05,
+          "status": "ready"
+        }
+      },
+      "evidence_probe": {
+        "supported_path": "/home/fhshao/CVPR-submission/results/eval/generations/cepo_evidence_probe/cepo_dual_evidence_probe/cepo_answer_dpo.metrics.json",
+        "wrong_path": "/home/fhshao/CVPR-submission/results/eval/generations/cepo_wrong_evidence_probe/cepo_dual_evidence_probe/cepo_answer_dpo.metrics.json",
+        "supported_accuracy": 0.906667,
+        "wrong_rejection": 0.3425,
+        "object_wrong_rejection": 0.452381,
+        "attribute_wrong_rejection": 0.449665,
+        "relation_wrong_rejection": 0.104,
+        "parse_failure_rate": 0.0,
+        "status": "ready"
+      }
+    },
+    "cepo_evidence_only_dpo": {
+      "label": "Evidence-DPO only",
+      "answer_rows": 0,
+      "verifier_rows": 2000,
+      "variant": "cepo_dual_ablation/evidence_only_2k",
+      "probe_variant": "cepo_dual_ablation/evidence_only_2k",
+      "model_key": "cepo_evidence_only_dpo",
+      "short_answer": {
+        "coco": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/coco_heldout_object_existence/cepo_dual_ablation/evidence_only_2k/cepo_evidence_only_dpo.metrics.json",
+          "accuracy": 0.959,
+          "false_positive_rate": 0.018,
+          "status": "ready"
+        },
+        "gqa": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/gqa_simple_heldout/cepo_dual_ablation/evidence_only_2k/cepo_evidence_only_dpo.metrics.json",
+          "accuracy": 0.767,
+          "false_positive_rate": 0.142,
+          "status": "ready"
+        },
+        "hard": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/coco_hard_object_existence/cepo_dual_ablation/evidence_only_2k/cepo_evidence_only_dpo.metrics.json",
+          "accuracy": 0.944,
+          "false_positive_rate": 0.038,
+          "status": "ready"
+        }
+      },
+      "evidence_probe": {
+        "supported_path": "/home/fhshao/CVPR-submission/results/eval/generations/cepo_evidence_probe/cepo_dual_ablation/evidence_only_2k/cepo_evidence_only_dpo.metrics.json",
+        "wrong_path": "/home/fhshao/CVPR-submission/results/eval/generations/cepo_wrong_evidence_probe/cepo_dual_ablation/evidence_only_2k/cepo_evidence_only_dpo.metrics.json",
+        "supported_accuracy": 0.878333,
+        "wrong_rejection": 0.53,
+        "object_wrong_rejection": 0.769841,
+        "attribute_wrong_rejection": 0.637584,
+        "relation_wrong_rejection": 0.16,
+        "parse_failure_rate": 0.0,
+        "status": "ready"
+      }
+    },
+    "cepo_dual500_dpo": {
+      "label": "CEPO-Dual-500",
+      "answer_rows": 6000,
+      "verifier_rows": 500,
+      "variant": "cepo_dual_ablation/dual500",
+      "probe_variant": "cepo_dual_ablation/dual500",
+      "model_key": "cepo_dual500_dpo",
+      "short_answer": {
+        "coco": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/coco_heldout_object_existence/cepo_dual_ablation/dual500/cepo_dual500_dpo.metrics.json",
+          "accuracy": 0.969,
+          "false_positive_rate": 0.018,
+          "status": "ready"
+        },
+        "gqa": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/gqa_simple_heldout/cepo_dual_ablation/dual500/cepo_dual500_dpo.metrics.json",
+          "accuracy": 0.768,
+          "false_positive_rate": 0.246,
+          "status": "ready"
+        },
+        "hard": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/coco_hard_object_existence/cepo_dual_ablation/dual500/cepo_dual500_dpo.metrics.json",
+          "accuracy": 0.95,
+          "false_positive_rate": 0.05,
+          "status": "ready"
+        }
+      },
+      "evidence_probe": {
+        "supported_path": "/home/fhshao/CVPR-submission/results/eval/generations/cepo_evidence_probe/cepo_dual_ablation/dual500/cepo_dual500_dpo.metrics.json",
+        "wrong_path": "/home/fhshao/CVPR-submission/results/eval/generations/cepo_wrong_evidence_probe/cepo_dual_ablation/dual500/cepo_dual500_dpo.metrics.json",
+        "supported_accuracy": 0.913333,
+        "wrong_rejection": 0.395,
+        "object_wrong_rejection": 0.563492,
+        "attribute_wrong_rejection": 0.503356,
+        "relation_wrong_rejection": 0.096,
+        "parse_failure_rate": 0.0,
+        "status": "ready"
+      }
+    },
+    "cepo_dual1k_dpo": {
+      "label": "CEPO-Dual-1k",
+      "answer_rows": 6000,
+      "verifier_rows": 1000,
+      "variant": "cepo_dual_ablation/dual1k",
+      "probe_variant": "cepo_dual_ablation/dual1k",
+      "model_key": "cepo_dual1k_dpo",
+      "short_answer": {
+        "coco": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/coco_heldout_object_existence/cepo_dual_ablation/dual1k/cepo_dual1k_dpo.metrics.json",
+          "accuracy": 0.97,
+          "false_positive_rate": 0.018,
+          "status": "ready"
+        },
+        "gqa": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/gqa_simple_heldout/cepo_dual_ablation/dual1k/cepo_dual1k_dpo.metrics.json",
+          "accuracy": 0.772,
+          "false_positive_rate": 0.242,
+          "status": "ready"
+        },
+        "hard": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/coco_hard_object_existence/cepo_dual_ablation/dual1k/cepo_dual1k_dpo.metrics.json",
+          "accuracy": 0.949,
+          "false_positive_rate": 0.052,
+          "status": "ready"
+        }
+      },
+      "evidence_probe": {
+        "supported_path": "/home/fhshao/CVPR-submission/results/eval/generations/cepo_evidence_probe/cepo_dual_ablation/dual1k/cepo_dual1k_dpo.metrics.json",
+        "wrong_path": "/home/fhshao/CVPR-submission/results/eval/generations/cepo_wrong_evidence_probe/cepo_dual_ablation/dual1k/cepo_dual1k_dpo.metrics.json",
+        "supported_accuracy": 0.931667,
+        "wrong_rejection": 0.485,
+        "object_wrong_rejection": 0.746032,
+        "attribute_wrong_rejection": 0.590604,
+        "relation_wrong_rejection": 0.096,
+        "parse_failure_rate": 0.0,
+        "status": "ready"
+      }
+    },
+    "cepo_dual_dpo": {
+      "label": "CEPO-Dual-2k",
+      "answer_rows": 6000,
+      "verifier_rows": 2000,
+      "variant": "cepo_dual",
+      "probe_variant": "cepo_dual_evidence_probe",
+      "model_key": "cepo_dual_dpo",
+      "short_answer": {
+        "coco": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/coco_heldout_object_existence/cepo_dual/cepo_dual_dpo.metrics.json",
+          "accuracy": 0.97,
+          "false_positive_rate": 0.018,
+          "status": "ready"
+        },
+        "gqa": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/gqa_simple_heldout/cepo_dual/cepo_dual_dpo.metrics.json",
+          "accuracy": 0.771,
+          "false_positive_rate": 0.244,
+          "status": "ready"
+        },
+        "hard": {
+          "path": "/home/fhshao/CVPR-submission/results/eval/generations/coco_hard_object_existence/cepo_dual/cepo_dual_dpo.metrics.json",
+          "accuracy": 0.949,
+          "false_positive_rate": 0.052,
+          "status": "ready"
+        }
+      },
+      "evidence_probe": {
+        "supported_path": "/home/fhshao/CVPR-submission/results/eval/generations/cepo_evidence_probe/cepo_dual_evidence_probe/cepo_dual_dpo.metrics.json",
+        "wrong_path": "/home/fhshao/CVPR-submission/results/eval/generations/cepo_wrong_evidence_probe/cepo_dual_evidence_probe/cepo_dual_dpo.metrics.json",
+        "supported_accuracy": 0.951667,
+        "wrong_rejection": 0.7025,
+        "object_wrong_rejection": 0.960317,
+        "attribute_wrong_rejection": 0.85906,
+        "relation_wrong_rejection": 0.256,
+        "parse_failure_rate": 0.0,
+        "status": "ready"
+      }
+    }
+  },
+  "conclusions": [
+    "Answer-DPO improves supported-claim behavior but lowers wrong-evidence rejection relative to the base; CEPO-Dual-2k restores rejection strongly.",
+    "Relation wrong-evidence remains the bottleneck even when object wrong-evidence rejection is high.",
+    "The verifier-count ablation is monotonic: wrong-evidence rejection is 39.5, 48.5, and 70.3 for 500/1k/2k verifier rows.",
+    "Evidence-DPO-only has completed enough short-answer evaluation to test whether verifier supervision transfers or harms ordinary VQA behavior."
+  ]
+}

@@ -83,6 +83,23 @@ Relation wrong-evidence examples are sampled with:
 python scripts/eval/sample_cepo_relation_failures.py
 ```
 
+The V3 convergence task adds a locked relation-stress probe from the GQA
+held-out relation rows:
+
+```bash
+python scripts/eval/prepare_relation_stress_probe.py
+bash experiments/slurm/submit_relation_stress_eval.sh
+```
+
+This writes the task-local probe and summary under:
+
+```text
+v2/tasks/review-convergence-experiments/results/relation_stress/
+```
+
+and submits Base, CEPO Answer-DPO, and CEPO-Dual-2k evaluation jobs through the
+CEPO evidence-probe Slurm entrypoint.
+
 The completed verifier-count ablation is summarized with:
 
 ```bash

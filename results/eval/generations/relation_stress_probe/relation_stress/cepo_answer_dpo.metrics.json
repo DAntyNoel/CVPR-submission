@@ -1,0 +1,34 @@
+{
+  "total": 240,
+  "answer_accuracy": 0.0,
+  "support_accuracy": 0.104167,
+  "evidence_label_accuracy": 1.0,
+  "claim_match_rate": 1.0,
+  "relation_direction_accuracy": 0.5,
+  "wrong_evidence_rejection_accuracy": 0.554167,
+  "invalid_json_rate": 0.0,
+  "parse_failure_rate": 0.0,
+  "predicted_support_counts": {
+    "contradicted": 108,
+    "supported": 107,
+    "wrong_evidence": 25
+  },
+  "by_base_task_type": {
+    "relation_spatial": {
+      "total": 240,
+      "answer_accuracy": 0.0,
+      "support_accuracy": 0.104167,
+      "evidence_label_accuracy": 1.0,
+      "wrong_evidence_rejection_accuracy": 0.554167
+    }
+  },
+  "by_target_support": {
+    "wrong_evidence": {
+      "total": 240,
+      "answer_accuracy": 0.0,
+      "support_accuracy": 0.104167,
+      "evidence_label_accuracy": 1.0,
+      "wrong_evidence_rejection_accuracy": 0.554167
+    }
+  }
+}

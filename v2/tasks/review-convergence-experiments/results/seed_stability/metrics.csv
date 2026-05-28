@@ -1,0 +1,1 @@
+experiment_id,seed,model_key,train_job,output_variant,coco_acc,coco_fpr,coco_fnr,gqa_acc,gqa_fpr,gqa_fnr,hard_acc,hard_fpr,hard_fnr,bem_recovery,supported_acc,wrong_rejection,object_wrong,attribute_wrong,relation_wrong,strict_json,scored_output,parse_fail,notes

@@ -9,11 +9,11 @@ groups while the paper body targets 6-8 pages.
 
 Current files:
 
-- `main.tex`: paper body with final CEPO-Probe benchmark framing,
-  ClaimEvidence-6K data description, preference-format setup, five-group
-  short-answer transfer results, evidence-probe results, confidence intervals,
-  parser audit, relation error analysis, external sanity checks, limitations,
-  and conclusion.
+- `main.tex`: paper body with final CEPO-Probe benchmark framing, first-use
+  CEPO acronym expansion, Figure 1 claim-evidence overview, ClaimEvidence-6K
+  data description, preference-format setup, five-group short-answer transfer
+  results, evidence-probe results, confidence intervals, parser audit, relation
+  error analysis, external sanity checks, limitations, and conclusion.
 - `main_full.tex`: standalone entry point that enables the appendix and writes
   `build/main_full.pdf`.
 - `preamble.tex`: CVPR author-kit preamble helper, kept aligned with the

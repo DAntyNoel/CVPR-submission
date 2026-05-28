@@ -1,0 +1,22 @@
+{
+  "created_at": "2026-05-28T05:30:06.807504+00:00",
+  "model_key": "base",
+  "method": "Base Instruct",
+  "model_name_or_path": "/home/fhshao/CVPR-submission/models/Qwen2.5-VL-7B-Instruct",
+  "adapter_name_or_path": null,
+  "adapter_status": {
+    "status": "not_applicable",
+    "message": "Base model uses no adapter."
+  },
+  "eval_file": "/home/fhshao/CVPR-submission/v2/tasks/review-convergence-experiments/results/relation_stress/relation_stress_probe.jsonl",
+  "output_file": "/home/fhshao/CVPR-submission/results/eval/generations/relation_stress_probe/relation_stress/base.jsonl",
+  "num_records": 240,
+  "max_new_tokens": 96,
+  "temperature": 0.0,
+  "top_p": 1.0,
+  "image_min_pixels": null,
+  "image_max_pixels": null,
+  "instruction_suffix": "Return JSON with answer, claim, evidence_label, support. Use support as supported, contradicted, or wrong_evidence.",
+  "dry_run": false,
+  "finished_at": "2026-05-28T05:36:35.341687+00:00"
+}

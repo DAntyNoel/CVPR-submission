@@ -1,0 +1,4 @@
+probe_version,model_key,eval_job,rows,subject_object_swap_rows,left_right_reversal_rows,wrong_rejection,swap_rejection,left_right_rejection,both_objects_visible_false_accept,strict_json,scored_output,parse_fail,notes
+relation_stress_v1,base,64682,240,120,120,0.6083,0.2167,1.0000,0.3917,1.0000,1.0000,0.0000,"Base rejects all left/right reversals but accepts most subject/object swaps."
+relation_stress_v1,cepo_answer_dpo,64683,240,120,120,0.5542,0.1083,1.0000,0.4458,1.0000,1.0000,0.0000,"Answer-DPO weakens subject/object-swap rejection relative to Base."
+relation_stress_v1,cepo_dual_dpo,64684,240,120,120,0.7125,0.4250,1.0000,0.2875,1.0000,1.0000,0.0000,"CEPO-Dual improves overall relation stress but subject/object swaps remain below 50%."

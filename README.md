@@ -29,13 +29,35 @@ metrics, and the completed CEPO-Dual/evidence-control follow-up is now the
 main benchmark-paper comparison.
 
 The review-driven improvement pass under `cepo-probe-benchmark-improve/` is
-also complete. It adds bootstrap CIs, parser audit tables, relation failure
+also complete. It adds a first-use CEPO acronym expansion, a Figure 1
+claim-evidence overview, bootstrap CIs, parser audit tables, relation failure
 samples, and a Slurm-only verifier-count ablation. The ablation supports using
 CEPO-Dual-2k: the main paper now reports five groups at most (Base,
 Answer-DPO, Evidence-DPO-only, CEPO-Dual-1k, CEPO-Dual-2k), while the
 auxiliary CEPO-Dual-500 run stays in the appendix/artifacts. CEPO-Dual-500/1k/2k
 reach 39.5 / 48.5 / 70.3 wrong-evidence rejection while keeping COCO/GQA/Hard
 short-answer accuracy essentially flat.
+
+The active V3 convergence task is:
+
+```text
+v2/tasks/review-convergence-experiments/
+```
+
+It defines the remaining added experiments and result directories needed before
+claiming the V3 conclusion has converged: seed stability, a locked
+relation-stress probe, optional Qwen2.5-VL-32B transfer, and final
+paper/build-citation checks.
+
+The runnable submission entrypoints for the first convergence pass are:
+
+```bash
+bash experiments/slurm/submit_cepo_seed_stability_pipeline.sh
+bash experiments/slurm/submit_relation_stress_eval.sh
+```
+
+Both use Slurm; the first submits ZeRO-2 training for seeds 13 and 97 plus
+dependent evals, and the second submits the locked relation-stress probe evals.
 
 The generated sidecar artifacts live under:
 
@@ -71,6 +93,22 @@ idea-evidence-grounded-preference-vlm/
 Active V2 outline: what to reuse from V1, the new CEPO project framing, and the
 planned experiment schedule. `next_experiment_plan.md` records the CEPO-Dual
 follow-up after the CEPO-Latent result.
+
+```text
+v2/tasks/review-convergence-experiments/
+```
+
+V3 convergence task. It stores the added-experiment plan and canonical result
+folders under `results/` for paper fixes, seed stability, relation-stress
+analysis, optional backbone transfer, and the final convergence audit. Heavy
+training or full VLM inference for this task must be submitted through Slurm.
+
+The seed-stability Slurm entrypoint uses seed-specific LLaMA-Factory YAMLs
+under `experiments/llamafactory_configs/` and writes new adapters under
+`outputs/llamafactory/*_seed{13,97}_zero2/`, leaving the locked seed-42 V3
+adapters untouched. It serializes same-dataset seed training and uses reduced
+preprocessing/DataLoader workers to avoid HuggingFace dataset cache races on
+shared Slurm nodes.
 
 ```text
 cepo-probe-benchmark-paper/
