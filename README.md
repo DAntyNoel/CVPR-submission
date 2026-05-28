@@ -38,26 +38,33 @@ auxiliary CEPO-Dual-500 run stays in the appendix/artifacts. CEPO-Dual-500/1k/2k
 reach 39.5 / 48.5 / 70.3 wrong-evidence rejection while keeping COCO/GQA/Hard
 short-answer accuracy essentially flat.
 
-The active V3 convergence task is:
+The V3 convergence task is now complete for the current course-paper scope:
 
 ```text
 v2/tasks/review-convergence-experiments/
 ```
 
-It defines the remaining added experiments and result directories needed before
-claiming the V3 conclusion has converged: seed stability, a locked
-relation-stress probe, optional Qwen2.5-VL-32B transfer, and final
-paper/build-citation checks.
+It stores the added evidence used by the second-review paper polish: three-seed
+stability for CEPO Answer-DPO and CEPO-Dual-2k, a locked relation-stress probe,
+optional Qwen2.5-VL-32B transfer metadata, and the final convergence audit.
+Seed stability supports the central claim: across seeds 13/42/97, CEPO-Dual-2k
+improves wrong-evidence rejection over CEPO Answer-DPO by +35.2 to +38.8
+points while keeping COCO/GQA/Hard accuracy essentially flat. Relation-stress
+analysis narrows the unresolved relation failure to subject/object role swaps:
+CEPO-Dual-2k reaches 71.25% overall relation-stress rejection, 42.50% swap
+rejection, and 100% left/right reversal rejection.
 
-The runnable submission entrypoints for the first convergence pass are:
+The runnable submission entrypoints used for the convergence pass are:
 
 ```bash
 bash experiments/slurm/submit_cepo_seed_stability_pipeline.sh
 bash experiments/slurm/submit_relation_stress_eval.sh
 ```
 
-Both use Slurm; the first submits ZeRO-2 training for seeds 13 and 97 plus
-dependent evals, and the second submits the locked relation-stress probe evals.
+Both use Slurm; the first submitted ZeRO-2 training for seeds 13 and 97 plus
+dependent evals, and the second submitted the locked relation-stress probe
+evals. Optional 32B backbone transfer remains deferred unless a broader
+empirical-scope check is explicitly required.
 
 The generated sidecar artifacts live under:
 
@@ -238,7 +245,8 @@ reading:
 CEPO-Probe shows that short-answer preference tuning and claim-evidence
 verification are separable. CEPO Answer-DPO improves ordinary yes/no accuracy
 but weakens wrong-evidence rejection, while CEPO-Dual improves explicit
-evidence consistency without resolving relation reversals.
+evidence consistency without resolving subject/object role swaps in relation
+evidence.
 ```
 
 The completed verifier-count ablation refines the CEPO-Dual choice:
@@ -248,6 +256,12 @@ The completed verifier-count ablation refines the CEPO-Dual choice:
 | CEPO-Dual-500 | 96.9 | 76.8 | 95.0 | 91.3 | 39.5 | 9.6 |
 | CEPO-Dual-1k | 97.0 | 77.2 | 94.9 | 93.2 | 48.5 | 9.6 |
 | CEPO-Dual-2k | 97.0 | 77.1 | 94.9 | 95.2 | 70.3 | 25.6 |
+
+The completed seed-stability check keeps this reading stable: CEPO-Dual-2k
+wrong-evidence rejection is 68.5--71.8 across seeds, while CEPO Answer-DPO is
+33.0--34.3. The locked relation-stress probe further clarifies that simple
+left/right reversals are rejected reliably, but subject/object swaps remain
+fragile.
 
 Evidence-DPO-only is useful as a control: it keeps short-answer transfer near
 the main rows but reaches only 87.8 supported accuracy and 53.0 wrong-evidence
@@ -309,10 +323,11 @@ cd paper
 make pdf
 ```
 
-The current CEPO-Probe draft builds as `paper/build/main.pdf` with a 7-page
-review PDF and `paper/build/main_full.pdf` with a 9-page appendix-including
-version. It uses the five-group main comparison above and keeps the auxiliary
-CEPO-Dual-500 sensitivity result in the appendix/artifacts. The latest outer
+The current CEPO-Probe draft builds as `paper/build/main.pdf` with an 8-page
+review PDF and `paper/build/main_full.pdf` with a 10-page appendix-including
+version. It uses the five-group main comparison above, keeps the auxiliary
+CEPO-Dual-500 sensitivity result in the appendix/artifacts, and now documents
+three-seed stability plus the locked relation-stress probe. The latest outer
 `paper/` draft also has an expanded related-work bibliography covering public
 hallucination/evaluation benchmarks, multimodal preference-tuning work, and
 grounding/rationale datasets.

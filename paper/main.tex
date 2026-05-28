@@ -54,11 +54,12 @@ directions: answer-only tuning improves short-answer accuracy but lowers
 wrong-evidence rejection from 44.3\% to 34.3\%. Direct verifier supervision
 recovers this behavior, reaching 53.0\% in the verifier-only control and
 70.3\% in the strongest mixed setting while preserving the answer-level gains.
-Row-bootstrap intervals, parser audits, and slice analysis support a bounded
-conclusion: explicit verifier preferences substantially improve object and
-attribute evidence checks, but relation reversals remain fragile. External POPE
-and AMBER checks stay close to the answer-only baseline, so the claim is
-diagnostic rather than a broad hallucination-benchmark win.
+Row-bootstrap intervals, parser audits, seed stability, and slice analysis
+support a bounded conclusion: explicit verifier preferences substantially
+improve object and attribute evidence checks, but subject/object role swaps
+remain fragile. External POPE and AMBER checks stay close to the answer-only
+baseline, so the claim is diagnostic rather than a broad
+hallucination-benchmark win.
 \end{abstract}
 
 \section{Introduction}
@@ -88,14 +89,14 @@ verification: the answer text may remain plausible, but the candidate evidence
 is mismatched. This forces evaluation to look beyond the final answer and ask
 whether the model accepts the correct object, attribute, or spatial relation.
 
-The study is intentionally small. \dataset{} contains 6{,}000 training rows
-derived from existing COCO~\cite{coco} and GQA~\cite{gqa} annotations, with a
-fixed 600-row supported-evidence probe and 400-row wrong-evidence probe. The
-main paper limits the training comparison to five groups: Base Instruct,
-\answerdpo{}, \evidencedpo{}, \dualonek{}, and \dualtwok{}. This keeps the
-experimental surface narrow enough for a reproducible diagnostic conclusion
-while still testing whether verifier supervision helps by itself and when
-mixed with answer preferences.
+We focus on a controlled diagnostic setting. \dataset{} contains 6{,}000
+training rows derived from existing COCO~\cite{coco} and GQA~\cite{gqa}
+annotations, with a fixed 600-row supported-evidence probe and 400-row
+wrong-evidence probe. The main paper limits the training comparison to five
+groups: Base Instruct, \answerdpo{}, \evidencedpo{}, \dualonek{}, and
+\dualtwok{}. This keeps the experimental surface narrow enough for a
+reproducible diagnostic conclusion while still testing whether verifier
+supervision helps by itself and when mixed with answer preferences.
 
 Our conclusion is deliberately bounded. We do not claim that \dualtwok{}
 solves visual hallucination. Instead, \benchmark{} shows that answer-level DPO
@@ -110,7 +111,7 @@ Our contributions are:
 \begin{itemize}
     \item We define \benchmark{}, a claim-evidence consistency benchmark that
     separates answer correctness from evidence correctness.
-    \item We construct \dataset{}, a lightweight 6k-row preference collection
+    \item We construct \dataset{}, a controlled 6k-row preference collection
     with object, attribute, relation, and same-answer wrong-evidence examples,
     plus fixed supported and wrong-evidence probes.
     \item We provide a deterministic protocol that reports short-answer
@@ -118,7 +119,7 @@ Our contributions are:
     bootstrap intervals, and parser quality.
     \item We show in a five-group comparison that answer-only DPO can weaken
     wrong-evidence rejection, while direct verifier preferences improve the
-    explicit probe and reveal relation reversals as the main bottleneck.
+    explicit probe and reveal relation role swaps as the main bottleneck.
 \end{itemize}
 
 \section{Related Work}
@@ -155,13 +156,13 @@ These signals are stronger than the textual evidence labels used here, but
 they are also more expensive. \benchmark{} takes a lighter route: it derives
 object labels, attributes, and left/right relations from COCO and GQA
 annotations. This makes the benchmark easy to regenerate and well suited for a
-small diagnostic study, at the cost of not measuring precise region
+controlled diagnostic setting, at the cost of not measuring precise region
 localization.
 
 \paragraph{Structured evaluation.}
 Many VLM failures are hidden when all outputs are reduced to a final answer.
 \benchmark{} therefore requires a structured support decision and audits both
-JSON validity and fallback scoring. The purpose is not to reward verbose
+JSON-object parsing and fallback scoring. The purpose is not to reward verbose
 explanations, but to expose whether a model accepts or rejects a specific
 evidence item under a deterministic scoring rule.
 
@@ -218,6 +219,10 @@ GQA contributes color/material attributes and left/right spatial relations
 from scene graphs. We also create same-answer wrong-evidence rows where the
 answer text is intentionally not the discriminating signal: the candidate
 evidence is a wrong object label, mismatched attribute, or reversed relation.
+Examples include ``person visible'' with \texttt{label=airplane}, ``grass is
+green'' with an unrelated object, and a left/right claim whose evidence swaps
+subject and object. The answer remains plausible; the support decision should
+change.
 
 \begin{table}[t]
 \centering
@@ -253,7 +258,9 @@ answers match contradicted claims (170/170), all chosen evidence entries match
 the chosen claims (200/200), and all rejected errors match the intended
 negative type (200/200). The remaining 30 rejected-answer checks are marked
 not applicable because same-answer wrong-evidence rows intentionally keep the
-answer plausible while changing only the evidence.
+answer plausible while changing only the evidence. The sample is stratified
+across 60 object rows, 50 attribute rows, 60 relation rows, and 30
+same-answer wrong-evidence rows.
 
 \paragraph{Data card.}
 The benchmark is intended for diagnostic evaluation of VLM grounding and
@@ -291,7 +298,7 @@ Base Instruct & 0 & 0 & No preference tuning & No preference tuning \\
 \dualtwok{} & 6{,}000 & 2{,}000 & Mixed answer and verifier positives & Mixed answer and verifier negatives \\
 \bottomrule
 \end{tabular}
-\caption{Main training groups. The design keeps the experiment compact while
+\caption{Main training groups. The design keeps the experiment controlled while
 testing answer-only supervision, verifier-only supervision, and two mixed
 answer/verifier settings.}
 \label{tab:groups}
@@ -338,7 +345,7 @@ directly.}
 This format is intentionally simple. It does not require boxes, masks, or
 human-written rationales. It only asks the model to decide whether the
 candidate evidence item is a valid support for the claim. The lightweight
-format makes the data construction small enough for a diagnostic submission,
+format keeps the data construction bounded for a diagnostic submission,
 but it also explains a limitation of the results: success on \benchmark{} is
 evidence-label consistency, not full visual grounding.
 
@@ -367,12 +374,14 @@ rate (FPR) and false-negative rate (FNR) to expose yes/no bias.
 \benchmark{} reports supported-evidence accuracy on the 600-row supported
 probe and wrong-evidence rejection on the 400-row wrong-evidence probe. The
 wrong-evidence probe is further broken into object, attribute, and relation
-slices. We also track strict JSON validity, scored-output rate, and parse
-failure. Strict JSON means the raw output is a parseable JSON object.
-Scored-output rate also counts outputs recovered by deterministic fallback
-field parsing. Parse failure counts rows with insufficient structure for
-scoring. For the primary anchor comparison, we compute row-bootstrap 95\%
-confidence intervals with 10{,}000 resamples.
+slices. We also track whether the raw output contains a parseable JSON object,
+the scored-output rate, and parse failure. The evidence probe uses ordinary
+deterministic decoding rather than constrained decoding. JSON-object rate means
+the scorer found a parseable JSON object in the raw output. Scored-output rate
+also counts outputs recovered by deterministic fallback field parsing. Parse
+failure counts rows with insufficient structure for scoring. For the primary
+anchor comparison, we compute row-bootstrap 95\% confidence intervals with
+10{,}000 resamples.
 
 \subsection{Controls and Reporting Discipline}
 
@@ -383,6 +392,10 @@ probes are fixed before comparing trained models. Third, the parser audit is
 reported alongside the main probe metrics; a method should not receive credit
 for a support decision if the scorer recovered only a malformed or ambiguous
 output.
+Image disjointness does not prove template-distribution independence: training
+and probe rows still share annotation sources, prompt style, and evidence
+templates. Paraphrased or human-written evidence probes remain future
+external-validity checks.
 
 The main table is also capped at five groups. This is a practical reporting
 choice rather than an optimization claim. It keeps the paper focused on the
@@ -437,7 +450,7 @@ preference tuning when the deployment prompt asks for a short answer.
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}lrrrrrrr@{}}
 \toprule
-Model & Supp. Acc & Wrong Rej. & Obj Wrong & Attr Wrong & Rel. Wrong & Strict JSON & Parse Fail \\
+Model & Supp. Acc & Wrong Rej. & Obj Wrong & Attr Wrong & Rel. Wrong & JSON Obj. & Parse Fail \\
 \midrule
 Base Instruct & 86.5 & 44.3 & 59.5 & 53.7 & 17.6 & 100.0 & 0.0 \\
 \answerdpo{} & 90.7 & 34.3 & 45.2 & 45.0 & 10.4 & 100.0 & 0.0 \\
@@ -474,7 +487,7 @@ reaches 70.3\%.
 \setlength{\tabcolsep}{5pt}
 \begin{tabular}{@{}lccccc@{}}
 \toprule
-Model & Supp. Acc. 95\% CI & Wrong Rej. 95\% CI & Strict JSON & Scored Output & Parse Fail \\
+Model & Supp. Acc. 95\% CI & Wrong Rej. 95\% CI & JSON Obj. & Scored Output & Parse Fail \\
 \midrule
 Base Instruct & 86.5 [83.7, 89.2] & 44.3 [39.5, 49.0] & 100.0 & 100.0 & 0.0 \\
 \answerdpo{} & 90.7 [88.3, 93.0] & 34.3 [29.8, 39.0] & 100.0 & 100.0 & 0.0 \\
@@ -482,18 +495,22 @@ Base Instruct & 86.5 [83.7, 89.2] & 44.3 [39.5, 49.0] & 100.0 & 100.0 & 0.0 \\
 \bottomrule
 \end{tabular}
 \caption{Row-bootstrap intervals and parser audit for the primary anchor
-comparison. Intervals use 10{,}000 row resamples. Scored Output includes
+comparison. Intervals use 10{,}000 row resamples. JSON Obj. means the raw
+output contains a parseable JSON object; Scored Output additionally includes
 deterministic fallback field parsing.}
 \label{tab:ci}
 \end{table*}
 
 The intervals in Table~\ref{tab:ci} support the same reading. The
 \dualtwok{} wrong-evidence interval [65.8, 74.8] is well separated from both
-Base Instruct [39.5, 49.0] and \answerdpo{} [29.8, 39.0]. The supported probe
-also improves, but its baseline is already high, so the larger scientific
-signal is the wrong-evidence rejection gap. Parser quality is not a confound:
-strict JSON validity and scored-output rate are 100\% for all three anchor
-models, and parse failure is 0\%.
+Base Instruct [39.5, 49.0] and \answerdpo{} [29.8, 39.0]. These are
+fixed-output row-bootstrap intervals, not training-run variance. A three-seed
+LoRA-DPO check gives the missing stability test: \dualtwok{} improves
+wrong-evidence rejection over \answerdpo{} by +35.2 to +38.8 points, averaging
+70.2$\pm$1.3 versus 33.5$\pm$0.5, while COCO, GQA, and Hard COCO accuracy stay
+within 0.3 points. Parser quality is not a confound: every anchor probe output
+contains a parseable JSON object, scored output is 100\%, and parse failure is
+0\%.
 
 \subsection{Slice and Error Analysis}
 
@@ -504,7 +521,9 @@ wrong-evidence rejection reaches only 25.6\%, even though this is higher than
 the base and answer-only rows. Row-bootstrap slice intervals for the three
 anchor models are: object 96.0 [92.1, 99.2], attribute 85.9 [79.9, 91.3], and
 relation 25.6 [18.4, 32.8] for \dualtwok{}. The relation interval remains low,
-so the failure is not a small-sample artifact.
+so the failure is not a small-sample artifact. A locked relation-stress probe
+reaches 71.25\% overall rejection for \dualtwok{}, but separates easy
+left/right reversals (100.0\%) from weak subject/object swaps (42.5\%).
 
 \begin{table*}[t]
 \centering
@@ -541,8 +560,8 @@ hardest slice even after direct verifier supervision.}
 Table~\ref{tab:relation_examples} illustrates the remaining failure mode. In
 successful cases, \dualtwok{} learns to reject swapped subject/object evidence
 that both Base Instruct and \answerdpo{} accept. In many other cases, all
-models still accept the swapped relation. This suggests that textual
-left/right labels alone are not enough to enforce robust spatial grounding.
+models still accept the swapped relation. The stress probe suggests that the
+problem is role preservation more than the lexical left/right flip itself.
 A stronger relation probe likely needs region-aware evidence, explicit object
 localization, or harder contrastive relation pairs.
 
@@ -577,7 +596,7 @@ benchmark breakthrough.
 
 \section{Discussion}
 
-\paragraph{Answer and evidence skills separate.}
+\paragraph{Answer and evidence behaviors separate.}
 The most important empirical pattern is the disagreement between Tables
 \ref{tab:short} and \ref{tab:probe}. \answerdpo{} improves ordinary answers
 while lowering wrong-evidence rejection. \evidencedpo{} improves
@@ -585,20 +604,21 @@ wrong-evidence rejection while doing little for short-answer transfer.
 \dualtwok{} combines both signals and gives the strongest evidence-probe
 result. These behaviors would be hard to see from answer accuracy alone.
 
-\paragraph{Verifier data scale matters, but the result is modest.}
-The 1k and 2k mixed settings show that adding a small number of verifier rows
-is not automatically enough. \dualonek{} improves supported-evidence accuracy
-but does not strongly reject wrong evidence. \dualtwok{} is the selected main
-mixed setting because it is the first tested mixed recipe that clearly
-improves both supported and wrong-evidence probes. This still uses only 2k
-verifier rows, so the data construction remains lightweight.
+\paragraph{Verifier data scale matters, but the ablation has a confound.}
+\dualonek{} improves supported-evidence accuracy but does not strongly reject
+wrong evidence; \dualtwok{} is the first mixed recipe that improves both probe
+sides. Its verifier rows are balanced as 1{,}000 supported and 1{,}000 wrong,
+covering about 808 object, 607 attribute, and 585 relation examples. However,
+CEPO-Dual-500, -1k, and -2k use 6.5k, 7k, and 8k total rows, so the 1k to 2k
+jump shows that verifier volume and coverage matter, not a clean
+mixture-ratio proof.
 
 \paragraph{Relation evidence is the bottleneck.}
 Object and attribute mismatches are often visible from a single label or
 attribute. Relation mismatches require comparing two entities and preserving
-direction. The current textual evidence representation does not require the
-model to identify regions, so it can accept a swapped relation if the two
-objects are both present. This is why we treat relation errors as a remaining
+their roles. The current textual evidence representation does not require the
+model to identify regions, so it can accept a subject/object swap if the two
+objects are both present. This is why we treat role-swap errors as a remaining
 failure rather than a minor detail.
 
 \paragraph{What the benchmark should and should not support.}
@@ -619,23 +639,25 @@ instead of increasing the same object-label template at larger scale.
 
 \section{Limitations}
 
-\benchmark{} is intentionally compact and controlled. It is derived from COCO
-and GQA annotations rather than newly collected human evidence labels. Textual
-evidence labels are weaker than boxes, masks, or human rationales, and the
-rule-based scorer cannot recognize every semantically valid free-form
-description. Some GQA-derived rows lack boxes, so the current probe cannot
-verify region localization. The experiment uses one 7B backbone, one LoRA-DPO
-recipe, and one deterministic decoding setup; broader model families, random
-seeds, and stronger verifier data would be needed for a general alignment
-claim. Finally, the relation results show that accepting or rejecting textual
-relation evidence is still far from a robust spatial grounding test.
+\benchmark{} is controlled and annotation-derived. It uses COCO and GQA
+labels rather than newly collected human evidence labels. Textual evidence
+labels are weaker than boxes, masks, or human rationales, and the rule-based
+scorer cannot recognize every semantically valid free-form description. Some
+GQA-derived rows lack boxes, so the current probe cannot verify region
+localization. The experiment uses one 7B backbone, one LoRA-DPO recipe, and
+one deterministic decoding setup. We add a three-seed check for the central
+answer-versus-verifier comparison, but broader model families, paraphrased
+templates, human-written evidence, and stronger verifier data would be needed
+for a general alignment claim. Finally, the relation results show that
+accepting or rejecting textual relation evidence is still far from a robust
+spatial grounding test.
 
 \section{Conclusion}
 
 We presented \benchmark{}, a diagnostic benchmark for claim-evidence
 consistency in VLM preference tuning. The benchmark separates ordinary
 short-answer performance from the ability to verify whether a visual claim is
-supported by the correct evidence. In a compact five-group experiment,
+supported by the correct evidence. In a controlled five-group experiment,
 \answerdpo{} improves short-answer behavior while weakening wrong-evidence
 rejection, \evidencedpo{} improves verifier behavior without improving
 short-answer transfer, and \dualtwok{} preserves answer gains while improving

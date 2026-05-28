@@ -106,82 +106,82 @@ five groups.}
 \end{minipage}
 \end{center}
 
-The ablation also shows why the paper does not present CEPO-Dual as a broad
-hallucination method. The largest gain is on the internal evidence probe, not
-on every external yes/no benchmark. Table~\ref{tab:app_external} therefore
-serves as a sanity check. CEPO-Dual-2k stays close to CEPO Answer-DPO on POPE
-and AMBER, which means the verifier rows do not cause an obvious collapse in
-ordinary polling behavior. The differences are small, so the external table is
-supporting evidence for stability rather than the source of the main claim.
-
-\begin{center}
-\begin{minipage}{0.55\linewidth}
-\centering
-\footnotesize
-\begin{tabular}{lccc}
-\toprule
-Eval & Base & \answerdpo{} & \dualtwok{} \\
-\midrule
-POPE random & 88.7 & 89.6 & \textbf{89.8} \\
-POPE popular & 87.7 & 88.5 & \textbf{88.7} \\
-POPE adversarial & 86.7 & 87.1 & \textbf{87.3} \\
-AMBER discr. & 87.6 & \textbf{88.2} & \textbf{88.2} \\
-\bottomrule
-\end{tabular}
-\captionof{table}{External yes/no sanity checks. Values are accuracy
-percentages under the same deterministic parser.}
-\label{tab:app_external}
-\end{minipage}
-\end{center}
-
-\subsection{Qualitative Analysis and Scoring Rules}
-
-The most persistent failure mode is relation verification. Object and
-attribute evidence can often be checked by recognizing one label or property,
-but a left/right relation requires the model to preserve subject, object, and
-direction at the same time. Table~\ref{tab:app_qual} gives representative
-probe outputs. The successful wrong-relation case shows that CEPO-Dual-2k can
-learn to reject swapped evidence, while the failure case shows the remaining
-weakness: if both objects are visible, the model may still accept the swapped
-relation as supported.
+Table~\ref{tab:app_seed} summarizes the seed-stability run used to check
+LoRA-DPO variance. The default seed-42 rows are the locked V3 runs; seeds 13
+and 97 are the completed retry jobs with serialized preprocessing to avoid
+shared-cache races. The wrong-evidence gap remains large for all three seeds:
+\dualtwok{} improves over \answerdpo{} by 38.8, 36.0, and 35.2 points for
+seeds 13, 42, and 97 respectively, while short-answer accuracy stays nearly
+unchanged.
 
 \begin{center}
 \begin{minipage}{\linewidth}
 \centering
 \scriptsize
-\begin{tabular}{@{}p{0.14\linewidth}p{0.34\linewidth}p{0.16\linewidth}p{0.13\linewidth}p{0.10\linewidth}@{}}
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{@{}rrlrrrrrr@{}}
 \toprule
-Type & Candidate claim and evidence & Target & \dualtwok{} output & Reading \\
+Seed & Model & COCO/GQA/Hard & BEM & Supp. & Wrong Rej. & Obj/Attr/Rel & JSON Obj. & Parse Fail \\
 \midrule
-Supported attr. &
-claim: vehicle is white; evidence: label=vehicle, attribute=white &
-supported & supported & correct \\
-Supported material &
-claim: window is glass; evidence: label=window, attribute=glass &
-supported & supported & correct \\
-Wrong object &
-claim: sink visible; evidence: label=potted plant &
-wrong evidence & wrong evidence & correct \\
-Wrong relation &
-claim: glass left\_of grape; evidence swaps subject/object &
-wrong evidence & contradicted & correct rejection \\
-Wrong relation &
-claim: man right\_of parking meter; evidence swaps subject/object &
-wrong evidence & supported & relation failure \\
+13 & \answerdpo{} & 96.9 / 77.2 / 95.1 & 19.4 & 90.7 & 33.0 & 42.1 / 44.3 / 10.4 & 100.0 & 0.0 \\
+13 & \dualtwok{} & 97.0 / 76.9 / 95.0 & 20.3 & 95.7 & 71.8 & 96.0 / 85.9 / 30.4 & 100.0 & 0.0 \\
+42 & \answerdpo{} & 97.0 / 76.8 / 95.0 & 18.0 & 90.7 & 34.3 & 45.2 / 45.0 / 10.4 & 100.0 & 0.0 \\
+42 & \dualtwok{} & 97.0 / 77.1 / 94.9 & 19.4 & 95.2 & 70.3 & 96.0 / 85.9 / 25.6 & 100.0 & 0.0 \\
+97 & \answerdpo{} & 97.0 / 77.0 / 95.1 & 19.0 & 90.2 & 33.3 & 42.9 / 45.0 / 9.6 & 100.0 & 0.0 \\
+97 & \dualtwok{} & 97.0 / 76.9 / 95.0 & 19.5 & 95.3 & 68.5 & 96.8 / 85.2 / 20.0 & 100.0 & 0.0 \\
 \bottomrule
 \end{tabular}
-\captionof{table}{Representative probe outputs. Examples are anonymized to
-local image references and show why relation reversals remain the hardest
-slice.}
-\label{tab:app_qual}
+\captionof{table}{Seed-stability results for the two trained groups needed
+for the central conclusion. Values are percentages. JSON Obj. reports whether
+the raw evidence-probe output contains a parseable JSON object; decoding is
+not constrained.}
+\label{tab:app_seed}
 \end{minipage}
 \end{center}
+
+The ablation also shows why the paper does not present CEPO-Dual as a broad
+hallucination method. The largest gain is on the internal evidence probe, not
+on every external yes/no benchmark. The main paper therefore reports POPE and
+AMBER only as sanity checks: CEPO-Dual-2k stays close to CEPO Answer-DPO, so
+the verifier rows do not cause an obvious collapse in ordinary polling
+behavior, but they are not the source of the main claim.
+
+\begin{center}
+\begin{minipage}{0.74\linewidth}
+\centering
+\footnotesize
+\begin{tabular}{lrrrr}
+\toprule
+Model & Overall & Swap & L/R reversal & False accept \\
+\midrule
+Base Instruct & 60.8 & 21.7 & 100.0 & 39.2 \\
+\answerdpo{} & 55.4 & 10.8 & 100.0 & 44.6 \\
+\dualtwok{} & \textbf{71.3} & \textbf{42.5} & 100.0 & \textbf{28.8} \\
+\bottomrule
+\end{tabular}
+\captionof{table}{Locked relation-stress probe. It contains 240 held-out GQA
+relation rows split evenly between subject/object swaps and left/right
+reversals. The residual weakness is role swapping, not simple left/right
+lexical reversal.}
+\label{tab:app_relation_stress}
+\end{minipage}
+\end{center}
+
+\subsection{Scoring Rules and Qualitative Reading}
+
+The most persistent failure mode is relation verification. Object and
+attribute evidence can often be checked by recognizing one label or property,
+but a relation requires the model to preserve subject, object, and direction
+at the same time. The main-paper examples show both outcomes: CEPO-Dual-2k can
+reject some swapped evidence, but if both objects are visible, it may still
+accept the swapped relation as supported.
 
 Scoring follows the same conservative principle. Short-answer metrics use a
 deterministic yes/no parser. Outputs with explicit uncertainty such as
 ``cannot determine'' or ``not sure'' are refusals; outputs without a parseable
 yes/no decision are counted as other/invalid. The evidence-probe scorer first
-tries to parse JSON and then falls back to labeled fields. For wrong-evidence
+tries to parse a JSON object from the raw output and then falls back to labeled
+fields; decoding itself is not constrained. For wrong-evidence
 rows, both \texttt{wrong\_evidence} and \texttt{contradicted} count as
 rejecting the candidate evidence, because both labels indicate that the
 evidence should not be accepted as support for the claim. This scoring rule is

@@ -12,8 +12,9 @@ Current files:
 - `main.tex`: paper body with final CEPO-Probe benchmark framing, first-use
   CEPO acronym expansion, Figure 1 claim-evidence overview, ClaimEvidence-6K
   data description, preference-format setup, five-group short-answer transfer
-  results, evidence-probe results, confidence intervals, parser audit, relation
-  error analysis, external sanity checks, limitations, and conclusion.
+  results, evidence-probe results, confidence intervals, parser audit, seed
+  stability summary, relation error analysis, external sanity checks,
+  limitations, and conclusion.
 - `main_full.tex`: standalone entry point that enables the appendix and writes
   `build/main_full.pdf`.
 - `preamble.tex`: CVPR author-kit preamble helper, kept aligned with the
@@ -32,7 +33,8 @@ Current files:
 - `appendix.tex`: supplementary material included by `main_full.tex`,
   organized into reproducibility setup, additional quantitative checks, and
   qualitative/scoring analysis. It keeps the auxiliary CEPO-Dual-500 run out of
-  the main five-group body while still documenting the full ablation.
+  the main five-group body while documenting the full ablation, three-seed
+  stability check, and locked relation-stress probe.
 - `Makefile`: Tectonic-based local build entry point.
 - `rebuttal/`: simulated reviewer reports for the current PDF.
 
@@ -53,10 +55,15 @@ The paper now follows the completed CEPO-Probe interpretation: CEPO Answer-DPO
 improves ordinary yes/no accuracy but weakens wrong-evidence rejection, while
 direct verifier supervision recovers evidence behavior. Evidence-DPO-only
 reaches 53.0% wrong-evidence rejection, CEPO-Dual-1k reaches 48.5%, and
-CEPO-Dual-2k reaches 70.3% while preserving the short-answer gains. Relation
-reversals remain the main failure slice. POPE/AMBER are reported only as
-external sanity checks: CEPO-Dual-2k stays close to CEPO Answer-DPO, so the
-paper does not claim a general hallucination-benchmark win.
+CEPO-Dual-2k reaches 70.3% while preserving the short-answer gains. The
+three-seed stability check is now complete: CEPO-Dual-2k improves
+wrong-evidence rejection over CEPO Answer-DPO by +35.2 to +38.8 points while
+keeping COCO/GQA/Hard accuracy essentially flat. Relation-stress analysis
+narrows the remaining relation bottleneck to subject/object role swaps:
+CEPO-Dual-2k reaches 71.25% overall relation-stress rejection, with 42.50%
+swap rejection and 100% left/right reversal rejection. POPE/AMBER are reported
+only as external sanity checks: CEPO-Dual-2k stays close to CEPO Answer-DPO, so
+the paper does not claim a general hallucination-benchmark win.
 
 Related-work references were expanded on 2026-05-28 for the latest outer
 `paper/` draft. The current citation set now situates CEPO-Probe against
@@ -88,9 +95,9 @@ make full
 
 This writes `build/main_full.pdf`. The environment currently uses Tectonic 0.16.9
 because system-level TeX Live cannot be installed without sudo on this machine.
-The CEPO-Probe PDF builds were verified on 2026-05-28 after the five-group
-paper rewrite, appendix layout fix, and related-work citation expansion:
-`build/main.pdf` is 7 pages and `build/main_full.pdf` is 9 pages. The
+The CEPO-Probe PDF builds were verified on 2026-05-28 after the second-review
+polish, seed-stability integration, appendix compaction, and relation-stress
+update: `build/main.pdf` is 8 pages and `build/main_full.pdf` is 10 pages. The
 remaining non-fatal warning is the upstream `lineno.sty` UTF-8 warning from
 the bundled review style; there are no current overfull table warnings,
 missing-reference warnings, or missing-citation warnings.
