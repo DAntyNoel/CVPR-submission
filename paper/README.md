@@ -12,7 +12,7 @@ Current files:
 - `main.tex`: paper body with final CEPO-Probe benchmark framing, first-use
   CEPO acronym expansion, Figure 1 claim-evidence overview, ClaimEvidence-6K
   data description, preference-format setup, five-group short-answer transfer
-  results, evidence-probe results, confidence intervals, parser audit, seed
+  results, evidence-probe results, confidence intervals, parser-audit note, seed
   stability summary, paraphrased-probe diagnostic, relation error analysis,
   external sanity checks, limitations, and conclusion.
 - `main_full.tex`: standalone entry point that enables the appendix and writes
@@ -34,8 +34,8 @@ Current files:
   organized into reproducibility setup, additional quantitative checks, and
   qualitative/scoring analysis. It keeps the auxiliary CEPO-Dual-500 run out of
   the main five-group body while documenting the full ablation, three-seed
-  stability check, row-preserving paraphrased probe, and locked
-  relation-stress probe.
+  stability check, row-preserving paraphrased probe, fixed-budget row-count
+  control, and locked relation-stress probe.
 - `Makefile`: Tectonic-based local build entry point.
 - `rebuttal/`: simulated reviewer reports for the current PDF.
 
@@ -74,12 +74,16 @@ under this wording shift: 73.2% vs 61.8%, with both at 90.0% supported
 accuracy and 0.0 parse failures. This is treated as template-robustness
 evidence, not as a human-written evidence benchmark.
 
+Constant parser-audit columns such as JSON-object rate and parse failure are
+kept in released metrics but omitted from paper tables because all reported
+paper rows are 100.0% parseable with 0.0% parse failure.
+
 The fixed-budget row-count control requested after the 2026-05-30 review is
-tracked outside the main manuscript under
-`v2/tasks/fixed-budget-control-experiments/`. It submits Answer-4k,
-Dual-1k-fixed6k, and Dual-2k-fixed6k through Slurm and will only be integrated
-as appendix/control evidence after `scripts/eval/summarize_cepo_fixed_budget_results.py`
-reports complete metrics. The main five-group table remains unchanged.
+complete under `v2/tasks/fixed-budget-control-experiments/`. Dual-2k-fixed6k
+reaches 62.7% wrong-evidence rejection, +28.5 points over CEPO Answer-DPO-6k,
+while COCO/GQA/Hard accuracy changes by only -0.1/+0.1/+0.1 points. The result
+is integrated as appendix/control evidence; the main five-group table remains
+unchanged.
 
 Related-work references were expanded on 2026-05-28 for the latest outer
 `paper/` draft. The current citation set now situates CEPO-Probe against
@@ -112,9 +116,9 @@ make full
 This writes `build/main_full.pdf`. The environment currently uses Tectonic 0.16.9
 because system-level TeX Live cannot be installed without sudo on this machine.
 The CEPO-Probe PDF builds were verified on 2026-05-28 after the second-review
-polish, seed-stability integration, paraphrased-probe integration, appendix
-compaction, and relation-stress update: `build/main.pdf` is 8 pages and
-`build/main_full.pdf` is 10 pages. The
+polish, seed-stability integration, paraphrased-probe integration,
+fixed-budget control integration, appendix compaction, and relation-stress
+update: `build/main.pdf` is 8 pages and `build/main_full.pdf` is 10 pages. The
 remaining non-fatal warning is the upstream `lineno.sty` UTF-8 warning from
 the bundled review style; there are no current overfull table warnings,
 missing-reference warnings, or missing-citation warnings.

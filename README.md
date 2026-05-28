@@ -30,7 +30,7 @@ main benchmark-paper comparison.
 
 The review-driven improvement pass under `cepo-probe-benchmark-improve/` is
 also complete. It adds a first-use CEPO acronym expansion, a Figure 1
-claim-evidence overview, bootstrap CIs, parser audit tables, relation failure
+claim-evidence overview, bootstrap CIs, parser audit metrics, relation failure
 samples, and a Slurm-only verifier-count ablation. The ablation supports using
 CEPO-Dual-2k: the main paper now reports five groups at most (Base,
 Answer-DPO, Evidence-DPO-only, CEPO-Dual-1k, CEPO-Dual-2k), while the
@@ -77,7 +77,7 @@ the smoke test OOMs or projects beyond the two-day result deadline. If ZeRO-2
 cannot load the 32B model even on 48GB-class GPUs, use the `_z3_` profiles for
 stronger sharding.
 
-The row-count confound raised after the 2026-05-30 review is tracked as a
+The row-count confound raised after the 2026-05-30 review is resolved as a
 separate Slurm-only fixed-budget control task:
 
 ```text
@@ -85,15 +85,17 @@ v2/tasks/fixed-budget-control-experiments/
 ```
 
 It keeps the main paper at five groups and adds three appendix/control runs:
-Answer-4k, Dual-1k-fixed6k, and Dual-2k-fixed6k. These controls test whether
-replacing answer rows with verifier rows at a fixed 6,000-row budget preserves
-the CEPO-Dual-2k wrong-evidence rejection gain. The submission entrypoint is:
+Answer-4k, Dual-1k-fixed6k, and Dual-2k-fixed6k. Replacing answer rows with
+verifier rows at a fixed 6,000-row budget preserves the CEPO-Dual-2k
+wrong-evidence rejection gain: Dual-2k-fixed6k reaches 62.7% wrong-evidence
+rejection, +28.5 points over CEPO Answer-DPO-6k, while COCO/GQA/Hard accuracy
+changes by -0.1/+0.1/+0.1 points. The submission entrypoint was:
 
 ```bash
 bash experiments/slurm/submit_cepo_fixed_budget_pipeline.sh
 ```
 
-After the dependent eval jobs complete, summarize with:
+The completed results are summarized with:
 
 ```bash
 python scripts/eval/summarize_cepo_fixed_budget_results.py
@@ -106,6 +108,8 @@ data/processed/cepo/
 experiments/llamafactory_data_cepo/
 data/processed/cepo_dual/
 experiments/llamafactory_data_cepo_dual/
+data/processed/cepo_fixed_budget/
+experiments/llamafactory_data_cepo_fixed_budget/
 data/eval/cepo_evidence_probe.jsonl
 data/eval/cepo_wrong_evidence_probe.jsonl
 data/eval/cepo_evidence_probe_paraphrase.jsonl
@@ -160,8 +164,8 @@ v2/tasks/fixed-budget-control-experiments/
 Post-review fixed-budget control task. It reuses the CEPO-Dual export pipeline
 to train Answer-4k, Dual-1k-fixed6k, and Dual-2k-fixed6k controls with
 Qwen2.5-VL-7B, LoRA-DPO, seed 42, one epoch, and ZeRO-2. The outputs are kept
-out of the main five-group table and should only be integrated into the
-appendix/control discussion after the summarizer reports complete metrics.
+out of the main five-group table and integrated only as appendix/control
+evidence that the 2k verifier effect is not solely a total-row-count artifact.
 
 ```text
 v2/tasks/backbone-transfer-experiments/

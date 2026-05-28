@@ -1,12 +1,10 @@
 \section{Supplementary Material}
 \captionsetup{hypcap=false}
+\footnotesize
 
-This appendix collects details that support the main \benchmark{} claim without
-expanding the primary review paper beyond the five-group comparison. The
-sections are organized by purpose: reproducibility setup, additional
-quantitative checks, and qualitative/scoring details. The appendix is not meant
-to introduce a second story; it records the controls behind the same bounded
-conclusion in the main paper.
+This appendix records the controls behind the same bounded conclusion in the
+main paper: reproducibility setup, additional quantitative checks, and
+qualitative/scoring details.
 
 \subsection{Reproducibility Setup and Artifacts}
 
@@ -32,6 +30,7 @@ Epochs & 1 \\
 DPO beta & 0.1 \\
 LoRA rank & 16 \\
 Answer rows & 0 or 6{,}000 \\
+Answer rows in fixed-budget controls & 4{,}000 or 5{,}000 \\
 Verifier rows & 0, 500, 1{,}000, or 2{,}000 \\
 Distributed setup & ZeRO-2 \\
 \bottomrule
@@ -58,7 +57,8 @@ Slurm entry points are:
 \begin{quote}
 \footnotesize
 \texttt{submit\_cepo\_dual\_pipeline.sh}\\
-\texttt{submit\_cepo\_ablation\_pipeline.sh}
+\texttt{submit\_cepo\_ablation\_pipeline.sh}\\
+\texttt{submit\_cepo\_fixed\_budget\_pipeline.sh}
 \end{quote}
 The paper numbers are then refreshed with the deterministic scoring and
 summary scripts:
@@ -67,7 +67,8 @@ summary scripts:
 \texttt{score\_object\_eval.py}\\
 \texttt{score\_cepo\_evidence\_probe.py}\\
 \texttt{bootstrap\_cepo\_probe\_ci.py}\\
-\texttt{summarize\_cepo\_ablation\_results.py}
+\texttt{summarize\_cepo\_ablation\_results.py}\\
+\texttt{summarize\_cepo\_fixed\_budget\_results.py}
 \end{quote}
 
 \subsection{Additional Quantitative Checks}
@@ -87,22 +88,51 @@ CEPO-Dual-2k setting.
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{@{}lrrrrrrrrr@{}}
+\begin{tabular}{@{}lrrrrrrrr@{}}
 \toprule
-Setting & Ans. rows & Ver. rows & COCO & GQA & Hard & Supp. & Wrong Rej. & Obj/Attr/Rel & Parse Fail \\
+Setting & Ans. rows & Ver. rows & COCO & GQA & Hard & Supp. & Wrong Rej. & Obj/Attr/Rel \\
 \midrule
-Base Instruct & 0 & 0 & 96.0 & 76.2 & 94.4 & 86.5 & 44.3 & 59.5 / 53.7 / 17.6 & 0.0 \\
-\answerdpo{} & 6{,}000 & 0 & 97.0 & 76.8 & 95.0 & 90.7 & 34.3 & 45.2 / 45.0 / 10.4 & 0.0 \\
-\evidencedpo{} & 0 & 2{,}000 & 95.9 & 76.7 & 94.4 & 87.8 & 53.0 & 77.0 / 63.8 / 16.0 & 0.0 \\
-CEPO-Dual-500 & 6{,}000 & 500 & 96.9 & 76.8 & 95.0 & 91.3 & 39.5 & 56.3 / 50.3 / 9.6 & 0.0 \\
-\dualonek{} & 6{,}000 & 1{,}000 & 97.0 & 77.2 & 94.9 & 93.2 & 48.5 & 74.6 / 59.1 / 9.6 & 0.0 \\
-\dualtwok{} & 6{,}000 & 2{,}000 & 97.0 & 77.1 & 94.9 & 95.2 & 70.3 & 96.0 / 85.9 / 25.6 & 0.0 \\
+Base Instruct & 0 & 0 & 96.0 & 76.2 & 94.4 & 86.5 & 44.3 & 59.5 / 53.7 / 17.6 \\
+\answerdpo{} & 6{,}000 & 0 & 97.0 & 76.8 & 95.0 & 90.7 & 34.3 & 45.2 / 45.0 / 10.4 \\
+\evidencedpo{} & 0 & 2{,}000 & 95.9 & 76.7 & 94.4 & 87.8 & 53.0 & 77.0 / 63.8 / 16.0 \\
+CEPO-Dual-500 & 6{,}000 & 500 & 96.9 & 76.8 & 95.0 & 91.3 & 39.5 & 56.3 / 50.3 / 9.6 \\
+\dualonek{} & 6{,}000 & 1{,}000 & 97.0 & 77.2 & 94.9 & 93.2 & 48.5 & 74.6 / 59.1 / 9.6 \\
+\dualtwok{} & 6{,}000 & 2{,}000 & 97.0 & 77.1 & 94.9 & 95.2 & 70.3 & 96.0 / 85.9 / 25.6 \\
 \bottomrule
 \end{tabular}
 \captionof{table}{Full verifier-count ablation from the released artifacts.
 The main paper omits CEPO-Dual-500 to keep the primary comparison to at most
 five groups.}
 \label{tab:app_ablation}
+\end{minipage}
+\end{center}
+
+The verifier-count sweep above still changes total training rows. To isolate
+this confound, Table~\ref{tab:app_fixed_budget} keeps the total budget at
+6{,}000 rows and replaces answer rows with verifier rows. Dual-2k-fixed6k
+preserves the short-answer transfer of \answerdpo{}-6k while improving
+wrong-evidence rejection by 28.5 points. This supports the main-text claim
+that verifier replacement helps beyond simply adding more preference rows.
+
+\begin{center}
+\begin{minipage}{\linewidth}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+Setting & Ans. & Ver. & Total & COCO/GQA/Hard & Supp. & Wrong Rej. \\
+\midrule
+\answerdpo{}-6k & 6{,}000 & 0 & 6{,}000 & 97.0 / 76.8 / 95.0 & 90.7 & 34.3 \\
+Answer-4k & 4{,}000 & 0 & 4{,}000 & 96.7 / 77.0 / 94.9 & 89.2 & 39.2 \\
+Dual-1k-fixed6k & 5{,}000 & 1{,}000 & 6{,}000 & 96.9 / 77.0 / 95.1 & 91.5 & 48.2 \\
+Dual-2k-fixed6k & 4{,}000 & 2{,}000 & 6{,}000 & 96.9 / 76.9 / 95.1 & 94.5 & 62.7 \\
+\bottomrule
+\end{tabular}
+\captionof{table}{Fixed-budget control for the row-count confound. Values are
+percentages. The fixed-budget rows are appendix controls only and do not alter
+the five-group main comparison.}
+\label{tab:app_fixed_budget}
 \end{minipage}
 \end{center}
 
@@ -119,22 +149,20 @@ unchanged.
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3.2pt}
-\begin{tabular}{@{}rrlrrrrrr@{}}
+\begin{tabular}{@{}rllrrrr@{}}
 \toprule
-Seed & Model & COCO/GQA/Hard & BEM & Supp. & Wrong Rej. & Obj/Attr/Rel & JSON Obj. & Parse Fail \\
+Seed & Model & COCO/GQA/Hard & BEM & Supp. & Wrong Rej. & Obj/Attr/Rel \\
 \midrule
-13 & \answerdpo{} & 96.9 / 77.2 / 95.1 & 19.4 & 90.7 & 33.0 & 42.1 / 44.3 / 10.4 & 100.0 & 0.0 \\
-13 & \dualtwok{} & 97.0 / 76.9 / 95.0 & 20.3 & 95.7 & 71.8 & 96.0 / 85.9 / 30.4 & 100.0 & 0.0 \\
-42 & \answerdpo{} & 97.0 / 76.8 / 95.0 & 18.0 & 90.7 & 34.3 & 45.2 / 45.0 / 10.4 & 100.0 & 0.0 \\
-42 & \dualtwok{} & 97.0 / 77.1 / 94.9 & 19.4 & 95.2 & 70.3 & 96.0 / 85.9 / 25.6 & 100.0 & 0.0 \\
-97 & \answerdpo{} & 97.0 / 77.0 / 95.1 & 19.0 & 90.2 & 33.3 & 42.9 / 45.0 / 9.6 & 100.0 & 0.0 \\
-97 & \dualtwok{} & 97.0 / 76.9 / 95.0 & 19.5 & 95.3 & 68.5 & 96.8 / 85.2 / 20.0 & 100.0 & 0.0 \\
+13 & \answerdpo{} & 96.9 / 77.2 / 95.1 & 19.4 & 90.7 & 33.0 & 42.1 / 44.3 / 10.4 \\
+13 & \dualtwok{} & 97.0 / 76.9 / 95.0 & 20.3 & 95.7 & 71.8 & 96.0 / 85.9 / 30.4 \\
+42 & \answerdpo{} & 97.0 / 76.8 / 95.0 & 18.0 & 90.7 & 34.3 & 45.2 / 45.0 / 10.4 \\
+42 & \dualtwok{} & 97.0 / 77.1 / 94.9 & 19.4 & 95.2 & 70.3 & 96.0 / 85.9 / 25.6 \\
+97 & \answerdpo{} & 97.0 / 77.0 / 95.1 & 19.0 & 90.2 & 33.3 & 42.9 / 45.0 / 9.6 \\
+97 & \dualtwok{} & 97.0 / 76.9 / 95.0 & 19.5 & 95.3 & 68.5 & 96.8 / 85.2 / 20.0 \\
 \bottomrule
 \end{tabular}
 \captionof{table}{Seed-stability results for the two trained groups needed
-for the central conclusion. Values are percentages. JSON Obj. reports whether
-the raw evidence-probe output contains a parseable JSON object; decoding is
-not constrained.}
+for the central conclusion. Values are percentages.}
 \label{tab:app_seed}
 \end{minipage}
 \end{center}
@@ -193,6 +221,6 @@ fields; decoding itself is not constrained. For wrong-evidence
 rows, both \texttt{wrong\_evidence} and \texttt{contradicted} count as
 rejecting the candidate evidence, because both labels indicate that the
 evidence should not be accepted as support for the claim. This scoring rule is
-why the paper reports parser quality next to the main probe metrics: an
-evidence-verification gain should not come from malformed output or a fragile
-parser recovery.
+why the released metrics retain parser-audit fields even though the paper
+tables omit the constant parser columns: an evidence-verification gain should
+not come from malformed output or fragile parser recovery.

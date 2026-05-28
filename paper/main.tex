@@ -374,14 +374,11 @@ rate (FPR) and false-negative rate (FNR) to expose yes/no bias.
 \benchmark{} reports supported-evidence accuracy on the 600-row supported
 probe and wrong-evidence rejection on the 400-row wrong-evidence probe. The
 wrong-evidence probe is further broken into object, attribute, and relation
-slices. We also track whether the raw output contains a parseable JSON object,
-the scored-output rate, and parse failure. The evidence probe uses ordinary
-deterministic decoding rather than constrained decoding. JSON-object rate means
-the scorer found a parseable JSON object in the raw output. Scored-output rate
-also counts outputs recovered by deterministic fallback field parsing. Parse
-failure counts rows with insufficient structure for scoring. For the primary
-anchor comparison, we compute row-bootstrap 95\% confidence intervals with
-10{,}000 resamples.
+slices. The evidence probe uses ordinary deterministic decoding rather than
+constrained decoding; parser quality is audited separately in the released
+metrics. Because every paper-row evidence-probe output is parseable, the
+tables omit the constant parser columns. For the primary anchor comparison, we
+compute row-bootstrap 95\% confidence intervals with 10{,}000 resamples.
 
 \subsection{Controls and Reporting Discipline}
 
@@ -389,9 +386,9 @@ We include several controls to keep the conclusion narrow. First, all training
 and evaluation image identifiers are checked for overlap, so the probe is not
 measuring repeated training images. Second, the supported and wrong-evidence
 probes are fixed before comparing trained models. Third, the parser audit is
-reported alongside the main probe metrics; a method should not receive credit
-for a support decision if the scorer recovered only a malformed or ambiguous
-output.
+checked separately from the main probe metrics; a method should not receive
+credit for a support decision if the scorer recovered only a malformed or
+ambiguous output.
 Image disjointness does not prove template-distribution independence: training
 and probe rows still share annotation sources, prompt style, and evidence
 templates. We therefore add an inference-only paraphrased probe for the three
@@ -453,15 +450,15 @@ preference tuning when the deployment prompt asks for a short answer.
 \centering
 \scriptsize
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}lrrrrrrr@{}}
+\begin{tabular}{@{}lrrrrr@{}}
 \toprule
-Model & Supp. Acc & Wrong Rej. & Obj Wrong & Attr Wrong & Rel. Wrong & JSON Obj. & Parse Fail \\
+Model & Supp. Acc & Wrong Rej. & Obj Wrong & Attr Wrong & Rel. Wrong \\
 \midrule
-Base Instruct & 86.5 & 44.3 & 59.5 & 53.7 & 17.6 & 100.0 & 0.0 \\
-\answerdpo{} & 90.7 & 34.3 & 45.2 & 45.0 & 10.4 & 100.0 & 0.0 \\
-\evidencedpo{} & 87.8 & 53.0 & 77.0 & 63.8 & 16.0 & 100.0 & 0.0 \\
-\dualonek{} & 93.2 & 48.5 & 74.6 & 59.1 & 9.6 & 100.0 & 0.0 \\
-\dualtwok{} & \textbf{95.2} & \textbf{70.3} & \textbf{96.0} & \textbf{85.9} & \textbf{25.6} & 100.0 & 0.0 \\
+Base Instruct & 86.5 & 44.3 & 59.5 & 53.7 & 17.6 \\
+\answerdpo{} & 90.7 & 34.3 & 45.2 & 45.0 & 10.4 \\
+\evidencedpo{} & 87.8 & 53.0 & 77.0 & 63.8 & 16.0 \\
+\dualonek{} & 93.2 & 48.5 & 74.6 & 59.1 & 9.6 \\
+\dualtwok{} & \textbf{95.2} & \textbf{70.3} & \textbf{96.0} & \textbf{85.9} & \textbf{25.6} \\
 \bottomrule
 \end{tabular}
 \caption{\benchmark{} probe results. Supp. Acc is support accuracy on 600
@@ -490,19 +487,17 @@ reaches 70.3\%.
 \centering
 \footnotesize
 \setlength{\tabcolsep}{5pt}
-\begin{tabular}{@{}lccccc@{}}
+\begin{tabular}{@{}lcc@{}}
 \toprule
-Model & Supp. Acc. 95\% CI & Wrong Rej. 95\% CI & JSON Obj. & Scored Output & Parse Fail \\
+Model & Supp. Acc. 95\% CI & Wrong Rej. 95\% CI \\
 \midrule
-Base Instruct & 86.5 [83.7, 89.2] & 44.3 [39.5, 49.0] & 100.0 & 100.0 & 0.0 \\
-\answerdpo{} & 90.7 [88.3, 93.0] & 34.3 [29.8, 39.0] & 100.0 & 100.0 & 0.0 \\
-\dualtwok{} & 95.2 [93.3, 96.8] & 70.3 [65.8, 74.8] & 100.0 & 100.0 & 0.0 \\
+Base Instruct & 86.5 [83.7, 89.2] & 44.3 [39.5, 49.0] \\
+\answerdpo{} & 90.7 [88.3, 93.0] & 34.3 [29.8, 39.0] \\
+\dualtwok{} & 95.2 [93.3, 96.8] & 70.3 [65.8, 74.8] \\
 \bottomrule
 \end{tabular}
-\caption{Row-bootstrap intervals and parser audit for the primary anchor
-comparison. Intervals use 10{,}000 row resamples. JSON Obj. means the raw
-output contains a parseable JSON object; Scored Output additionally includes
-deterministic fallback field parsing.}
+\caption{Row-bootstrap intervals for the primary anchor comparison. Intervals
+use 10{,}000 row resamples.}
 \label{tab:ci}
 \end{table*}
 
@@ -609,14 +604,19 @@ wrong-evidence rejection while doing little for short-answer transfer.
 \dualtwok{} combines both signals and gives the strongest evidence-probe
 result. These behaviors would be hard to see from answer accuracy alone.
 
-\paragraph{Verifier data scale matters, but the ablation has a confound.}
+\paragraph{Verifier data scale matters.}
 \dualonek{} improves supported-evidence accuracy but does not strongly reject
 wrong evidence; \dualtwok{} is the first mixed recipe that improves both probe
 sides. Its verifier rows are balanced as 1{,}000 supported and 1{,}000 wrong,
 covering about 808 object, 607 attribute, and 585 relation examples. However,
 CEPO-Dual-500, -1k, and -2k use 6.5k, 7k, and 8k total rows, so the 1k to 2k
 jump shows that verifier volume and coverage matter, not a clean
-mixture-ratio proof.
+mixture-ratio proof. A fixed-budget control replaces answer rows with verifier
+rows at 6k total rows: Dual-2k-fixed6k reaches 62.7\% wrong-evidence rejection
+versus 34.3\% for \answerdpo{}-6k, while COCO/GQA/Hard accuracy changes by
+-0.1/+0.1/+0.1 points. Thus the 2k verifier gain is not only a total-row
+artifact, although the original 8k \dualtwok{} run still combines verifier
+supervision with extra rows.
 
 \paragraph{Relation evidence is the bottleneck.}
 Object and attribute mismatches are often visible from a single label or
