@@ -1,0 +1,11 @@
+% Local build shim for Tectonic/XeTeX.
+%
+% The official CVPR style requests PSNFSS Times/Helvetica fonts (`ptm`/`phv`).
+% Tectonic's XeTeX-based LaTeX defaults to TU encoding here, where those legacy
+% PSNFSS families are not defined. Force the classic T1 font encoding so the
+% official Times-like PSNFSS fonts and their bold shapes are used instead of
+% silently falling back to non-bold Computer Modern or unrelated system fonts.
+\usepackage{iftex}
+\ifXeTeX
+  \usepackage[T1]{fontenc}
+\fi

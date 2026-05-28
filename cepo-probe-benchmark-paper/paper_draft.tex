@@ -1,332 +1,61 @@
-\documentclass[10pt,twocolumn,letterpaper]{article}
+\documentclass[10pt,letterpaper]{article}
 
-% Draft-only imports. When moving into paper/main.tex, keep the repository's
-% existing CVPR template, preamble, hyperref setup, and bibliography style.
+\usepackage[margin=1in]{geometry}
 \usepackage{booktabs}
-\usepackage{multirow}
-\usepackage{graphicx}
-\usepackage{amsmath}
-\usepackage{amssymb}
+\usepackage{hyperref}
 
-\newcommand{\benchmark}{CEPO-Probe}
-\newcommand{\dataset}{ClaimEvidence-6K}
-\newcommand{\answerdpo}{Answer-DPO}
-\newcommand{\evidencebaseline}{Evidence-Aware DPO}
-
-\title{\benchmark{}: A Claim-Evidence Consistency Benchmark for Diagnosing Vision-Language Preference Tuning}
+\title{CEPO-Probe Paper Draft Handoff}
 \author{Anonymous CVPR Submission}
+\date{2026-05-28}
 
 \begin{document}
 \maketitle
 
-\begin{abstract}
-Preference tuning can improve the short answers of vision-language models
-(VLMs), but a correct yes/no answer does not necessarily imply that the model
-has grounded the answer in the right visual evidence. We introduce
-\benchmark{}, a compact diagnostic benchmark for claim-evidence consistency.
-The benchmark is built from \dataset{}, a 6k-row collection of object,
-attribute, relation, and wrong-evidence preference examples derived from COCO
-and GQA annotations with zero train/eval image overlap against the fixed
-evaluation suite. Unlike ordinary answer-level evaluation, \benchmark{} asks a
-model to judge whether a candidate visual claim is supported by a specific
-evidence label or relation, including same-answer cases where only the evidence
-is wrong. We evaluate a base VLM, an answer-only DPO baseline, and one
-evidence-aware preference-tuning baseline on both ordinary short-answer
-benchmarks and \benchmark{} probes. The resulting diagnosis is that
-short-answer gains and evidence consistency are separable: a model can improve
-ordinary yes/no accuracy while remaining weak at rejecting mismatched evidence,
-especially for spatial relations. These findings suggest that future grounded
-preference-tuning work should report evidence consistency directly rather than
-using answer accuracy alone as a proxy for grounding.
-\end{abstract}
+This prototype draft has been superseded by the submission-style CVPR draft in:
 
-\section{Introduction}
+\begin{quote}
+\texttt{paper/main.tex}
+\end{quote}
 
-Vision-language models can answer simple visual questions fluently while using
-the wrong visual support. For example, a model may answer that a bus is present
-because the image contains a large vehicle, or claim that a cup is left of a
-plate while relying on the reversed relation. In such cases, answer correctness
-and evidence correctness are related but not identical. This distinction is
-important for preference tuning, where training pairs often specify which
-answer is preferred without checking whether the preferred answer is tied to
-the right visual evidence.
+The final metric summary for the benchmark-paper pivot is recorded in:
 
-Direct Preference Optimization (DPO) is attractive for VLM alignment because it
-uses paired preferences without training a separate reward model. However, an
-answer-only preference pair can be satisfied by learning a better response
-prior or yes/no bias. Even evidence-augmented response templates may fail to
-test the intended behavior if evaluation only asks for a short answer. We
-therefore ask a diagnostic question: when preference tuning changes the final
-answer, does it also improve the model's ability to verify claim-evidence
-consistency?
+\begin{quote}
+\texttt{cepo-probe-benchmark-paper/final\_results.md}
+\end{quote}
 
-We introduce \benchmark{}, a small benchmark designed to isolate this question.
-The benchmark uses object, attribute, and left/right relation claims with
-annotation-derived evidence. Its key slice is wrong-evidence verification:
-examples where the answer can remain plausible, but the candidate evidence is
-mismatched. This forces evaluation to look beyond answer text and ask whether
-the model accepts the correct evidence object, attribute, or relation.
+\section*{Selected Main Groups}
 
-Our goal is not to claim that a new preference-tuning method solves visual
-hallucination. Instead, we use \benchmark{} as a diagnostic instrument. We
-compare a base model, an answer-only DPO model, and an evidence-aware
-preference-tuned model under the same backbone, data scale, and evaluation
-suite. We report both ordinary short-answer transfer and explicit
-claim-evidence metrics.
-
-Our contributions are:
-\begin{itemize}
-    \item We define \benchmark{}, a compact claim-evidence consistency
-    benchmark that separates answer correctness from evidence correctness.
-    \item We construct \dataset{}, a 6k-row controlled set with object,
-    attribute, relation, and wrong-evidence examples, plus fixed supported and
-    wrong-evidence probe splits.
-    \item We provide a diagnostic evaluation protocol for VLM preference
-    tuning that reports short-answer transfer, evidence-label matching,
-    relation-direction accuracy, wrong-evidence rejection, and invalid-format
-    rates.
-    \item We show, through controlled baselines, that answer-level preference
-    gains do not automatically imply stronger evidence verification.
-\end{itemize}
-
-\section{Related Work}
-
-\paragraph{Object hallucination and VLM evaluation.}
-Prior work studies hallucination by checking generated captions or answers
-against objects and relations present in the image. Polling-style yes/no
-benchmarks are useful because they make unsupported object claims measurable.
-\benchmark{} follows this controlled evaluation spirit, but asks whether the
-model can connect a claim to the evidence that supports it.
-
-\paragraph{Preference tuning.}
-DPO and related preference-optimization methods provide a practical route for
-aligning models from chosen/rejected examples. In VLM settings, answer-level
-preferences can improve final responses while leaving the grounding signal
-implicit. Our benchmark is designed to test whether such tuning changes
-evidence verification, not only answer selection.
-
-\paragraph{Grounding and rationales.}
-Grounded VLM training can use boxes, masks, region descriptions, or human
-rationales. These signals are expensive and often evaluated through task
-accuracy. \benchmark{} uses weaker but cheap annotation-derived evidence labels
-and relations, allowing a small diagnostic study that can be regenerated from
-existing COCO/GQA-style resources.
-
-\section{\benchmark{} Benchmark}
-
-\subsection{Task Definition}
-
-Each \benchmark{} example contains an image, a question, a visual claim, and a
-candidate evidence item. The model must return a structured judgment indicating
-whether the evidence supports the claim. The expected output contains four
-fields:
-\begin{equation}
-    \{\texttt{answer}, \texttt{claim}, \texttt{evidence\_label}, \texttt{support}\}.
-\end{equation}
-The support label is one of \texttt{supported}, \texttt{contradicted}, or
-\texttt{wrong\_evidence}.
-
-\subsection{Data Sources and Slices}
-
-\dataset{} is derived from existing COCO and GQA annotations. The current
-canonical set contains 6,000 rows and four diagnostic slices:
-
-\begin{table}[t]
+\begin{table}[h]
 \centering
-\small
-\begin{tabular}{lrrl}
+\begin{tabular}{ll}
 \toprule
-Slice & Train rows & Probe rows & Negative type \\
+Group & Model \\
 \midrule
-Object existence & 2,000 & TBD & absent/wrong object \\
-Attribute & 1,500 & TBD & attribute mismatch \\
-Relation & 1,500 & TBD & left/right reversal \\
-Wrong evidence & 1,000 & TBD & same answer, wrong evidence \\
-\midrule
-Total & 6,000 & TBD & -- \\
+A & Base Instruct \\
+B & CEPO Answer-DPO \\
+C & CEPO-Dual \\
 \bottomrule
 \end{tabular}
-\caption{\dataset{} composition. Probe-row counts should be filled from the
-final regenerated supported and wrong-evidence probe files.}
-\label{tab:data}
 \end{table}
 
-The wrong-evidence slice is central. It includes examples where the answer text
-alone is not enough to distinguish chosen from rejected behavior. For instance,
-both responses may concern the same visible object, but the rejected evidence
-points to a different object label or an incorrect relation.
+\section*{Headline Result}
 
-\subsection{Schema}
+CEPO-Probe shows that short-answer preference tuning and claim-evidence
+verification are separable. CEPO Answer-DPO improves ordinary yes/no accuracy
+but weakens wrong-evidence rejection, while CEPO-Dual preserves the
+short-answer gains and improves explicit evidence consistency from 34.3\% to
+70.2\% wrong-evidence rejection. Relation reversals remain the main failure
+slice.
 
-The canonical row stores the image path and stable image id, question,
-chosen/rejected answers, chosen/rejected claim blocks, task type, negative
-type, and evidence metadata. Boxes are retained when available for audit and
-future region-aware extensions, but the primary probe scorer uses text labels,
-attributes, and relation direction.
-
-\subsection{Leakage and Audit Checks}
-
-The current split has zero train/eval image overlap against the fixed internal
-and external evaluation suite. Before submission, we additionally require a
-manual audit of 100--200 sampled examples, covering answer correctness,
-evidence correctness, relation direction, and wrong-evidence construction.
-
-\section{Evaluation Protocol}
-
-\subsection{Model Groups}
-
-The main comparison uses at most three groups:
+\section*{Status}
 
 \begin{itemize}
-    \item \textbf{Base Instruct:} the untuned VLM.
-    \item \textbf{\answerdpo{}:} an answer-only DPO baseline trained on the
-    same canonical questions and answer preferences.
-    \item \textbf{\evidencebaseline{}:} the selected evidence-aware baseline.
-    This is CEPO-Dual if final results pass the short-answer and probe gates;
-    otherwise it is CEPO-Latent and is presented as a failed latent-transfer
-    baseline.
+    \item ClaimEvidence-6K data checks pass with zero train/eval image overlap.
+    \item CEPO-Dual is selected as the final evidence-aware baseline.
+    \item Main generations were re-scored with the current short-answer and
+    evidence-probe scorers on 2026-05-28.
+    \item The submission-style manuscript and supplementary material now live
+    under \texttt{paper/}.
 \end{itemize}
-
-All trained groups use the same backbone, LoRA-DPO recipe, training image pool,
-and one-epoch small-data setting. Heavy training and inference are run through
-Slurm.
-
-\subsection{Short-Answer Transfer}
-
-We first evaluate ordinary yes/no behavior on COCO object existence, GQA
-simple, Hard COCO, and Base-error-mined diagnostics, with POPE and AMBER as
-external sanity checks when complete. Metrics are accuracy, balanced accuracy,
-F1, false-positive rate, false-negative rate, yes rate, and invalid/other rate.
-
-\subsection{\benchmark{} Probes}
-
-We then evaluate supported-evidence and wrong-evidence probes. Metrics are:
-support accuracy, evidence-label accuracy, claim-match rate,
-relation-direction accuracy, wrong-evidence rejection accuracy, and invalid
-JSON rate. The headline metric is wrong-evidence rejection because it tests the
-case where plausible answer text is not enough.
-
-\section{Experiments}
-
-\subsection{Short-Answer Results}
-
-\begin{table*}[t]
-\centering
-\small
-\begin{tabular}{lccccccc}
-\toprule
-Model & COCO Acc & COCO FPR/FNR & GQA Acc & GQA FPR/FNR & Hard Acc & Hard FPR/FNR & Other \\
-\midrule
-Base Instruct & TBD & TBD / TBD & TBD & TBD / TBD & TBD & TBD / TBD & TBD \\
-\answerdpo{} & TBD & TBD / TBD & TBD & TBD / TBD & TBD & TBD / TBD & TBD \\
-\evidencebaseline{} & TBD & TBD / TBD & TBD & TBD / TBD & TBD & TBD / TBD & TBD \\
-\bottomrule
-\end{tabular}
-\caption{Short-answer transfer under the ordinary yes/no prompt. Fill values
-after fixing the final evidence-aware baseline and re-scoring all selected
-generations with the current scorer.}
-\label{tab:short}
-\end{table*}
-
-The intended reading is not that one number alone proves grounding. We compare
-short-answer gains with the explicit evidence metrics in
-Table~\ref{tab:probe}. A model that improves recall by increasing yes rate may
-still perform poorly on wrong-evidence rejection.
-
-\subsection{Claim-Evidence Consistency}
-
-\begin{table*}[t]
-\centering
-\small
-\begin{tabular}{lccccc}
-\toprule
-Model & Supported Support Acc & Wrong-Evidence Rejection & Evidence Label Acc & Relation Direction Acc & Invalid JSON \\
-\midrule
-Base Instruct & TBD & TBD & TBD & TBD & TBD \\
-\answerdpo{} & TBD & TBD & TBD & TBD & TBD \\
-\evidencebaseline{} & TBD & TBD & TBD & TBD & TBD \\
-\bottomrule
-\end{tabular}
-\caption{\benchmark{} probe results. Wrong-evidence rejection is the primary
-diagnostic because the candidate answer can remain plausible while the evidence
-is mismatched.}
-\label{tab:probe}
-\end{table*}
-
-The key diagnostic is the gap between Table~\ref{tab:short} and
-Table~\ref{tab:probe}. If \answerdpo{} improves short-answer accuracy but does
-not improve wrong-evidence rejection, answer preference has not transferred to
-evidence consistency. If the evidence-aware baseline improves the probe without
-preserving short-answer behavior, the method remains a diagnostic tool rather
-than a deployable alignment recipe.
-
-\subsection{Slice Analysis}
-
-\begin{table}[t]
-\centering
-\small
-\begin{tabular}{lccc}
-\toprule
-Model & Object & Attribute & Relation \\
-\midrule
-Base Instruct & TBD & TBD & TBD \\
-\answerdpo{} & TBD & TBD & TBD \\
-\evidencebaseline{} & TBD & TBD & TBD \\
-\bottomrule
-\end{tabular}
-\caption{Wrong-evidence rejection by base task type. Relation evidence should
-be reported separately because left/right reversal is often harder than object
-or attribute evidence.}
-\label{tab:slices}
-\end{table}
-
-\subsection{Qualitative Diagnostics}
-
-The final paper should include a compact qualitative table with 4--6 examples:
-one correct supported object case, one correct attribute case, one correct
-relation case, one wrong-object evidence failure, one wrong-attribute evidence
-failure, and one relation-reversal failure. The table should show the image id
-or anonymized image reference, question, candidate claim, candidate evidence,
-target support, and model prediction.
-
-\section{Discussion}
-
-\benchmark{} is designed to expose a failure mode that is hidden by ordinary
-answer accuracy. Answer-only preference tuning can improve the final yes/no
-response by changing recall or yes bias. That behavior is useful, but it does
-not prove that the model checks whether a claim is supported by the correct
-object, attribute, or relation. Wrong-evidence probes make this distinction
-visible.
-
-The benchmark also clarifies how evidence-aware training should be evaluated.
-If a model is trained to generate claim blocks but tested only with short
-answers, improvements may not transfer. Conversely, if a model improves
-structured evidence probes while losing short-answer accuracy, it is better
-understood as an evidence verifier than as a general answerer. Reporting both
-views prevents overclaiming.
-
-\section{Limitations}
-
-\benchmark{} is intentionally small and controlled. It is derived from COCO and
-GQA annotations rather than newly collected human evidence labels. The current
-evidence representation is mostly textual: object labels, attributes, and
-left/right relations, with boxes retained for audit where available. The
-rule-based scorer is transparent and cheap, but it may mark some semantically
-valid free-form outputs as mismatches. Finally, the current experiments use a
-single backbone and small LoRA-DPO runs; the benchmark should be extended to
-more model families before drawing broad conclusions about VLM alignment.
-
-\section{Conclusion}
-
-We presented \benchmark{}, a diagnostic benchmark for claim-evidence
-consistency in VLM preference tuning. The benchmark separates ordinary
-short-answer performance from the ability to verify whether a visual claim is
-supported by the correct evidence. The resulting paper framing is deliberately
-diagnostic: evidence consistency should be measured directly, because
-short-answer gains alone can hide persistent wrong-evidence failures. This
-compact benchmark provides a practical testbed for future grounded preference
-tuning methods while avoiding the unsupported claim that lightweight evidence
-formatting alone solves visual hallucination.
 
 \end{document}
-

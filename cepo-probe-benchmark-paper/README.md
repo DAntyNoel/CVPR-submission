@@ -27,7 +27,8 @@ The existing project already has the ingredients for this:
 - supported-evidence and wrong-evidence probes;
 - short-answer baselines on COCO, GQA, Hard COCO, Base-error-mined, POPE, and
   AMBER;
-- completed negative/diagnostic evidence from V1 and CEPO-Latent.
+- completed negative/diagnostic evidence from V1 and CEPO-Latent;
+- completed CEPO-Dual results for the final three-group benchmark comparison.
 
 ## Files
 
@@ -49,16 +50,22 @@ metrics, scoring assumptions, and quality gates.
 experiment_blueprint.md
 ```
 
-The minimal experiment matrix and table shells. Numbers are intentionally left
-as placeholders where a final rerun or final model choice is needed.
+The minimal experiment matrix and table shells. It now points to the completed
+CEPO-Dual decision and final paper tables.
+
+```text
+final_results.md
+```
+
+Final selected metrics for Base Instruct, CEPO Answer-DPO, and CEPO-Dual after
+re-scoring with the current short-answer and evidence-probe scorers.
 
 ```text
 paper_draft.tex
 ```
 
-A full CVPR-style draft skeleton for the benchmark/diagnostic paper. It is
-written as a standalone draft body with placeholder metric cells, ready to be
-ported into `paper/main.tex` after the final experiment set is fixed.
+A final handoff note for the old prototype skeleton. The submission-style
+version with final numbers has been ported into `paper/main.tex`.
 
 ## Recommended Final Shape
 
@@ -74,7 +81,7 @@ Use a benchmark-first narrative:
    yes/no accuracy while failing to improve, or even worsening, evidence
    consistency on wrong-evidence cases.
 
-Do not claim that CEPO-Latent is a successful main method unless a final run
-proves it. CEPO-Dual can become the third main group only if its final results
-are complete and pass the gates in `experiment_blueprint.md`.
-
+CEPO-Dual is now the selected third main group: it preserves short-answer
+behavior close to CEPO Answer-DPO and improves wrong-evidence rejection from
+34.3% to 70.2%. The paper should still keep a diagnostic tone because relation
+wrong-evidence rejection remains weak at 25.6%.

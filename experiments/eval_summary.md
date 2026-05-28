@@ -6,6 +6,37 @@ This file records completed evaluation results. The mixed Evidence-Hint DPO
 default adapter is the completed ZeRO-2 run from job 64252. The old ZeRO-3 job
 64201 and its dependency queue were cancelled.
 
+## CEPO-Probe Benchmark Results
+
+Updated: 2026-05-28
+
+The CEPO-Probe paper now uses the completed CEPO-Dual three-group comparison:
+Base Instruct, CEPO Answer-DPO, and CEPO-Dual. The selected metrics were
+refreshed with the current `score_object_eval.py` and
+`score_cepo_evidence_probe.py` scorers.
+
+Short-answer transfer:
+
+| Model | COCO Acc | COCO FPR/FNR | GQA Acc | GQA FPR/FNR | Hard Acc | Hard FPR/FNR | Base-Err Acc |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Base Instruct | 0.960 | 0.016 / 0.064 | 0.762 | 0.144 / 0.332 | 0.944 | 0.038 / 0.074 | 0.000 |
+| CEPO Answer-DPO | 0.970 | 0.018 / 0.042 | 0.768 | 0.236 / 0.228 | 0.950 | 0.050 / 0.050 | 0.180 |
+| CEPO-Dual | 0.970 | 0.018 / 0.042 | 0.771 | 0.244 / 0.214 | 0.949 | 0.052 / 0.050 | 0.194 |
+
+CEPO-Probe evidence consistency:
+
+| Model | Supported Support Acc | Wrong-Evidence Rejection | Object Wrong | Attribute Wrong | Relation Wrong | Invalid JSON |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Base Instruct | 0.865 | 0.443 | 0.595 | 0.537 | 0.176 | 0.000 |
+| CEPO Answer-DPO | 0.907 | 0.343 | 0.452 | 0.450 | 0.104 | 0.000 |
+| CEPO-Dual | 0.952 | 0.702 | 0.960 | 0.859 | 0.256 | 0.000 |
+
+External sanity checks are close to CEPO Answer-DPO: CEPO-Dual reaches 0.898,
+0.887, and 0.873 accuracy on POPE random/popular/adversarial, and 0.882 on
+AMBER discriminative. The final paper reading is diagnostic: CEPO-Dual improves
+explicit evidence verification, but relation wrong-evidence rejection remains
+weak.
+
 ## Overall Reading
 
 The completed 5k mixed results support the Plan B / diagnostic interpretation.

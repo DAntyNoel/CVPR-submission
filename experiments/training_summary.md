@@ -4,6 +4,32 @@ Updated: 2026-05-27
 
 ## Slurm Jobs
 
+### CEPO-Probe / CEPO-Dual
+
+Updated: 2026-05-28
+
+The CEPO-Dual follow-up is complete and is the selected third group for the
+CEPO-Probe benchmark paper. The final adapters are present:
+
+```text
+outputs/llamafactory/qwen25vl7b_cepo_answer_dpo_zero2/
+outputs/llamafactory/qwen25vl7b_cepo_dual_dpo_zero2/
+outputs/llamafactory/qwen25vl7b_cepo_latent_dpo_zero2/
+```
+
+Training metrics:
+
+| Method | Epoch | Train Loss | Runtime (s) | Samples/sec | Steps/sec |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| CEPO Answer-DPO | 1.0 | 0.3367 | 943.3365 | 6.360 | 0.199 |
+| CEPO-Latent | 1.0 | 0.1327 | 1178.0651 | 5.093 | 0.160 |
+| CEPO-Dual | 1.0 | 0.3298 | 1275.9316 | 6.270 | 0.196 |
+
+CEPO-Latent remains a diagnostic negative result for short-answer transfer.
+CEPO-Dual is used in the main benchmark paper because it keeps short-answer
+performance near CEPO Answer-DPO while improving wrong-evidence rejection from
+0.343 to 0.702.
+
 ### Balanced Hard Input-Side Evidence DPO
 
 This run follows `tasks/input-side-evidence-main-method/README.md` and is the

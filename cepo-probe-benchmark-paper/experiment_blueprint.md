@@ -18,7 +18,7 @@ Keep the primary comparison to three groups.
 | --- | --- | --- | --- |
 | A | Base Instruct | Untuned reference model | Required |
 | B | CEPO Answer-DPO | Answer-only preference baseline | Required |
-| C | CEPO-Dual | Preferred evidence-aware baseline if complete | Pending final decision |
+| C | CEPO-Dual | Evidence-aware baseline | Selected |
 
 Fallback for Group C:
 
@@ -26,9 +26,9 @@ Fallback for Group C:
 CEPO-Latent
 ```
 
-Use CEPO-Latent if CEPO-Dual is incomplete or fails. In that case, write the
-paper as a diagnostic showing that latent claim-evidence generation does not
-transfer into robust evidence verification.
+CEPO-Latent remains a diagnostic fallback/appendix result because it did not
+provide a sufficient positive short-answer result. CEPO-Dual is now selected
+for the main paper.
 
 ## 3. What Counts As Success
 
@@ -59,25 +59,25 @@ language.
 
 | Model | COCO Acc | COCO FPR/FNR | GQA Acc | GQA FPR/FNR | Hard COCO Acc | Hard FPR/FNR | Other |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Base Instruct |  |  |  |  |  |  |  |
-| CEPO Answer-DPO |  |  |  |  |  |  |  |
-| Evidence-aware baseline |  |  |  |  |  |  |  |
+| Base Instruct | 96.0 | 1.6 / 6.4 | 76.2 | 14.4 / 33.2 | 94.4 | 3.8 / 7.4 | Base-Err 0.0 |
+| CEPO Answer-DPO | 97.0 | 1.8 / 4.2 | 76.8 | 23.6 / 22.8 | 95.0 | 5.0 / 5.0 | Base-Err 18.0 |
+| CEPO-Dual | 97.0 | 1.8 / 4.2 | 77.1 | 24.4 / 21.4 | 94.9 | 5.2 / 5.0 | Base-Err 19.4 |
 
 ### Table 3: CEPO-Probe Evidence Consistency
 
 | Model | Supported Support Acc | Wrong-Evidence Rejection | Evidence Label Acc | Relation Direction Acc | Invalid JSON |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Base Instruct |  |  |  |  |  |
-| CEPO Answer-DPO |  |  |  |  |  |
-| Evidence-aware baseline |  |  |  |  |  |
+| Base Instruct | 86.5 | 44.3 | 99.8 | relation wrong-rej. 17.6 | 0.0 |
+| CEPO Answer-DPO | 90.7 | 34.3 | 99.8 | relation wrong-rej. 10.4 | 0.0 |
+| CEPO-Dual | 95.2 | 70.2 | 100.0 | relation wrong-rej. 25.6 | 0.0 |
 
 ### Table 4: Slice Breakdown
 
 | Model | Object Wrong-Evidence | Attribute Wrong-Evidence | Relation Wrong-Evidence | Main Failure |
 | --- | ---: | ---: | ---: | --- |
-| Base Instruct |  |  |  |  |
-| CEPO Answer-DPO |  |  |  |  |
-| Evidence-aware baseline |  |  |  |  |
+| Base Instruct | 59.5 | 53.7 | 17.6 | relation evidence fragile |
+| CEPO Answer-DPO | 45.2 | 45.0 | 10.4 | accepts plausible wrong evidence |
+| CEPO-Dual | 96.0 | 85.9 | 25.6 | relation reversals still weak |
 
 ## 5. Secondary Tables
 
@@ -147,4 +147,3 @@ CEPO-Probe isolates evidence consistency from answer correctness by asking the
 model to judge candidate claim-evidence pairs, including same-answer examples
 where only the evidence is wrong.
 ```
-

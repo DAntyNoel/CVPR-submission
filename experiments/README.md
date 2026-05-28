@@ -20,8 +20,9 @@ B. CEPO Answer-DPO: experiments/llamafactory_configs/qwen25vl_cepo_answer_dpo.ya
 C. CEPO-Latent: experiments/llamafactory_configs/qwen25vl_cepo_latent_dpo.yaml
 ```
 
-CEPO-Latent did not provide a sufficient positive short-answer result, so the
-current follow-up is CEPO-Dual:
+CEPO-Latent did not provide a sufficient positive short-answer result. The
+CEPO-Dual follow-up is now complete and is the selected third group for the
+CEPO-Probe benchmark paper:
 
 ```text
 A. Base Instruct: no training
@@ -114,7 +115,8 @@ experiments/llamafactory_data_cepo_dual/dataset_info.json
 experiments/llamafactory_data_cepo_dual/cvpr_cepo_dual_dpo.json
 ```
 
-Launch the CEPO-Dual ZeRO-2 job plus Base/CEPO Answer-DPO/CEPO-Dual evals with:
+Launch or rerun the CEPO-Dual ZeRO-2 job plus Base/CEPO Answer-DPO/CEPO-Dual
+evals with:
 
 ```bash
 bash experiments/slurm/submit_cepo_dual_pipeline.sh
@@ -128,6 +130,16 @@ results/eval/generations/<eval_name>/cepo_dual/<model_key>.jsonl
 results/eval/generations/<eval_name>/cepo_dual_external/<model_key>.jsonl
 results/eval/generations/<eval_name>/cepo_dual_evidence_probe/<model_key>.jsonl
 ```
+
+Final paper metrics are summarized in:
+
+```text
+cepo-probe-benchmark-paper/final_results.md
+paper/main.tex
+```
+
+The headline probe result is wrong-evidence rejection: Base 44.3%, CEPO
+Answer-DPO 34.3%, and CEPO-Dual 70.2%, with 0.0% invalid JSON on the probe.
 
 Adapters and generations are written to:
 

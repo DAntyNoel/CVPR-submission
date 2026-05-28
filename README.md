@@ -10,7 +10,7 @@ template-level evidence hints to DPO responses slightly reduces some
 false-positive rates, but does not consistently outperform plain Answer-DPO on
 accuracy, F1, hard negatives, or base-error recovery.
 
-The active next idea is V2:
+The active paper path is V2 / CEPO-Probe:
 
 ```text
 idea-evidence-grounded-preference-vlm/
@@ -22,11 +22,11 @@ claim-evidence preference:
 > Can VLM preference tuning improve grounding when each visual claim is paired
 > with verifiable object, attribute, or relation evidence?
 
-V2 now has an executable CEPO pipeline: local data construction and audits are
-lightweight, while 7B training and full evaluation are submitted through Slurm.
-The CEPO-Latent run did not beat Answer-DPO on the primary short-answer
-metrics, so the active next experiment is **CEPO-Dual**, which mixes ordinary
-short-answer DPO rows with direct evidence-verifier preference rows.
+V2 now has a completed CEPO-Probe benchmark-paper path: local data construction
+and audits are lightweight, while 7B training and full evaluation are submitted
+through Slurm. CEPO-Latent did not beat Answer-DPO on the primary short-answer
+metrics, but the CEPO-Dual follow-up is complete and is now the selected third
+main group for the benchmark paper.
 
 The generated sidecar artifacts live under:
 
@@ -69,12 +69,14 @@ cepo-probe-benchmark-paper/
   conversion_plan.md
   benchmark_spec.md
   experiment_blueprint.md
+  final_results.md
   paper_draft.tex
 ```
 
 Benchmark/diagnostic-paper prototype for pivoting the project from a
 method-centered CEPO story to CEPO-Probe: a claim-evidence consistency
-benchmark with a full draft skeleton and concrete remaining-work checklist.
+benchmark. `final_results.md` records the selected three-group comparison and
+the numbers now ported into `paper/main.tex`.
 
 ```text
 futurework-grounded-preference-vlm/
@@ -144,8 +146,8 @@ still asks for short answers. A separate evidence-probe evaluation checks
 whether the model learned evidence consistency rather than merely changing
 yes/no bias.
 
-The active follow-up keeps the same three-group discipline but replaces the
-third group with CEPO-Dual:
+The completed benchmark-paper comparison keeps the same three-group discipline
+and uses CEPO-Dual as the evidence-aware baseline:
 
 | Group | Method |
 | --- | --- |
@@ -162,7 +164,16 @@ The fixed V2 run uses 6,000 preference rows:
 | GQA left/right relation | 1,500 |
 | Wrong-evidence negatives | 1,000 |
 
-The main launch point is:
+The completed CEPO-Dual result supports this paper-level reading:
+
+```text
+CEPO-Probe shows that short-answer preference tuning and claim-evidence
+verification are separable. CEPO Answer-DPO improves ordinary yes/no accuracy
+but weakens wrong-evidence rejection, while CEPO-Dual improves explicit
+evidence consistency without resolving relation reversals.
+```
+
+The main launch point for rerunning the CEPO-Dual matrix is:
 
 ```bash
 bash experiments/slurm/submit_cepo_pipeline.sh
@@ -171,8 +182,8 @@ bash experiments/slurm/submit_cepo_pipeline.sh
 It submits the two ZeRO-2 LoRA-DPO training jobs and after-ok eval jobs for
 COCO/GQA/Hard COCO/Base-error, POPE/AMBER, and the CEPO evidence probes.
 
-For the CEPO-Dual follow-up, build the 8,000-row dual-task export and submit
-the single new ZeRO-2 training job plus fixed eval matrix with:
+To rebuild the 8,000-row dual-task export and submit the single ZeRO-2 training
+job plus fixed eval matrix:
 
 ```bash
 python scripts/data/14_export_cepo_dual_dpo.py

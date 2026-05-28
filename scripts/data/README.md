@@ -15,6 +15,7 @@ intact and writes under `data/processed/cepo/`:
 ```bash
 python scripts/data/12_build_cepo_claim_evidence.py
 python scripts/data/13_check_cepo_data.py
+python scripts/data/15_complete_cepo_audit_sheet.py
 ```
 
 The default split is 6,000 rows: 2,000 COCO object-existence, 1,500 GQA
@@ -25,12 +26,16 @@ The builder also exports:
 data/processed/cepo/answer_dpo_train.jsonl
 data/processed/cepo/cepo_latent_dpo_train.jsonl
 data/processed/cepo/claim_evidence_audit_200.csv
+data/processed/cepo/claim_evidence_audit_200_summary.json
 data/processed/cepo/claim_evidence_summary.json
 data/processed/cepo/leakage_report.json
 ```
 
 `13_check_cepo_data.py` verifies claim fields, same-answer wrong-evidence
 rows, non-identical Answer-DPO exports, and train/eval image overlap.
+`15_complete_cepo_audit_sheet.py` completes the 200-row CEPO audit sheet as an
+annotation-consistency audit against canonical labels. It is not an independent
+pixel-level relabeling pass.
 
 The CEPO-Dual follow-up reuses the canonical CEPO sidecar and exports an
 8,000-row dual-task DPO file:

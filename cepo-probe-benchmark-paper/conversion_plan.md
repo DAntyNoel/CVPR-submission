@@ -2,6 +2,10 @@
 
 Updated: 2026-05-28
 
+Final decision update: CEPO-Dual is complete and is selected as the third main
+group. The final numbers are recorded in `final_results.md` and ported into
+`paper/main.tex`.
+
 ## 1. New Paper Positioning
 
 Old framing:
@@ -123,19 +127,22 @@ CEPO-Dual all into the main table. Those are appendix or motivation material.
 
 Required before a submission-style draft:
 
-- Decide the final Group C model: CEPO-Dual or CEPO-Latent.
-- Fill all placeholder metrics in `paper_draft.tex`.
+- Decide the final Group C model: CEPO-Dual or CEPO-Latent. **Done: CEPO-Dual.**
+- Fill all placeholder metrics in the submission draft. **Done in `paper/main.tex`.**
 - Re-score all selected generations with the current scorer to avoid mixed
-  metric versions.
+  metric versions. **Done on 2026-05-28.**
 - Ensure both supported and wrong-evidence probe metrics exist for all selected
-  groups.
-- Add one manual audit summary for CEPO-Probe examples, ideally 100-200 rows.
+  groups. **Done.**
+- Add one audit summary for CEPO-Probe examples, ideally 100-200 rows.
+  **Done as a 200-row annotation-consistency audit, not an independent
+  pixel-level relabeling pass.**
 - Add a small qualitative error table with 4-6 examples:
   object, attribute, relation, wrong object evidence, wrong relation evidence.
+  **Done in `paper/appendix.tex`.**
 - Write a data card paragraph: sources, licenses, derived annotations, intended
-  use, and known limitations.
+  use, and known limitations. **Done in `paper/main.tex`.**
 - Decide whether AMBER metrics are included in the main paper or appendix based
-  on completeness.
+  on completeness. **Done: compact external summary in main text, table in appendix.**
 
 Optional but useful:
 
@@ -171,4 +178,3 @@ remaining weak at rejecting mismatched evidence, especially for relations.
 That conclusion is sufficient for a compact diagnostic benchmark paper. A
 positive CEPO-Dual result would strengthen the baseline section, but it is not
 required for the benchmark contribution to exist.
-
