@@ -46,25 +46,58 @@ v2/tasks/review-convergence-experiments/
 
 It stores the added evidence used by the second-review paper polish: three-seed
 stability for CEPO Answer-DPO and CEPO-Dual-2k, a locked relation-stress probe,
-optional Qwen2.5-VL-32B transfer metadata, and the final convergence audit.
+row-preserving paraphrased-probe results, optional Qwen2.5-VL-32B transfer
+metadata, and the final convergence audit.
 Seed stability supports the central claim: across seeds 13/42/97, CEPO-Dual-2k
 improves wrong-evidence rejection over CEPO Answer-DPO by +35.2 to +38.8
 points while keeping COCO/GQA/Hard accuracy essentially flat. Relation-stress
 analysis narrows the unresolved relation failure to subject/object role swaps:
 CEPO-Dual-2k reaches 71.25% overall relation-stress rejection, 42.50% swap
-rejection, and 100% left/right reversal rejection.
+rejection, and 100% left/right reversal rejection. The paraphrased probe keeps
+the locked 600 supported and 400 wrong-evidence rows but rewrites
+prompt/evidence wording; CEPO-Dual-2k still beats CEPO Answer-DPO on
+wrong-evidence rejection, 73.2% vs 61.8%, with 0.0 parse failures.
 
 The runnable submission entrypoints used for the convergence pass are:
 
 ```bash
 bash experiments/slurm/submit_cepo_seed_stability_pipeline.sh
 bash experiments/slurm/submit_relation_stress_eval.sh
+bash experiments/slurm/submit_cepo_paraphrase_probe_eval.sh
+PROFILE=rtx4090_z2_4 bash experiments/slurm/submit_qwen25vl32b_backbone_transfer.sh smoke
 ```
 
-Both use Slurm; the first submitted ZeRO-2 training for seeds 13 and 97 plus
-dependent evals, and the second submitted the locked relation-stress probe
-evals. Optional 32B backbone transfer remains deferred unless a broader
-empirical-scope check is explicitly required.
+All use Slurm; the first submitted ZeRO-2 training for seeds 13 and 97 plus
+dependent evals, the second submitted the locked relation-stress probe evals,
+the third submitted the inference-only paraphrased CEPO-Probe matrix, and the
+32B smoke entrypoint checks whether the transfer backbone fits and is fast
+enough before launching the two full seed-42 transfer trainings. The 32B
+runbook escalates from 4x4090 to 8x4090 and then L40S/ADA6000/A100 profiles if
+the smoke test OOMs or projects beyond the two-day result deadline. If ZeRO-2
+cannot load the 32B model even on 48GB-class GPUs, use the `_z3_` profiles for
+stronger sharding.
+
+The row-count confound raised after the 2026-05-30 review is tracked as a
+separate Slurm-only fixed-budget control task:
+
+```text
+v2/tasks/fixed-budget-control-experiments/
+```
+
+It keeps the main paper at five groups and adds three appendix/control runs:
+Answer-4k, Dual-1k-fixed6k, and Dual-2k-fixed6k. These controls test whether
+replacing answer rows with verifier rows at a fixed 6,000-row budget preserves
+the CEPO-Dual-2k wrong-evidence rejection gain. The submission entrypoint is:
+
+```bash
+bash experiments/slurm/submit_cepo_fixed_budget_pipeline.sh
+```
+
+After the dependent eval jobs complete, summarize with:
+
+```bash
+python scripts/eval/summarize_cepo_fixed_budget_results.py
+```
 
 The generated sidecar artifacts live under:
 
@@ -75,6 +108,8 @@ data/processed/cepo_dual/
 experiments/llamafactory_data_cepo_dual/
 data/eval/cepo_evidence_probe.jsonl
 data/eval/cepo_wrong_evidence_probe.jsonl
+data/eval/cepo_evidence_probe_paraphrase.jsonl
+data/eval/cepo_wrong_evidence_probe_paraphrase.jsonl
 ```
 
 ## Project Layout
@@ -107,8 +142,9 @@ v2/tasks/review-convergence-experiments/
 
 V3 convergence task. It stores the added-experiment plan and canonical result
 folders under `results/` for paper fixes, seed stability, relation-stress
-analysis, optional backbone transfer, and the final convergence audit. Heavy
-training or full VLM inference for this task must be submitted through Slurm.
+analysis, paraphrased-probe diagnostics, optional backbone transfer, and the
+final convergence audit. Heavy training or full VLM inference for this task
+must be submitted through Slurm.
 
 The seed-stability Slurm entrypoint uses seed-specific LLaMA-Factory YAMLs
 under `experiments/llamafactory_configs/` and writes new adapters under
@@ -116,6 +152,34 @@ under `experiments/llamafactory_configs/` and writes new adapters under
 adapters untouched. It serializes same-dataset seed training and uses reduced
 preprocessing/DataLoader workers to avoid HuggingFace dataset cache races on
 shared Slurm nodes.
+
+```text
+v2/tasks/fixed-budget-control-experiments/
+```
+
+Post-review fixed-budget control task. It reuses the CEPO-Dual export pipeline
+to train Answer-4k, Dual-1k-fixed6k, and Dual-2k-fixed6k controls with
+Qwen2.5-VL-7B, LoRA-DPO, seed 42, one epoch, and ZeRO-2. The outputs are kept
+out of the main five-group table and should only be integrated into the
+appendix/control discussion after the summarizer reports complete metrics.
+
+```text
+v2/tasks/backbone-transfer-experiments/
+```
+
+Post-convergence experiment outline for using the downloaded
+Qwen2.5-VL-32B-Instruct checkpoint as a controlled transfer backbone. It keeps
+the 7B five-group table as the main paper result and plans a minimal 32B
+appendix check: Base, CEPO Answer-DPO, and CEPO-Dual-2k, with the same
+short-answer, CEPO-Probe, and relation-stress metrics. Training and full
+inference remain Slurm-only, with ZeRO-2 as the first training setup. Use the
+task-local submit helper for smoke/full runs and summarize completed metrics
+with:
+
+```bash
+PROFILE=<fixed_profile> bash experiments/slurm/submit_qwen25vl32b_backbone_transfer.sh full
+python scripts/eval/summarize_qwen25vl32b_backbone_transfer.py
+```
 
 ```text
 cepo-probe-benchmark-paper/
@@ -327,7 +391,7 @@ The current CEPO-Probe draft builds as `paper/build/main.pdf` with an 8-page
 review PDF and `paper/build/main_full.pdf` with a 10-page appendix-including
 version. It uses the five-group main comparison above, keeps the auxiliary
 CEPO-Dual-500 sensitivity result in the appendix/artifacts, and now documents
-three-seed stability plus the locked relation-stress probe. The latest outer
-`paper/` draft also has an expanded related-work bibliography covering public
-hallucination/evaluation benchmarks, multimodal preference-tuning work, and
-grounding/rationale datasets.
+three-seed stability, the row-preserving paraphrased probe, and the locked
+relation-stress probe. The latest outer `paper/` draft also has an expanded
+related-work bibliography covering public hallucination/evaluation benchmarks,
+multimodal preference-tuning work, and grounding/rationale datasets.

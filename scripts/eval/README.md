@@ -100,6 +100,23 @@ v2/tasks/review-convergence-experiments/results/relation_stress/
 and submits Base, CEPO Answer-DPO, and CEPO-Dual-2k evaluation jobs through the
 CEPO evidence-probe Slurm entrypoint.
 
+The same task now includes a row-preserving paraphrased CEPO-Probe check. It
+keeps the locked supported/wrong-evidence rows and labels, rewrites only the
+question/evidence wording, and evaluates the three anchor models through
+Slurm:
+
+```bash
+python scripts/eval/prepare_cepo_paraphrase_probe.py
+bash experiments/slurm/submit_cepo_paraphrase_probe_eval.sh
+python scripts/eval/summarize_cepo_paraphrase_probe_results.py
+```
+
+The summarizer writes:
+
+```text
+v2/tasks/review-convergence-experiments/results/paraphrase_probe/metrics.csv
+```
+
 The completed verifier-count ablation is summarized with:
 
 ```bash

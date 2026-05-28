@@ -16,6 +16,7 @@ ROOT=/home/fhshao/CVPR-submission
 PY=/home/fhshao/miniconda3/envs/verl0.6/bin/python
 
 MODEL_KEY="${MODEL_KEY:-base}"
+MODEL_NAME_OR_PATH="${MODEL_NAME_OR_PATH:-models/Qwen2.5-VL-7B-Instruct}"
 EVAL_JSONL="${EVAL_JSONL:-${ROOT}/data/eval/cepo_evidence_probe.jsonl}"
 ADAPTER_NAME_OR_PATH="${ADAPTER_NAME_OR_PATH:-}"
 MAX_SAMPLES="${MAX_SAMPLES:-}"
@@ -43,6 +44,7 @@ mkdir -p "${OUTPUT_DIR}"
 ARGS=(
   "${ROOT}/scripts/eval/run_vlm_inference.py"
   --model-key "${MODEL_KEY}"
+  --model-name-or-path "${MODEL_NAME_OR_PATH}"
   --eval "${EVAL_JSONL}"
   --output "${OUTPUT}"
   --max-new-tokens "${MAX_NEW_TOKENS}"

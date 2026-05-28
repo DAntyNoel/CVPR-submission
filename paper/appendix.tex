@@ -139,6 +139,33 @@ not constrained.}
 \end{minipage}
 \end{center}
 
+Table~\ref{tab:app_paraphrase} reports the row-preserving paraphrase check.
+It rewrites the evaluation question and candidate-evidence wording, but keeps
+the locked probe images, rows, and labels. This is weaker than a human-written
+evidence benchmark, yet it tests whether the main wrong-evidence gain survives
+surface template changes.
+
+\begin{center}
+\begin{minipage}{0.82\linewidth}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrr}
+\toprule
+Model & Supp. & Wrong Rej. & Obj/Attr/Rel & JSON Obj. & Parse Fail \\
+\midrule
+Base Instruct & 86.0 & 65.8 & 71.4 / 64.4 / 61.6 & 100.0 & 0.0 \\
+\answerdpo{} & 90.0 & 61.8 & 66.7 / 60.4 / 58.4 & 100.0 & 0.0 \\
+\dualtwok{} & \textbf{90.0} & \textbf{73.2} & \textbf{91.3} / \textbf{68.5} / \textbf{60.8} & 100.0 & 0.0 \\
+\bottomrule
+\end{tabular}
+\captionof{table}{Paraphrased CEPO-Probe check for the three anchor models.
+Values are percentages. The probe reuses the locked 600 supported and 400
+wrong-evidence rows with rewritten prompt/evidence wording.}
+\label{tab:app_paraphrase}
+\end{minipage}
+\end{center}
+
 The ablation also shows why the paper does not present CEPO-Dual as a broad
 hallucination method. The largest gain is on the internal evidence probe, not
 on every external yes/no benchmark. The main paper therefore reports POPE and

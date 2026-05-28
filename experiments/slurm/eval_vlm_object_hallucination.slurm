@@ -13,6 +13,7 @@
 set -xeuo pipefail
 
 MODEL_KEY="${MODEL_KEY:-base}"
+MODEL_NAME_OR_PATH="${MODEL_NAME_OR_PATH:-models/Qwen2.5-VL-7B-Instruct}"
 EVAL_JSONL="${EVAL_JSONL:-/home/fhshao/CVPR-submission/data/eval/coco_heldout_object_existence.jsonl}"
 ADAPTER_NAME_OR_PATH="${ADAPTER_NAME_OR_PATH:-}"
 MAX_SAMPLES="${MAX_SAMPLES:-}"
@@ -42,6 +43,7 @@ mkdir -p "$(dirname "${OUTPUT}")"
 ARGS=(
   /home/fhshao/CVPR-submission/scripts/eval/run_vlm_inference.py
   --model-key "${MODEL_KEY}"
+  --model-name-or-path "${MODEL_NAME_OR_PATH}"
   --eval "${EVAL_JSONL}"
   --output "${OUTPUT}"
   --max-new-tokens "${MAX_NEW_TOKENS}"

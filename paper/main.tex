@@ -394,8 +394,13 @@ for a support decision if the scorer recovered only a malformed or ambiguous
 output.
 Image disjointness does not prove template-distribution independence: training
 and probe rows still share annotation sources, prompt style, and evidence
-templates. Paraphrased or human-written evidence probes remain future
-external-validity checks.
+templates. We therefore add an inference-only paraphrased probe for the three
+anchor models, keeping the same 600 supported and 400 wrong-evidence rows and
+labels while rewriting the question and candidate-evidence wording. On this
+row-preserving check, \dualtwok{} still beats \answerdpo{} on wrong-evidence
+rejection (73.2\% vs. 61.8\%, +11.5 points) while both reach 90.0\%
+supported accuracy and parse failure remains 0.0\%. This tests prompt-template
+robustness, not human-written evidence distribution shift.
 
 The main table is also capped at five groups. This is a practical reporting
 choice rather than an optimization claim. It keeps the paper focused on the
@@ -646,11 +651,12 @@ scorer cannot recognize every semantically valid free-form description. Some
 GQA-derived rows lack boxes, so the current probe cannot verify region
 localization. The experiment uses one 7B backbone, one LoRA-DPO recipe, and
 one deterministic decoding setup. We add a three-seed check for the central
-answer-versus-verifier comparison, but broader model families, paraphrased
-templates, human-written evidence, and stronger verifier data would be needed
-for a general alignment claim. Finally, the relation results show that
-accepting or rejecting textual relation evidence is still far from a robust
-spatial grounding test.
+answer-versus-verifier comparison and a row-preserving paraphrased-probe
+check, but broader model families, human-written evidence, independent
+paraphrases, and stronger verifier data would be needed for a general
+alignment claim. Finally, the relation results show that accepting or
+rejecting textual relation evidence is still far from a robust spatial
+grounding test.
 
 \section{Conclusion}
 
