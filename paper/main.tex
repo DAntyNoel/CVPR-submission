@@ -21,11 +21,15 @@
 
 \newcommand{\benchmark}{CEPO-Probe}
 \newcommand{\dataset}{ClaimEvidence-6K}
+\newcommand{\cepo}{CEPO}
 \newcommand{\answerdpo}{CEPO Answer-DPO}
-\newcommand{\cepodual}{CEPO-Dual}
+\newcommand{\evidencedpo}{Evidence-DPO-only}
+\newcommand{\dualonek}{CEPO-Dual-1k}
+\newcommand{\dualtwok}{CEPO-Dual-2k}
+\newcommand{\cepodual}{CEPO-Dual-2k}
 
 %%%%%%%%% TITLE - PLEASE UPDATE
-\title{\benchmark{}: A Claim-Evidence Consistency Benchmark for Diagnosing Vision-Language Preference Tuning}
+\title{\benchmark{}: Probing Claim-Evidence Consistency in Vision-Language Preference Tuning}
 
 %%%%%%%%% AUTHORS - PLEASE UPDATE
 \author{Anonymous \confName{} Submission}
@@ -35,138 +39,180 @@
 
 \begin{abstract}
 Preference tuning can improve the short answers of vision-language models
-(VLMs), but a correct yes/no answer does not imply that the model has verified
-the right visual evidence. We introduce \benchmark{}, a compact diagnostic
+(VLMs), but a correct answer does not guarantee that the model has verified the
+right visual evidence. We introduce \benchmark{}, a compact diagnostic
 benchmark for claim-evidence consistency. The benchmark is built from
-\dataset{}, a 6k-row collection of object, attribute, relation, and
-wrong-evidence preference examples derived from COCO and GQA annotations with
-zero train/eval image overlap against the fixed evaluation suite. Unlike
-ordinary answer-level evaluation, \benchmark{} asks a model to judge whether a
+\dataset{}, a 6k-row annotation-derived collection with object, attribute,
+relation, and wrong-evidence preference examples from COCO and GQA. Unlike
+ordinary yes/no evaluation, \benchmark{} asks a model to judge whether a
 candidate visual claim is supported by a specific evidence label or relation,
-including same-answer cases where only the evidence is wrong. We evaluate
-Qwen2.5-VL-7B-Instruct, an answer-only DPO baseline, and \cepodual{}, which
-mixes answer preferences with direct evidence-verifier preferences. The
-answer-only baseline improves short-answer accuracy but increases yes bias on
-GQA, while \cepodual{} preserves the short-answer gains and improves
-wrong-evidence rejection from 34.3\% to 70.2\%. The improvement is uneven:
-object and attribute mismatches become much easier to reject, but relation
-reversals remain fragile. External POPE and AMBER checks stay close to the
-answer-only baseline, so the supported claim is diagnostic rather than a broad
-hallucination-benchmark win. These results show that short-answer preference
-tuning and evidence consistency are separable and should be reported together.
+including same-answer cases where only the evidence is wrong. We evaluate five
+groups under the same Qwen2.5-VL-7B backbone: Base Instruct,
+\answerdpo{}, \evidencedpo{}, \dualonek{}, and \dualtwok{}. The results show a
+separation between answer preference and evidence verification. \answerdpo{}
+improves short-answer accuracy but lowers wrong-evidence rejection from
+44.3\% to 34.3\%. Direct verifier supervision recovers this behavior:
+\evidencedpo{} reaches 53.0\%, \dualonek{} reaches 48.5\%, and \dualtwok{}
+reaches 70.3\% wrong-evidence rejection while preserving the answer-level
+gains. Row-bootstrap intervals, parser audits, and slice analysis support the
+same bounded conclusion: explicit verifier preferences substantially improve
+object and attribute evidence checks, but relation reversals remain fragile.
+External POPE and AMBER checks stay close to the answer-only baseline, so the
+claim is diagnostic rather than a broad hallucination-benchmark win.
 \end{abstract}
 
 \section{Introduction}
 
-Vision-language models can answer simple visual questions fluently while using
-the wrong visual support. For example, a model may answer that a sink is
-present but cite a potted plant as the evidence, or accept that a glass is left
-of a grape while the provided relation swaps the two objects. In such cases,
-answer correctness and evidence correctness are related but not identical. The
-distinction is especially important for preference tuning, where a chosen
-answer is often preferred without checking whether it is tied to the correct
-visual evidence.
+Vision-language models can answer visual questions fluently while accepting
+the wrong visual support. A model may correctly answer that a sink is present
+but accept ``potted plant'' as the evidence, or it may accept a left/right
+relation after the subject and object have been swapped. These errors matter
+because many preference-tuning pipelines supervise the final answer, while the
+connection between the answer and its visual evidence remains implicit.
 
 Direct Preference Optimization (DPO)~\cite{dpo} is attractive for VLM
-alignment because it trains from paired preferences without a separate reward
-model. However, an answer-only preference pair can be satisfied by learning a
-better response prior or a stronger yes/no bias. Even evidence-flavored
-training responses may fail to change the behavior we care about if evaluation
-only asks for a short answer. We therefore ask a diagnostic question: when
-preference tuning improves ordinary answers, does it also improve the model's
-ability to verify claim-evidence consistency?
+alignment because it trains from chosen/rejected pairs without learning a
+separate reward model. However, an answer-only preference pair can be satisfied
+by learning a better response prior or a stronger yes/no bias. If evaluation
+also asks only for short answers, a model can appear improved while still
+accepting evidence that contradicts the intended visual claim. This raises a
+diagnostic question: when preference tuning improves ordinary answers, does it
+also improve the ability to verify claim-evidence consistency?
 
-We introduce \benchmark{}, a small benchmark designed to isolate this question.
-Each example contains an image, a question, a candidate claim, and a candidate
-evidence item. The model must return a structured judgment indicating whether
-the evidence supports the claim. The key split is wrong-evidence verification:
-examples where the answer text can remain plausible, but the candidate
-evidence is mismatched. This forces evaluation to look beyond the final answer
-and ask whether the model accepts the correct object, attribute, or relation.
+We introduce \benchmark{}, a compact benchmark designed to isolate this
+question. Each example contains an image, a question, a candidate claim, and a
+candidate evidence item. The model returns a structured judgment indicating
+whether the evidence supports the claim. The key split is wrong-evidence
+verification: the answer text may remain plausible, but the candidate evidence
+is mismatched. This forces evaluation to look beyond the final answer and ask
+whether the model accepts the correct object, attribute, or spatial relation.
 
-Our goal is not to claim that a new preference-tuning method solves visual
-hallucination. Instead, we use \benchmark{} as a diagnostic instrument. We
-compare a base model, \answerdpo{}, and \cepodual{} under the same backbone,
-data source, and evaluation suite. The results support a useful but bounded
-conclusion: \cepodual{} improves explicit evidence verification while leaving
-relation-level mismatches difficult, so evidence consistency should be measured
-directly rather than inferred from answer accuracy. We therefore do not frame
-\cepodual{} as a general external-benchmark winner; its main value is exposing
-and improving a failure mode that ordinary short-answer metrics can miss.
+The study is intentionally small. \dataset{} contains 6{,}000 training rows
+derived from existing COCO~\cite{coco} and GQA~\cite{gqa} annotations, with a
+fixed 600-row supported-evidence probe and 400-row wrong-evidence probe. The
+main paper limits the training comparison to five groups: Base Instruct,
+\answerdpo{}, \evidencedpo{}, \dualonek{}, and \dualtwok{}. This keeps the
+experimental surface narrow enough for a reproducible diagnostic conclusion
+while still testing whether verifier supervision helps by itself and when
+mixed with answer preferences.
+
+Our conclusion is deliberately bounded. We do not claim that \dualtwok{}
+solves visual hallucination. Instead, \benchmark{} shows that answer-level DPO
+and evidence verification can move independently. \answerdpo{} improves
+ordinary short-answer behavior but weakens wrong-evidence rejection. Direct
+verifier preferences, especially at 2k rows, improve explicit evidence
+consistency without collapsing the short-answer gains. The remaining relation
+failures are central to the result: a model can learn to reject many wrong
+object and attribute labels while still accepting subject/object swaps.
 
 Our contributions are:
 \begin{itemize}
-    \item We define \benchmark{}, a compact claim-evidence consistency
-    benchmark that separates answer correctness from evidence correctness.
-    \item We construct \dataset{}, a 6k-row controlled set with object,
-    attribute, relation, and wrong-evidence examples plus fixed supported and
-    wrong-evidence probe splits.
-    \item We provide a deterministic evaluation protocol for VLM preference
-    tuning that reports short-answer transfer, support accuracy,
-    evidence-label extraction, wrong-evidence rejection, slice breakdowns, and
-    invalid-format rates.
-    \item We show that \answerdpo{} improves short-answer behavior without
-    reliably improving wrong-evidence rejection, while \cepodual{} improves the
-    explicit probe but still struggles on relation reversals and remains close
-    to \answerdpo{} on POPE/AMBER sanity checks.
+    \item We define \benchmark{}, a claim-evidence consistency benchmark that
+    separates answer correctness from evidence correctness.
+    \item We construct \dataset{}, a lightweight 6k-row preference collection
+    with object, attribute, relation, and same-answer wrong-evidence examples,
+    plus fixed supported and wrong-evidence probes.
+    \item We provide a deterministic protocol that reports short-answer
+    transfer, support accuracy, wrong-evidence rejection, slice breakdowns,
+    bootstrap intervals, and parser quality.
+    \item We show in a five-group comparison that answer-only DPO can weaken
+    wrong-evidence rejection, while direct verifier preferences improve the
+    explicit probe and reveal relation reversals as the main bottleneck.
 \end{itemize}
 
 \section{Related Work}
 
 \paragraph{Object hallucination and VLM evaluation.}
-Object hallucination has been studied by checking generated captions or
-answers against visual annotations. CHAIR~\cite{chair} measures hallucinated
-objects in captions, while POPE~\cite{pope} recasts object hallucination as
-polling-style yes/no questions. \benchmark{} follows this controlled
-evaluation spirit, but asks whether the model connects a claim to the evidence
-that supports it.
+Object hallucination has been measured by comparing generated captions or
+answers with visual annotations. CHAIR~\cite{chair} evaluates hallucinated
+objects in captions, while POPE~\cite{pope} turns hallucination detection into
+controlled yes/no polling. These benchmarks are useful for answer-level or
+caption-level behavior. \benchmark{} asks a narrower question: given a
+candidate claim and a candidate evidence item, does the model accept the
+evidence as support?
 
 \paragraph{Preference tuning.}
-DPO and related preference-optimization methods align models from
-chosen/rejected examples. In VLM settings, answer-level preferences can improve
-final responses while leaving the grounding signal implicit. Our benchmark
-tests whether such tuning changes evidence verification, not only answer
-selection.
+DPO~\cite{dpo} and related preference objectives align models from paired
+preferences. In VLM settings, the easiest preference pair often compares two
+final answers. Such supervision may improve the answer distribution without
+forcing the model to inspect which visual fact supports the answer. Our
+experiment keeps the optimizer and backbone fixed while changing only whether
+the preference rows supervise answer choice, evidence verification, or both.
 
 \paragraph{Grounding and rationales.}
-Grounded VLM training can use boxes, masks, region descriptions, or
-human-written rationales. These signals are valuable but costly. \benchmark{}
-uses weaker annotation-derived evidence labels and relations, allowing a small
-diagnostic study that can be regenerated from COCO~\cite{coco} and
-GQA~\cite{gqa}-style resources.
+Grounded VLM training may use boxes, masks, region descriptions, or
+human-written rationales. These signals are stronger than the textual evidence
+labels used here, but they are also more expensive. \benchmark{} takes a
+lighter route: it derives object labels, attributes, and left/right relations
+from COCO and GQA annotations. This makes the benchmark easy to regenerate and
+well suited for a small diagnostic study, at the cost of not measuring precise
+region localization.
+
+\paragraph{Structured evaluation.}
+Many VLM failures are hidden when all outputs are reduced to a final answer.
+\benchmark{} therefore requires a structured support decision and audits both
+JSON validity and fallback scoring. The purpose is not to reward verbose
+explanations, but to expose whether a model accepts or rejects a specific
+evidence item under a deterministic scoring rule.
 
 \section{\benchmark{} Benchmark}
 
 \subsection{Task Definition}
 
-Each \benchmark{} example contains an image $I$, a visual question $q$, a
-candidate claim $c$, and candidate evidence $e$. The model receives the image
-and a prompt such as:
+Each example contains an image $I$, a visual question $q$, a candidate claim
+$c$, and candidate evidence $e$. The model receives the image and a prompt
+similar to:
 \begin{quote}
 \small
 \textit{Visual question: Is there a sink in the image? Candidate claim: sink
 visible. Candidate evidence: label=potted plant. Decide whether the candidate
 evidence supports the claim in the image.}
 \end{quote}
-It should return JSON with \texttt{answer}, \texttt{claim},
-\texttt{evidence\_label}, and \texttt{support}. The support label is
-\texttt{supported}, \texttt{contradicted}, or \texttt{wrong\_evidence}. The
-headline metric is wrong-evidence rejection, where both
-\texttt{wrong\_evidence} and \texttt{contradicted} count as rejecting a
-mismatched evidence item.
+The expected output is a JSON object with fields such as
+\texttt{answer}, \texttt{claim}, \texttt{evidence\_label}, and
+\texttt{support}. The support label is one of \texttt{supported},
+\texttt{contradicted}, or \texttt{wrong\_evidence}. On wrong-evidence rows,
+both \texttt{contradicted} and \texttt{wrong\_evidence} count as rejecting the
+candidate evidence, because either decision means the evidence should not be
+accepted as support for the claim.
+
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}p{0.19\linewidth}p{0.24\linewidth}p{0.24\linewidth}p{0.24\linewidth}@{}}
+\toprule
+View & Input & Positive behavior & What the metric can miss \\
+\midrule
+Short-answer evaluation &
+Image and question &
+Correct yes/no answer &
+Whether the accepted answer is tied to the right visual evidence \\
+Claim-evidence probe &
+Image, question, candidate claim, candidate evidence &
+Reject unsupported or mismatched evidence while accepting supported evidence &
+Fine-grained localization beyond the annotation-derived evidence label \\
+\bottomrule
+\end{tabular}
+\caption{Two complementary views used in this paper. The first measures
+ordinary answer transfer; the second directly probes whether a specific
+evidence item supports the claim.}
+\label{tab:views}
+\end{table*}
 
 \subsection{Data Construction}
 
 \dataset{} is derived from COCO and GQA annotations. COCO contributes
 object-existence claims with visible object labels and absent-object negatives.
-GQA contributes color/material attributes and left/right spatial relations from
-scene graphs. We also create same-answer wrong-evidence rows where the answer
-text is not the discriminating signal: the candidate evidence is a wrong object
-label, mismatched attribute, or reversed relation.
+GQA contributes color/material attributes and left/right spatial relations
+from scene graphs. We also create same-answer wrong-evidence rows where the
+answer text is intentionally not the discriminating signal: the candidate
+evidence is a wrong object label, mismatched attribute, or reversed relation.
 
 \begin{table}[t]
 \centering
 \small
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lrr}
 \toprule
 Canonical slice & Rows & Negative type \\
@@ -190,54 +236,150 @@ The supported-evidence probe contains 600 rows: 162 object, 276 attribute, and
 blocking errors, no identical \answerdpo{} chosen/rejected rows, 1{,}000
 same-answer wrong-evidence rows, and zero train/eval image overlap against
 COCO held-out, GQA simple, Hard COCO, Base-error-mined, POPE, and AMBER evals.
-A 200-row annotation-consistency audit of \dataset{} passes all sampled checks:
-200/200 chosen answers match their supported claims, 170/170 applicable
-rejected answers match contradicted claims, 200/200 chosen evidence entries
-match the chosen claims, and 200/200 rejected errors match the intended
-negative type. Same-answer wrong-evidence rows mark rejected-answer wrongness
-as not applicable because the answer is intentionally plausible.
+
+We ran a 200-row annotation-consistency audit before training. All sampled
+chosen answers match their supported claims (200/200), all applicable rejected
+answers match contradicted claims (170/170), all chosen evidence entries match
+the chosen claims (200/200), and all rejected errors match the intended
+negative type (200/200). The remaining 30 rejected-answer checks are marked
+not applicable because same-answer wrong-evidence rows intentionally keep the
+answer plausible while changing only the evidence.
 
 \paragraph{Data card.}
 The benchmark is intended for diagnostic evaluation of VLM grounding and
-preference tuning. It is derived from COCO and GQA annotations, while POPE and
-AMBER are used only as external evaluation sources. Image redistribution is
-not required by the benchmark artifacts in this repository; examples store
-local image paths and annotation-derived labels. Known limitations include
-annotation incompleteness, weak textual evidence labels, missing boxes for some
-GQA-derived rows, and narrow coverage of simple object, attribute, and
-left/right relation claims.
+preference tuning. It uses annotation-derived labels from COCO and GQA, while
+POPE and AMBER are used only as external evaluation sources. The repository
+stores paths and metadata rather than redistributing images. Known limitations
+include annotation incompleteness, weak textual evidence labels, missing boxes
+for some GQA-derived rows, and narrow coverage of simple object, attribute,
+and left/right relation claims.
+
+\section{Preference Tuning Setup}
+
+\subsection{Training Groups}
+
+All trained variants use Qwen2.5-VL-7B-Instruct~\cite{qwen25vl} as the
+backbone, LoRA rank 16, one training epoch, DPO $\beta=0.1$, and a ZeRO-2
+distributed setup. The comparison changes only the preference rows. Table
+\ref{tab:groups} lists the five groups used in the main paper. An auxiliary
+500-verifier-row run is kept in the released experiment artifacts, but it is
+not part of the main comparison so that the paper stays within five primary
+groups.
+
+\begin{table*}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrp{0.27\linewidth}p{0.27\linewidth}@{}}
+\toprule
+Group & Answer rows & Verifier rows & Chosen response & Rejected response \\
+\midrule
+Base Instruct & 0 & 0 & No preference tuning & No preference tuning \\
+\answerdpo{} & 6{,}000 & 0 & Short answer matching the supported claim & Short answer matching the contradicted claim \\
+\evidencedpo{} & 0 & 2{,}000 & JSON verifier judgment that accepts supported evidence or rejects wrong evidence & JSON verifier judgment with the opposite support decision \\
+\dualonek{} & 6{,}000 & 1{,}000 & Mixed answer and verifier positives & Mixed answer and verifier negatives \\
+\dualtwok{} & 6{,}000 & 2{,}000 & Mixed answer and verifier positives & Mixed answer and verifier negatives \\
+\bottomrule
+\end{tabular}
+\caption{Main training groups. The design keeps the experiment compact while
+testing answer-only supervision, verifier-only supervision, and two mixed
+answer/verifier settings.}
+\label{tab:groups}
+\end{table*}
+
+\subsection{Verifier Preference Format}
+
+The verifier preference rows use the same image and natural-language context
+as the answer rows, but the chosen/rejected responses are structured evidence
+judgments. For a supported object example, the chosen response marks
+\texttt{support=supported} and repeats the candidate evidence label. For a
+wrong-evidence example, the chosen response marks
+\texttt{support=wrong\_evidence} or \texttt{support=contradicted}, while the
+rejected response incorrectly accepts the mismatched evidence as supported.
+
+\begin{table*}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{0.17\linewidth}p{0.27\linewidth}p{0.25\linewidth}p{0.23\linewidth}@{}}
+\toprule
+Preference row & Prompt content & Chosen response & Rejected response \\
+\midrule
+Answer-DPO &
+Image plus question: ``Is there a sink in the image?'' &
+Short answer consistent with the supported claim, e.g., ``Yes.'' &
+Short answer consistent with the contradicted claim, e.g., ``No.'' \\
+Supported verifier &
+Image, question, claim ``sink visible'', evidence ``label=sink'' &
+JSON with \texttt{support=supported} and \texttt{evidence\_label=sink} &
+JSON that rejects the supported evidence \\
+Wrong-evidence verifier &
+Image, question, claim ``sink visible'', evidence ``label=potted plant'' &
+JSON with \texttt{support=wrong\_evidence} or \texttt{contradicted} &
+JSON that incorrectly accepts the candidate evidence as supported \\
+\bottomrule
+\end{tabular}
+\caption{Preference formats used by the main groups. The verifier rows keep
+the same visual context as answer rows but supervise the support decision
+directly.}
+\label{tab:format}
+\end{table*}
+
+This format is intentionally simple. It does not require boxes, masks, or
+human-written rationales. It only asks the model to decide whether the
+candidate evidence item is a valid support for the claim. The lightweight
+format makes the data construction small enough for a diagnostic submission,
+but it also explains a limitation of the results: success on \benchmark{} is
+evidence-label consistency, not full visual grounding.
+
+The separation between answer rows and verifier rows is important for
+interpretation. Answer-DPO rows can improve the short-answer policy even if the
+model never learns to reject an incorrect evidence label. Verifier rows can
+teach a support decision, but by themselves they do not necessarily improve the
+ordinary yes/no prompt. The mixed groups test whether these two supervision
+signals can be combined without turning the study into a large data-scaling
+exercise.
 
 \section{Evaluation Protocol}
 
-\subsection{Model Groups}
+\subsection{Short-Answer Transfer}
 
-The main comparison uses three groups:
-\begin{itemize}
-    \item \textbf{Base Instruct:} Qwen2.5-VL-7B-Instruct~\cite{qwen25vl}
-    without preference tuning.
-    \item \textbf{\answerdpo{}:} a LoRA-DPO baseline trained for one epoch on
-    6{,}000 short-answer preference rows.
-    \item \textbf{\cepodual{}:} a LoRA-DPO baseline trained for one epoch on
-    the same 6{,}000 answer rows plus 2{,}000 evidence-verifier preference
-    rows, split evenly between supported and wrong-evidence targets.
-\end{itemize}
-Both trained models use the same backbone, DPO $\beta=0.1$, LoRA rank 16, and
-ZeRO-2 training setup. We avoid additional ablations in the main paper to keep
-the benchmark diagnosis focused.
+Short-answer transfer uses four fixed yes/no evaluations. COCO object
+existence and Hard COCO test object presence under normal and harder negative
+sampling. GQA simple tests object, attribute, and relation questions from scene
+graphs. Base-error-mined (BEM) recovery contains examples the base model gets
+wrong; the base row is therefore 0 by construction, and the metric reports how
+often tuning recovers those base errors. We report accuracy plus false-positive
+rate (FPR) and false-negative rate (FNR) to expose yes/no bias.
 
-\subsection{Metrics}
+\subsection{Claim-Evidence Metrics}
 
-Short-answer transfer uses COCO object existence, GQA simple, Hard COCO, and a
-Base-error-mined diagnostic set. Metrics are accuracy, F1, false-positive rate
-(FPR), false-negative rate (FNR), yes rate, and invalid/other rate.
+\benchmark{} reports supported-evidence accuracy on the 600-row supported
+probe and wrong-evidence rejection on the 400-row wrong-evidence probe. The
+wrong-evidence probe is further broken into object, attribute, and relation
+slices. We also track strict JSON validity, scored-output rate, and parse
+failure. Strict JSON means the raw output is a parseable JSON object.
+Scored-output rate also counts outputs recovered by deterministic fallback
+field parsing. Parse failure counts rows with insufficient structure for
+scoring. For the primary anchor comparison, we compute row-bootstrap 95\%
+confidence intervals with 10{,}000 resamples.
 
-\benchmark{} uses supported-evidence and wrong-evidence probes. We report
-support accuracy, wrong-evidence rejection accuracy, evidence-label accuracy,
-claim-match rate, slice-level wrong-evidence rejection, and invalid JSON rate.
-Evidence-label accuracy is treated as a format/extraction check, since a model
-can copy the candidate label without verifying that it is correct. The primary
-diagnostic is therefore the support decision, especially on wrong-evidence
-rows.
+\subsection{Controls and Reporting Discipline}
+
+We include several controls to keep the conclusion narrow. First, all training
+and evaluation image identifiers are checked for overlap, so the probe is not
+measuring repeated training images. Second, the supported and wrong-evidence
+probes are fixed before comparing trained models. Third, the parser audit is
+reported alongside the main probe metrics; a method should not receive credit
+for a support decision if the scorer recovered only a malformed or ambiguous
+output.
+
+The main table is also capped at five groups. This is a practical reporting
+choice rather than an optimization claim. It keeps the paper focused on the
+minimal scientific questions: whether answer-only DPO transfers to evidence
+verification, whether verifier-only supervision is sufficient, and whether
+mixed answer/verifier supervision improves the explicit probe. Additional
+sensitivity runs are kept in the appendix and released artifacts.
 
 \section{Experiments}
 
@@ -245,127 +387,252 @@ rows.
 
 \begin{table*}[t]
 \centering
-\footnotesize
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
 \begin{tabular}{@{}lccccccc@{}}
 \toprule
-Model & COCO & COCO FPR/FNR & GQA & GQA FPR/FNR & Hard & Hard FPR/FNR & BEM \\
+Model & COCO Acc & COCO FPR/FNR & GQA Acc & GQA FPR/FNR & Hard Acc & Hard FPR/FNR & BEM Rec. \\
 \midrule
 Base Instruct & 96.0 & \textbf{1.6} / 6.4 & 76.2 & \textbf{14.4} / 33.2 & 94.4 & \textbf{3.8} / 7.4 & 0.0 \\
 \answerdpo{} & \textbf{97.0} & 1.8 / \textbf{4.2} & 76.8 & 23.6 / 22.8 & \textbf{95.0} & 5.0 / \textbf{5.0} & 18.0 \\
-\cepodual{} & \textbf{97.0} & 1.8 / \textbf{4.2} & \textbf{77.1} & 24.4 / \textbf{21.4} & 94.9 & 5.2 / \textbf{5.0} & \textbf{19.4} \\
+\evidencedpo{} & 95.9 & 1.8 / 6.4 & 76.7 & 14.2 / 32.4 & 94.4 & \textbf{3.8} / 7.4 & 1.4 \\
+\dualonek{} & \textbf{97.0} & 1.8 / \textbf{4.2} & \textbf{77.2} & 24.2 / \textbf{21.4} & 94.9 & 5.2 / \textbf{5.0} & \textbf{19.8} \\
+\dualtwok{} & \textbf{97.0} & 1.8 / \textbf{4.2} & 77.1 & 24.4 / \textbf{21.4} & 94.9 & 5.2 / \textbf{5.0} & 19.4 \\
 \bottomrule
 \end{tabular}
 \caption{Short-answer transfer under the normal yes/no prompt. Values are
-percentages. \answerdpo{} and \cepodual{} improve recall and accuracy, but
-both increase yes bias on GQA and Hard COCO relative to the base model.}
+percentages. BEM Rec. is recovery on the Base-error-mined set, where Base
+Instruct is 0 by construction.}
 \label{tab:short}
 \end{table*}
 
-Table~\ref{tab:short} shows that answer-level DPO changes ordinary yes/no
-behavior. \answerdpo{} improves COCO accuracy from 96.0\% to 97.0\% and Hard
-COCO from 94.4\% to 95.0\%, mainly by lowering FNR. The trade-off is a larger
-GQA false-positive rate: 23.6\% for \answerdpo{} versus 14.4\% for the base
-model. \cepodual{} preserves the COCO gain, slightly improves GQA accuracy,
-and nearly matches Hard COCO, but it does not remove the short-answer yes-bias
-trade-off. This motivates the explicit evidence probe: answer accuracy alone
-does not tell us whether the model verifies the proposed evidence.
+Table~\ref{tab:short} shows that the answer-trained models preserve ordinary
+yes/no ability. \answerdpo{} improves COCO accuracy from 96.0\% to 97.0\% and
+Hard COCO from 94.4\% to 95.0\%, mainly by lowering FNR. The mixed
+\dualonek{} and \dualtwok{} variants keep this recall gain and recover roughly
+19\% of BEM examples. The trade-off is visible in FPR: both mixed variants
+raise GQA FPR to about 24\%, compared with 14.4\% for the base model.
+
+\evidencedpo{} behaves differently. It receives no answer preference rows, so
+it does not improve COCO or Hard COCO and recovers almost none of the BEM
+errors. This is useful diagnostically: verifier-only supervision can teach the
+probe behavior discussed next, but it is not a replacement for answer
+preference tuning when the deployment prompt asks for a short answer.
 
 \subsection{Claim-Evidence Consistency}
 
 \begin{table*}[t]
 \centering
-\small
-\begin{tabular}{lcccccc}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrrrrrr@{}}
 \toprule
-Model & Supp. Acc & Wrong Rej. & Obj Wrong & Attr Wrong & Rel. Wrong & Invalid JSON \\
+Model & Supp. Acc & Wrong Rej. & Obj Wrong & Attr Wrong & Rel. Wrong & Strict JSON & Parse Fail \\
 \midrule
-Base Instruct & 86.5 & 44.3 & 59.5 & 53.7 & 17.6 & 0.0 \\
-\answerdpo{} & 90.7 & 34.3 & 45.2 & 45.0 & 10.4 & 0.0 \\
-\cepodual{} & \textbf{95.2} & \textbf{70.2} & \textbf{96.0} & \textbf{85.9} & \textbf{25.6} & 0.0 \\
+Base Instruct & 86.5 & 44.3 & 59.5 & 53.7 & 17.6 & 100.0 & 0.0 \\
+\answerdpo{} & 90.7 & 34.3 & 45.2 & 45.0 & 10.4 & 100.0 & 0.0 \\
+\evidencedpo{} & 87.8 & 53.0 & 77.0 & 63.8 & 16.0 & 100.0 & 0.0 \\
+\dualonek{} & 93.2 & 48.5 & 74.6 & 59.1 & 9.6 & 100.0 & 0.0 \\
+\dualtwok{} & \textbf{95.2} & \textbf{70.3} & \textbf{96.0} & \textbf{85.9} & \textbf{25.6} & 100.0 & 0.0 \\
 \bottomrule
 \end{tabular}
-\caption{\benchmark{} probe results. Supp. Acc is support accuracy on the
-600-row supported-evidence probe. Wrong Rej. is rejection accuracy on the
-400-row wrong-evidence probe; the next three columns break that rejection rate
-down by base task type. Values are percentages.}
+\caption{\benchmark{} probe results. Supp. Acc is support accuracy on 600
+supported-evidence rows. Wrong Rej. is rejection accuracy on 400
+wrong-evidence rows; the next three columns break rejection down by base task
+type. Values are percentages.}
 \label{tab:probe}
 \end{table*}
 
-Table~\ref{tab:probe} exposes the separation between answer preference and
-evidence verification. \answerdpo{} improves supported-evidence support
-accuracy over the base model, but its wrong-evidence rejection drops from
-44.3\% to 34.3\%. It often accepts plausible candidate evidence even when the
-evidence label or relation is mismatched. \cepodual{} changes this behavior:
-wrong-evidence rejection rises to 70.2\%, a 36.0 point gain over \answerdpo{},
-while supported-evidence support accuracy also improves to 95.2\%.
+Table~\ref{tab:probe} is the central diagnostic result. \answerdpo{} improves
+supported-evidence accuracy from 86.5\% to 90.7\%, but wrong-evidence rejection
+falls from 44.3\% to 34.3\%. The model is better at accepting supported claims
+and worse at rejecting plausible but mismatched evidence. This confirms that
+answer-level gains cannot be treated as evidence-level gains.
 
-The slice breakdown is more cautious. \cepodual{} strongly improves wrong
-object evidence (96.0\%) and wrong attribute evidence (85.9\%), but relation
-reversals remain hard at 25.6\%. This means the positive result should not be
-read as solving evidence grounding. Rather, \benchmark{} identifies where
-direct verifier preferences help and where a model still fails.
+Verifier supervision changes the picture. \evidencedpo{} raises
+wrong-evidence rejection to 53.0\%, especially on object and attribute
+mismatches, but it does not improve short-answer transfer. \dualonek{} combines
+answer preferences with 1k verifier rows and improves supported-evidence
+accuracy to 93.2\%, but wrong-evidence rejection remains only 48.5\%.
+\dualtwok{} is the only main setting that clearly improves both sides of the
+probe: supported-evidence accuracy reaches 95.2\% and wrong-evidence rejection
+reaches 70.3\%.
+
+\begin{table*}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Model & Supp. Acc. 95\% CI & Wrong Rej. 95\% CI & Strict JSON & Scored Output & Parse Fail \\
+\midrule
+Base Instruct & 86.5 [83.7, 89.2] & 44.3 [39.5, 49.0] & 100.0 & 100.0 & 0.0 \\
+\answerdpo{} & 90.7 [88.3, 93.0] & 34.3 [29.8, 39.0] & 100.0 & 100.0 & 0.0 \\
+\dualtwok{} & 95.2 [93.3, 96.8] & 70.3 [65.8, 74.8] & 100.0 & 100.0 & 0.0 \\
+\bottomrule
+\end{tabular}
+\caption{Row-bootstrap intervals and parser audit for the primary anchor
+comparison. Intervals use 10{,}000 row resamples. Scored Output includes
+deterministic fallback field parsing.}
+\label{tab:ci}
+\end{table*}
+
+The intervals in Table~\ref{tab:ci} support the same reading. The
+\dualtwok{} wrong-evidence interval [65.8, 74.8] is well separated from both
+Base Instruct [39.5, 49.0] and \answerdpo{} [29.8, 39.0]. The supported probe
+also improves, but its baseline is already high, so the larger scientific
+signal is the wrong-evidence rejection gap. Parser quality is not a confound:
+strict JSON validity and scored-output rate are 100\% for all three anchor
+models, and parse failure is 0\%.
+
+\subsection{Slice and Error Analysis}
+
+The slice columns in Table~\ref{tab:probe} show that \dualtwok{} does not
+improve all evidence types equally. Object wrong-evidence rejection rises to
+96.0\% and attribute wrong-evidence rejection rises to 85.9\%. Relation
+wrong-evidence rejection reaches only 25.6\%, even though this is higher than
+the base and answer-only rows. Row-bootstrap slice intervals for the three
+anchor models are: object 96.0 [92.1, 99.2], attribute 85.9 [79.9, 91.3], and
+relation 25.6 [18.4, 32.8] for \dualtwok{}. The relation interval remains low,
+so the failure is not a small-sample artifact.
+
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{0.15\linewidth}p{0.25\linewidth}p{0.27\linewidth}p{0.25\linewidth}@{}}
+\toprule
+Case & Claim & Candidate evidence & Model behavior \\
+\midrule
+Dual succeeds &
+pepper left\_of bottle &
+subject=bottle; object=pepper; relation=left\_of &
+Base and \answerdpo{} accept; \dualtwok{} rejects as contradicted \\
+Dual succeeds &
+shirt left\_of hose &
+subject=hose; object=shirt; relation=left\_of &
+Base and \answerdpo{} accept; \dualtwok{} rejects as contradicted \\
+All fail &
+tree right\_of bus &
+subject=bus; object=tree; relation=right\_of &
+All three anchor models accept as supported \\
+All fail &
+mouse pad right\_of keyboard &
+subject=keyboard; object=mouse pad; relation=right\_of &
+All three anchor models accept as supported \\
+\bottomrule
+\end{tabular}
+\caption{Representative relation wrong-evidence cases. The examples use
+subject/object swaps; they illustrate why relation verification remains the
+hardest slice even after direct verifier supervision.}
+\label{tab:relation_examples}
+\end{table*}
+
+Table~\ref{tab:relation_examples} illustrates the remaining failure mode. In
+successful cases, \dualtwok{} learns to reject swapped subject/object evidence
+that both Base Instruct and \answerdpo{} accept. In many other cases, all
+models still accept the swapped relation. This suggests that textual
+left/right labels alone are not enough to enforce robust spatial grounding.
+A stronger relation probe likely needs region-aware evidence, explicit object
+localization, or harder contrastive relation pairs.
 
 \subsection{External Sanity Checks}
 
-On POPE random/popular/adversarial, \cepodual{} reaches 89.8\%, 88.7\%, and
-87.3\% accuracy, respectively, compared with 89.6\%, 88.5\%, and 87.1\% for
-\answerdpo{}. On AMBER discriminative, \cepodual{} reaches 88.2\% accuracy
-versus 88.2\% for \answerdpo{} after rounding. We treat these as sanity
-checks, not as the main source of improvement. They show that adding verifier
-rows does not cause a large out-of-distribution short-answer collapse, but the
-differences from \answerdpo{} are small. They also mirror the internal
-short-answer trade-off: the trained models lower FNR while raising FPR
-relative to Base Instruct.
+\begin{table}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{lccc}
+\toprule
+Eval & Base & Ans.-DPO & Dual-2k \\
+\midrule
+POPE random & 88.7 & 89.6 & \textbf{89.8} \\
+POPE popular & 87.7 & 88.5 & \textbf{88.7} \\
+POPE adversarial & 86.7 & 87.1 & \textbf{87.3} \\
+AMBER discr. & 87.6 & \textbf{88.2} & \textbf{88.2} \\
+\bottomrule
+\end{tabular}
+\caption{External yes/no sanity checks. Values are accuracy percentages under
+the same deterministic parser.}
+\label{tab:external}
+\end{table}
+
+Table~\ref{tab:external} checks whether the evidence-aware training causes an
+obvious collapse on external yes/no hallucination tests. It does not:
+\dualtwok{} stays close to \answerdpo{} on POPE and AMBER. The differences are
+small, so we do not use them as the primary claim. They instead support a
+negative control: the large \benchmark{} gain is not accompanied by a large
+loss on ordinary external yes/no checks, but it is also not a broad external
+benchmark breakthrough.
 
 \section{Discussion}
 
-\benchmark{} is designed to reveal a failure mode hidden by ordinary answer
-accuracy. \answerdpo{} improves short-answer behavior, but the explicit probe
-shows that this does not imply stronger rejection of mismatched evidence. In
-fact, \answerdpo{} has lower wrong-evidence rejection than the base model.
-\cepodual{} demonstrates that direct evidence-verifier preferences can improve
-the measured evidence behavior without sacrificing the short-answer gains, but
-the relation slice remains weak. A useful next benchmark extension would add
-region-aware relation checks instead of relying only on textual relation
-labels.
+\paragraph{Answer and evidence skills separate.}
+The most important empirical pattern is the disagreement between Tables
+\ref{tab:short} and \ref{tab:probe}. \answerdpo{} improves ordinary answers
+while lowering wrong-evidence rejection. \evidencedpo{} improves
+wrong-evidence rejection while doing little for short-answer transfer.
+\dualtwok{} combines both signals and gives the strongest evidence-probe
+result. These behaviors would be hard to see from answer accuracy alone.
 
-The results also clarify how to evaluate evidence-aware preference tuning. If
-a model is trained to reason about claims but tested only with short answers,
-improvements can be invisible or confused with yes/no bias. If it improves
-structured evidence probes while failing ordinary answers, it is better
-understood as an evidence verifier than as a general answerer. Reporting both
-views prevents overclaiming. The synchronized claim of this paper is therefore
-not that \cepodual{} solves object hallucination or dominates POPE/AMBER; it is
-that explicit verifier preferences can improve a separately measured
-claim-evidence consistency skill that answer-only DPO can weaken.
+\paragraph{Verifier data scale matters, but the result is modest.}
+The 1k and 2k mixed settings show that adding a small number of verifier rows
+is not automatically enough. \dualonek{} improves supported-evidence accuracy
+but does not strongly reject wrong evidence. \dualtwok{} is the selected main
+mixed setting because it is the first tested mixed recipe that clearly
+improves both supported and wrong-evidence probes. This still uses only 2k
+verifier rows, so the data construction remains lightweight.
+
+\paragraph{Relation evidence is the bottleneck.}
+Object and attribute mismatches are often visible from a single label or
+attribute. Relation mismatches require comparing two entities and preserving
+direction. The current textual evidence representation does not require the
+model to identify regions, so it can accept a swapped relation if the two
+objects are both present. This is why we treat relation errors as a remaining
+failure rather than a minor detail.
+
+\paragraph{What the benchmark should and should not support.}
+\benchmark{} supports a narrow scientific claim: evidence-verifier
+preferences can improve a separately measured claim-evidence consistency
+skill, and answer-only DPO can weaken that skill. It should not be used to
+claim solved hallucination, robust localization, or general reasoning gains.
+The external checks and relation failures are included specifically to keep
+the conclusion calibrated.
+
+\paragraph{Implications for data construction.}
+The result argues for small but targeted evidence data rather than simply more
+answer pairs. The 2k verifier rows are enough to expose a clear gain on object
+and attribute wrong-evidence rejection, but they are not enough for reliable
+relation verification. A follow-up data design should therefore spend new
+annotation budget on harder relation contrasts and region-aware evidence
+instead of increasing the same object-label template at larger scale.
 
 \section{Limitations}
 
-\benchmark{} is intentionally small and controlled. It is derived from COCO
+\benchmark{} is intentionally compact and controlled. It is derived from COCO
 and GQA annotations rather than newly collected human evidence labels. Textual
 evidence labels are weaker than boxes, masks, or human rationales, and the
 rule-based scorer cannot recognize every semantically valid free-form
 description. Some GQA-derived rows lack boxes, so the current probe cannot
-check region localization. The experiment uses one 7B backbone and one
-small-data LoRA-DPO recipe; broader model families and seeds are needed before
-drawing general conclusions about VLM alignment. Finally, the relation results
-show that accepting or rejecting textual relation evidence is still far from a
-robust spatial grounding test.
+verify region localization. The experiment uses one 7B backbone, one LoRA-DPO
+recipe, and one deterministic decoding setup; broader model families, random
+seeds, and stronger verifier data would be needed for a general alignment
+claim. Finally, the relation results show that accepting or rejecting textual
+relation evidence is still far from a robust spatial grounding test.
 
 \section{Conclusion}
 
 We presented \benchmark{}, a diagnostic benchmark for claim-evidence
 consistency in VLM preference tuning. The benchmark separates ordinary
 short-answer performance from the ability to verify whether a visual claim is
-supported by the correct evidence. In a controlled three-group experiment,
-\answerdpo{} improves short-answer accuracy while weakening wrong-evidence
-rejection, whereas \cepodual{} preserves the answer gains and substantially
-improves explicit evidence consistency. External POPE/AMBER results remain
-close to the answer-only baseline, so the result should be read as a diagnostic
-separation rather than a general hallucination solution. The remaining relation
-failures are the point of the benchmark: short-answer gains alone can hide
-persistent wrong-evidence errors, so evidence consistency should be measured
-directly.
+supported by the correct evidence. In a compact five-group experiment,
+\answerdpo{} improves short-answer behavior while weakening wrong-evidence
+rejection, \evidencedpo{} improves verifier behavior without improving
+short-answer transfer, and \dualtwok{} preserves answer gains while improving
+explicit evidence consistency to 70.3\% wrong-evidence rejection. The remaining
+relation failures are central to the conclusion: short-answer gains alone can
+hide persistent wrong-evidence errors, so evidence consistency should be
+measured directly.
 
 {
     \small

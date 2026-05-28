@@ -3,7 +3,7 @@
 This folder contains project-specific wrappers around the cloned
 `LLaMA-Factory` training code.
 
-The intended main comparison has three groups:
+The archived V1 intended main comparison had three groups:
 
 ```text
 A. Base Instruct: no training
@@ -11,7 +11,7 @@ B. Answer-DPO: experiments/llamafactory_configs/qwen25vl_answer_dpo.yaml
 C. Evidence-Hint DPO: experiments/llamafactory_configs/qwen25vl_evidence_hint_dpo.yaml
 ```
 
-The active V2/CEPO comparison keeps the same three-group discipline but changes
+The initial V2/CEPO comparison kept the same three-group discipline but changed
 the trained methods:
 
 ```text
@@ -21,13 +21,15 @@ C. CEPO-Latent: experiments/llamafactory_configs/qwen25vl_cepo_latent_dpo.yaml
 ```
 
 CEPO-Latent did not provide a sufficient positive short-answer result. The
-CEPO-Dual follow-up is now complete and is the selected third group for the
-CEPO-Probe benchmark paper:
+CEPO-Dual follow-up and verifier-control ablation are now complete. The
+CEPO-Probe benchmark paper uses a five-group main comparison:
 
 ```text
 A. Base Instruct: no training
 B. CEPO Answer-DPO: experiments/llamafactory_configs/qwen25vl_cepo_answer_dpo.yaml
-C. CEPO-Dual: experiments/llamafactory_configs/qwen25vl_cepo_dual_dpo.yaml
+C. Evidence-DPO-only: experiments/llamafactory_configs/qwen25vl_cepo_evidence_only_dpo.yaml
+D. CEPO-Dual-1k: experiments/llamafactory_configs/qwen25vl_cepo_dual1k_dpo.yaml
+E. CEPO-Dual-2k: experiments/llamafactory_configs/qwen25vl_cepo_dual_dpo.yaml
 ```
 
 Use the 7B Qwen2.5-VL model for the main run. The scripts expect it at:
@@ -135,11 +137,13 @@ Final paper metrics are summarized in:
 
 ```text
 cepo-probe-benchmark-paper/final_results.md
+cepo-probe-benchmark-improve/artifacts/ablation_results.md
 paper/main.tex
 ```
 
 The headline probe result is wrong-evidence rejection: Base 44.3%, CEPO
-Answer-DPO 34.3%, and CEPO-Dual 70.2%, with 0.0% invalid JSON on the probe.
+Answer-DPO 34.3%, Evidence-DPO-only 53.0%, CEPO-Dual-1k 48.5%, and
+CEPO-Dual-2k 70.3%, with 0.0% parse failure on the probe.
 
 Adapters and generations are written to:
 
@@ -352,7 +356,7 @@ Base-error-mined recovery:
 ```
 
 Input-Side Evidence is the best Phase-2 variant, but it remains a diagnostic
-side result rather than a replacement for the three-group main paper table.
+side result rather than a replacement for the CEPO-Probe main paper table.
 
 ## Balanced Hard Input-Side Evidence DPO
 

@@ -25,14 +25,17 @@ claim-evidence preference:
 V2 now has a completed CEPO-Probe benchmark-paper path: local data construction
 and audits are lightweight, while 7B training and full evaluation are submitted
 through Slurm. CEPO-Latent did not beat Answer-DPO on the primary short-answer
-metrics, but the CEPO-Dual follow-up is complete and is now the selected third
-main group for the benchmark paper.
+metrics, and the completed CEPO-Dual/evidence-control follow-up is now the
+main benchmark-paper comparison.
 
 The review-driven improvement pass under `cepo-probe-benchmark-improve/` is
 also complete. It adds bootstrap CIs, parser audit tables, relation failure
 samples, and a Slurm-only verifier-count ablation. The ablation supports using
-CEPO-Dual-2k: CEPO-Dual-500/1k/2k reach 39.5 / 48.5 / 70.3 wrong-evidence
-rejection while keeping COCO/GQA/Hard short-answer accuracy essentially flat.
+CEPO-Dual-2k: the main paper now reports five groups at most (Base,
+Answer-DPO, Evidence-DPO-only, CEPO-Dual-1k, CEPO-Dual-2k), while the
+auxiliary CEPO-Dual-500 run stays in the appendix/artifacts. CEPO-Dual-500/1k/2k
+reach 39.5 / 48.5 / 70.3 wrong-evidence rejection while keeping COCO/GQA/Hard
+short-answer accuracy essentially flat.
 
 The generated sidecar artifacts live under:
 
@@ -81,8 +84,9 @@ cepo-probe-benchmark-paper/
 
 Benchmark/diagnostic-paper prototype for pivoting the project from a
 method-centered CEPO story to CEPO-Probe: a claim-evidence consistency
-benchmark. `final_results.md` records the selected three-group comparison and
-the numbers now ported into `paper/main.tex`.
+benchmark. `final_results.md` records the original three-anchor comparison;
+the current `paper/main.tex` expands the main body to a five-group diagnostic
+table with verifier-only and verifier-count controls.
 
 ```text
 cepo-probe-benchmark-improve/
@@ -96,7 +100,8 @@ cepo-probe-benchmark-improve/
 Review-driven next-step plan based on `official-review/20260528.md`. It keeps
 the main paper benchmark-first while planning confidence intervals, parser/BEM
 clarification, CEPO-Dual verifier-count ablations, and relation-failure
-analysis needed to strengthen the draft toward a 6-page CVPR-style submission.
+analysis needed to strengthen the draft toward a 6-8 page CVPR-style
+submission.
 The generated `artifacts/` directory now contains the completed CI, parser,
 relation, and ablation tables for paper editing.
 
@@ -142,7 +147,7 @@ Reusable:
 - Qwen2.5-VL-7B + LoRA-DPO + ZeRO-2 training setup.
 - Unified VLM inference and yes/no scoring scripts.
 - COCO/GQA/Hard COCO/Base-error/POPE/AMBER eval files.
-- CVPR LaTeX paper skeleton and 6-page writing discipline.
+- CVPR LaTeX paper skeleton and 6-8 page writing discipline.
 
 Not worth continuing as a main direction:
 
@@ -168,14 +173,16 @@ still asks for short answers. A separate evidence-probe evaluation checks
 whether the model learned evidence consistency rather than merely changing
 yes/no bias.
 
-The completed benchmark-paper comparison keeps the same three-group discipline
-and uses CEPO-Dual as the evidence-aware baseline:
+The completed benchmark-paper comparison now follows the updated five-group
+limit and uses CEPO-Dual-2k as the selected evidence-aware setting:
 
 | Group | Method |
 | --- | --- |
 | A | Base Instruct |
 | B | CEPO Answer-DPO |
-| C | CEPO-Dual |
+| C | Evidence-DPO-only |
+| D | CEPO-Dual-1k |
+| E | CEPO-Dual-2k |
 
 The fixed V2 run uses 6,000 preference rows:
 
@@ -186,7 +193,8 @@ The fixed V2 run uses 6,000 preference rows:
 | GQA left/right relation | 1,500 |
 | Wrong-evidence negatives | 1,000 |
 
-The completed CEPO-Dual result supports this paper-level reading:
+The completed CEPO-Dual/evidence-control result supports this paper-level
+reading:
 
 ```text
 CEPO-Probe shows that short-answer preference tuning and claim-evidence
@@ -263,7 +271,7 @@ cd paper
 make pdf
 ```
 
-The V1 diagnostic draft previously built as `paper/build/main.pdf` and the
-full version with appendix as `paper/build/main_full.pdf`. V2 should reuse the
-template but replace the story with claim-evidence preference once experiments
-exist.
+The current CEPO-Probe draft builds as `paper/build/main.pdf` with a 7-page
+review PDF and `paper/build/main_full.pdf` with a 10-page appendix-including
+version. It uses the five-group main comparison above and keeps the auxiliary
+CEPO-Dual-500 sensitivity result in the appendix/artifacts.

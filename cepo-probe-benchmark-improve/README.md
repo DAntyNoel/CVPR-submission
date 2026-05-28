@@ -93,9 +93,11 @@ evidence-aware baseline that demonstrates why CEPO-Probe is needed.
 
 ## Scope Rules
 
-- Keep the main comparison to three model groups: Base Instruct, CEPO
-  Answer-DPO, and CEPO-Dual.
-- Put new ablations in a compact analysis table or appendix.
+- Keep the main comparison to at most five model groups. The current paper
+  uses Base Instruct, CEPO Answer-DPO, Evidence-DPO-only, CEPO-Dual-1k, and
+  CEPO-Dual-2k.
+- Keep auxiliary runs, such as CEPO-Dual-500, in a compact appendix or
+  artifact table.
 - Do not run GPU training or full inference directly in the interactive shell.
   Use Slurm and ZeRO-2.
 - Prefer lightweight local work first: confidence intervals, table
@@ -108,9 +110,9 @@ evidence-aware baseline that demonstrates why CEPO-Probe is needed.
 
 The improved submission should have:
 
-- at least 6 pages of main text;
+- 6-8 pages of main text;
 - a stronger related-work comparison;
-- a Figure 1 data/task diagram;
+- a compact data/task view in the main paper;
 - explicit CEPO-Dual training sample format;
 - confidence intervals or bootstrap standard errors for the probe table;
 - clear BEM and parser definitions;
