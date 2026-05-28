@@ -64,6 +64,19 @@ planned experiment schedule. `next_experiment_plan.md` records the CEPO-Dual
 follow-up after the CEPO-Latent result.
 
 ```text
+cepo-probe-benchmark-paper/
+  README.md
+  conversion_plan.md
+  benchmark_spec.md
+  experiment_blueprint.md
+  paper_draft.tex
+```
+
+Benchmark/diagnostic-paper prototype for pivoting the project from a
+method-centered CEPO story to CEPO-Probe: a claim-evidence consistency
+benchmark with a full draft skeleton and concrete remaining-work checklist.
+
+```text
 futurework-grounded-preference-vlm/
   experiment_plan.md
   index.html
