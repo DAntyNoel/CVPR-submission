@@ -2,19 +2,19 @@
 
 This directory contains the CVPR 2026-format paper draft for the CEPO-Probe
 benchmark paper. The current `main.tex` is a complete diagnostic manuscript
-using a five-group main comparison: Base Instruct, CEPO Answer-DPO,
-Evidence-DPO-only, CEPO-Dual-1k, and CEPO-Dual-2k. This matches the updated
-submission constraint that the main experiment should stay at or below five
-groups while the paper body targets 6-8 pages.
+using a five-group 7B main comparison: Base Instruct, CEPO Answer-DPO,
+Evidence-DPO-only, CEPO-Dual-1k, and CEPO-Dual-2k, plus Qwen2.5-VL-32B
+transfer rows for Base, CEPO Answer-DPO, and CEPO-Dual-2k. This keeps the main
+ablation at or below five groups while adding a larger-backbone sanity check.
 
 Current files:
 
 - `main.tex`: paper body with final CEPO-Probe benchmark framing, first-use
   CEPO acronym expansion, Figure 1 claim-evidence overview, ClaimEvidence-6K
   data description, preference-format setup, five-group short-answer transfer
-  results, evidence-probe results, confidence intervals, parser-audit note, seed
-  stability summary, paraphrased-probe diagnostic, relation error analysis,
-  external sanity checks, limitations, and conclusion.
+  results, evidence-probe results with 32B transfer rows, confidence intervals,
+  parser-audit note, seed stability summary, paraphrased-probe diagnostic,
+  relation error analysis, external sanity checks, limitations, and conclusion.
 - `main_full.tex`: standalone entry point that enables the appendix and writes
   `build/main_full.pdf`.
 - `preamble.tex`: CVPR author-kit preamble helper, kept aligned with the
@@ -35,7 +35,8 @@ Current files:
   qualitative/scoring analysis. It keeps the auxiliary CEPO-Dual-500 run out of
   the main five-group body while documenting the full ablation, three-seed
   stability check, row-preserving paraphrased probe, fixed-budget row-count
-  control, and locked relation-stress probe.
+  control, locked relation-stress probe, and 32B transfer training setup
+  including the ZeRO-3 preflight.
 - `Makefile`: Tectonic-based local build entry point.
 - `rebuttal/`: simulated reviewer reports for the current PDF.
 
@@ -66,6 +67,14 @@ swap rejection and 100% left/right reversal rejection. POPE/AMBER are reported
 only as external sanity checks: CEPO-Dual-2k stays close to CEPO Answer-DPO, so
 the paper does not claim a general hallucination-benchmark win.
 
+The Qwen2.5-VL-32B transfer check is now integrated into the main result
+tables as larger-backbone evidence. The gain is modest but positive:
+CEPO-Dual-2k improves wrong-evidence rejection over 32B CEPO Answer-DPO from
+23.8% to 24.5% while preserving COCO/GQA/Hard short-answer accuracy. The
+appendix records the 32B training ladder: ZeRO-2 OOM on 4090/L40S preflights,
+BF16 ZeRO-3 fitting on 8xADA6000 but projecting too slowly, and the final
+4-bit QLoRA + ZeRO-2 setting used for the reported 32B rows.
+
 The row-preserving paraphrased CEPO-Probe check is also complete for Base,
 CEPO Answer-DPO, and CEPO-Dual-2k. It keeps the same 600 supported and 400
 wrong-evidence rows and labels while rewriting the prompt/evidence wording.
@@ -82,8 +91,8 @@ The fixed-budget row-count control requested after the 2026-05-30 review is
 complete under `v2/tasks/fixed-budget-control-experiments/`. Dual-2k-fixed6k
 reaches 62.7% wrong-evidence rejection, +28.5 points over CEPO Answer-DPO-6k,
 while COCO/GQA/Hard accuracy changes by only -0.1/+0.1/+0.1 points. The result
-is integrated as appendix/control evidence; the main five-group table remains
-unchanged.
+is integrated as appendix/control evidence; the main 7B ablation remains the
+five-group comparison.
 
 Related-work references were expanded on 2026-05-28 for the latest outer
 `paper/` draft. The current citation set now situates CEPO-Probe against

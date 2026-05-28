@@ -64,7 +64,8 @@ The runnable submission entrypoints used for the convergence pass are:
 bash experiments/slurm/submit_cepo_seed_stability_pipeline.sh
 bash experiments/slurm/submit_relation_stress_eval.sh
 bash experiments/slurm/submit_cepo_paraphrase_probe_eval.sh
-PROFILE=rtx4090_z2_4 bash experiments/slurm/submit_qwen25vl32b_backbone_transfer.sh smoke
+PROFILE=ada6000_qlora4_8 SMOKE_TARGET=answer bash experiments/slurm/submit_qwen25vl32b_backbone_transfer.sh smoke
+PROFILE=ada6000_qlora4_8 SMOKE_TARGET=dual bash experiments/slurm/submit_qwen25vl32b_backbone_transfer.sh smoke
 ```
 
 All use Slurm; the first submitted ZeRO-2 training for seeds 13 and 97 plus
@@ -74,8 +75,17 @@ the third submitted the inference-only paraphrased CEPO-Probe matrix, and the
 enough before launching the two full seed-42 transfer trainings. The 32B
 runbook escalates from 4x4090 to 8x4090 and then L40S/ADA6000/A100 profiles if
 the smoke test OOMs or projects beyond the two-day result deadline. If ZeRO-2
-cannot load the 32B model even on 48GB-class GPUs, use the `_z3_` profiles for
-stronger sharding.
+cannot load the 32B model even on 48GB-class GPUs, use `_z3_` profiles for
+stronger sharding; if BF16 ZeRO-3 fits but is too slow, use `_qlora4_`
+profiles. The fixed 32B transfer setting selected on 2026-05-28 is
+`PROFILE=ada6000_qlora4_8` with eval jobs restricted to `A100,L40S,ADA6000`.
+The completed 32B transfer finished the full T0/T1/T2 matrix on 2026-05-28 by
+19:55 CST, inside the two-day constraint. It preserves short-answer accuracy
+and gives a smaller but positive larger-backbone gain: CEPO-Dual-2k improves
+wrong-evidence rejection over CEPO Answer-DPO by +0.8 points on 32B
+(24.5% vs 23.8%), while COCO/GQA/Hard accuracy remains flat. The paper now
+uses this as larger-backbone transfer evidence, with the caveat that the 32B
+margin is much smaller than the controlled 7B margin.
 
 The row-count confound raised after the 2026-05-30 review is resolved as a
 separate Slurm-only fixed-budget control task:
@@ -181,7 +191,12 @@ task-local submit helper for smoke/full runs and summarize completed metrics
 with:
 
 ```bash
-PROFILE=<fixed_profile> bash experiments/slurm/submit_qwen25vl32b_backbone_transfer.sh full
+PROFILE=ada6000_qlora4_8 \
+EVAL_PARTITION=A100,L40S,ADA6000 \
+EVAL_GPUS=4 \
+EVAL_MEM=320G \
+EVAL_TIME=12:00:00 \
+bash experiments/slurm/submit_qwen25vl32b_backbone_transfer.sh full
 python scripts/eval/summarize_qwen25vl32b_backbone_transfer.py
 ```
 
