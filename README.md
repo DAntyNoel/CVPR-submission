@@ -312,4 +312,7 @@ make pdf
 The current CEPO-Probe draft builds as `paper/build/main.pdf` with a 7-page
 review PDF and `paper/build/main_full.pdf` with a 9-page appendix-including
 version. It uses the five-group main comparison above and keeps the auxiliary
-CEPO-Dual-500 sensitivity result in the appendix/artifacts.
+CEPO-Dual-500 sensitivity result in the appendix/artifacts. The latest outer
+`paper/` draft also has an expanded related-work bibliography covering public
+hallucination/evaluation benchmarks, multimodal preference-tuning work, and
+grounding/rationale datasets.
