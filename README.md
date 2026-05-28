@@ -81,10 +81,11 @@ profiles. The fixed 32B transfer setting selected on 2026-05-28 is
 `PROFILE=ada6000_qlora4_8` with eval jobs restricted to `A100,L40S,ADA6000`.
 The completed 32B transfer finished the full T0/T1/T2 matrix on 2026-05-28 by
 19:55 CST, inside the two-day constraint. It preserves short-answer accuracy
-but does not reproduce the 7B evidence-separation gain: CEPO-Dual-2k improves
-wrong-evidence rejection over CEPO Answer-DPO by only +0.8 points on 32B
-(24.5% vs 23.8%), while COCO/GQA/Hard accuracy remains flat. Treat this as an
-appendix/limitation result rather than a new main-table claim.
+and gives a smaller but positive larger-backbone gain: CEPO-Dual-2k improves
+wrong-evidence rejection over CEPO Answer-DPO by +0.8 points on 32B
+(24.5% vs 23.8%), while COCO/GQA/Hard accuracy remains flat. The paper now
+uses this as larger-backbone transfer evidence, with the caveat that the 32B
+margin is much smaller than the controlled 7B margin.
 
 The row-count confound raised after the 2026-05-30 review is resolved as a
 separate Slurm-only fixed-budget control task:

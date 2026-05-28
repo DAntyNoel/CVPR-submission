@@ -139,8 +139,8 @@ Final 2026-05-28 outcome: the full T0/T1/T2 matrix completed by `19:55 CST`,
 well inside the two-day deadline. Training used `ada6000_qlora4_8`; the final
 straggler eval (`cepo_answer_dpo` on CEPO supported) was rerun on 4x A100 as
 job `64807` after the L40S/ADA6000 attempts projected too slowly. The run
-preserves short-answer accuracy but does not meet the +20 point 32B transfer
-criterion:
+preserves short-answer accuracy and gives a smaller but positive 32B transfer
+gain, although it does not meet the earlier +20 point stretch criterion:
 
 | Model | COCO | GQA | Hard COCO | Supported acc. | Wrong-evidence rejection | Relation-stress rejection |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -148,10 +148,10 @@ criterion:
 | CEPO Answer-DPO | 95.9 | 76.7 | 93.8 | 93.5 | 23.8 | 27.1 |
 | CEPO-Dual-2k | 95.9 | 76.6 | 93.8 | 93.0 | 24.5 | 31.7 |
 
-CEPO-Dual-2k is only `+0.8` points over CEPO Answer-DPO on wrong-evidence
-rejection. Keep this as an appendix/limitation result: the 7B controlled study
-still supports the main CEPO-Probe conclusion, while the 32B QLoRA transfer
-does not independently reproduce the large answer-vs-evidence separation.
+CEPO-Dual-2k is `+0.8` points over CEPO Answer-DPO on wrong-evidence rejection
+while preserving short-answer accuracy. Use this as modest larger-backbone
+transfer evidence in the paper, with the caveat that the 32B QLoRA transfer
+does not reproduce the large 7B answer-vs-evidence separation.
 
 Result files:
 

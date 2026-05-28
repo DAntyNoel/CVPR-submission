@@ -8,12 +8,14 @@ qualitative/scoring details.
 
 \subsection{Reproducibility Setup and Artifacts}
 
-All trained variants use the same backbone, optimizer objective, adapter
+The main 7B ablation uses the same backbone, optimizer objective, adapter
 configuration, and distributed setup. The only experimental variable is the
 composition of preference rows: answer rows, verifier rows, or their mixture.
 This control is important because the paper interprets differences between
 groups as evidence about supervision format rather than architecture,
-optimizer, or decoding changes.
+optimizer, or decoding changes. The 32B rows in the main tables are a separate
+larger-backbone transfer check and use the same selected Answer-DPO and
+CEPO-Dual-2k recipes where feasible.
 
 \begin{center}
 \begin{minipage}{0.58\linewidth}
@@ -42,6 +44,20 @@ an auxiliary sensitivity check.}
 \end{minipage}
 \end{center}
 
+\paragraph{32B transfer setup.}
+The larger-backbone rows use Qwen2.5-VL-32B-Instruct with seed 42 for
+\answerdpo{} and \dualtwok{}. We kept the optimizer recipe aligned with the 7B
+runs where feasible: DPO, LoRA rank 16 targeting all layers, $\beta=0.1$,
+sigmoid preference loss, one epoch, learning rate $5\times10^{-6}$, cutoff
+1024, and maximum image size 262{,}144 pixels. The resource preflight followed
+a memory ladder. BF16 ZeRO-2 failed at model load on 4x4090, 8x4090, and
+8xL40S; full-BF16 ZeRO-3 on 8xADA6000 did fit, but one step over 8 samples
+took 234.47s, which projected beyond the two-day result target. The reported
+32B rows therefore use the faster 4-bit bitsandbytes QLoRA path with ZeRO-2 on
+8xADA6000, per-device batch size 2 and gradient accumulation 4. Wall time was
+42:39 for \answerdpo{} and 54:38 for \dualtwok{}; full inference used 4-GPU
+A100/L40S/ADA6000 jobs.
+
 The completed artifacts are small enough to inspect and regenerate. The
 canonical \dataset{} file contains 6{,}000 rows. The selected \dualtwok{} DPO
 export contains 8{,}000 rows: 6{,}000 answer-preference rows plus 2{,}000
@@ -58,7 +74,8 @@ Slurm entry points are:
 \footnotesize
 \texttt{submit\_cepo\_dual\_pipeline.sh}\\
 \texttt{submit\_cepo\_ablation\_pipeline.sh}\\
-\texttt{submit\_cepo\_fixed\_budget\_pipeline.sh}
+\texttt{submit\_cepo\_fixed\_budget\_pipeline.sh}\\
+\texttt{submit\_qwen25vl32b\_backbone\_transfer.sh}
 \end{quote}
 The paper numbers are then refreshed with the deterministic scoring and
 summary scripts:
@@ -68,7 +85,8 @@ summary scripts:
 \texttt{score\_cepo\_evidence\_probe.py}\\
 \texttt{bootstrap\_cepo\_probe\_ci.py}\\
 \texttt{summarize\_cepo\_ablation\_results.py}\\
-\texttt{summarize\_cepo\_fixed\_budget\_results.py}
+\texttt{summarize\_cepo\_fixed\_budget\_results.py}\\
+\texttt{summarize\_qwen25vl32b\_backbone\_transfer.py}
 \end{quote}
 
 \subsection{Additional Quantitative Checks}

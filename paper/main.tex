@@ -46,20 +46,22 @@ consistency, built from \dataset{}, a 6k-row annotation-derived collection of
 object, attribute, relation, and wrong-evidence examples from COCO and GQA.
 Unlike ordinary yes/no evaluation, the benchmark asks whether a candidate
 visual claim is supported by a specific evidence label or relation, including
-same-answer cases where only the evidence is wrong. Under a fixed
-Qwen2.5-VL-7B backbone, we compare a base model, an answer-only tuned model, a
+same-answer cases where only the evidence is wrong. In a controlled
+Qwen2.5-VL-7B study, we compare a base model, an answer-only tuned model, a
 verifier-only control, and two mixed answer/verifier settings. The results show
 that answer preference and evidence verification can move in opposite
 directions: answer-only tuning improves short-answer accuracy but lowers
 wrong-evidence rejection from 44.3\% to 34.3\%. Direct verifier supervision
 recovers this behavior, reaching 53.0\% in the verifier-only control and
 70.3\% in the strongest mixed setting while preserving the answer-level gains.
-Row-bootstrap intervals, parser audits, seed stability, and slice analysis
-support a bounded conclusion: explicit verifier preferences substantially
-improve object and attribute evidence checks, but subject/object role swaps
-remain fragile. External POPE and AMBER checks stay close to the answer-only
-baseline, so the claim is diagnostic rather than a broad
-hallucination-benchmark win.
+We further repeat the anchor comparison on a larger Qwen2.5-VL-32B backbone:
+the 32B gain is modest, but CEPO-Dual-2k still improves wrong-evidence
+rejection over 32B Answer-DPO (24.5\% vs. 23.8\%) while keeping
+short-answer accuracy flat. Row-bootstrap intervals, parser audits, seed
+stability, larger-backbone transfer, and slice analysis support a bounded
+conclusion: explicit verifier preferences improve evidence checks, with the
+largest gains on object and attribute evidence and persistent fragility on
+subject/object role swaps.
 \end{abstract}
 
 \section{Introduction}
@@ -120,6 +122,9 @@ Our contributions are:
     \item We show in a five-group comparison that answer-only DPO can weaken
     wrong-evidence rejection, while direct verifier preferences improve the
     explicit probe and reveal relation role swaps as the main bottleneck.
+    \item We add a Qwen2.5-VL-32B transfer check that keeps short-answer
+    behavior stable and shows a smaller but positive wrong-evidence gain for
+    CEPO-Dual-2k over the 32B answer-only baseline.
 \end{itemize}
 
 \section{Related Work}
@@ -275,13 +280,20 @@ and left/right relation claims.
 
 \subsection{Training Groups}
 
-All trained variants use Qwen2.5-VL-7B-Instruct~\cite{qwen25vl} as the
+The main controlled variants use Qwen2.5-VL-7B-Instruct~\cite{qwen25vl} as the
 backbone, LoRA rank 16, one training epoch, DPO $\beta=0.1$, and a ZeRO-2
 distributed setup. The comparison changes only the preference rows. Table
-\ref{tab:groups} lists the five groups used in the main paper. An auxiliary
-500-verifier-row run is kept in the released experiment artifacts, but it is
-not part of the main comparison so that the paper stays within five primary
-groups.
+\ref{tab:groups} lists the five groups used for the main ablation. An
+auxiliary 500-verifier-row run is kept in the released experiment artifacts,
+but it is not part of the main comparison so that the 7B ablation stays within
+five primary groups.
+
+To check whether the effect survives a stronger backbone, we also run a
+minimal Qwen2.5-VL-32B-Instruct transfer: Base Instruct, \answerdpo{}, and
+\dualtwok{} with seed 42. This larger-backbone check does not replace the
+controlled 7B study; it asks whether the selected mixed verifier recipe still
+gives a positive evidence-verification signal when model capacity increases.
+The 32B training setup and ZeRO-3 preflight are documented in the appendix.
 
 \begin{table*}[t]
 \centering
@@ -399,11 +411,12 @@ rejection (73.2\% vs. 61.8\%, +11.5 points) while both reach 90.0\%
 supported accuracy and parse failure remains 0.0\%. This tests prompt-template
 robustness, not human-written evidence distribution shift.
 
-The main table is also capped at five groups. This is a practical reporting
-choice rather than an optimization claim. It keeps the paper focused on the
-minimal scientific questions: whether answer-only DPO transfers to evidence
-verification, whether verifier-only supervision is sufficient, and whether
-mixed answer/verifier supervision improves the explicit probe. Additional
+The main 7B ablation is also capped at five groups. This is a practical
+reporting choice rather than an optimization claim. It keeps the paper focused
+on the minimal scientific questions: whether answer-only DPO transfers to
+evidence verification, whether verifier-only supervision is sufficient, and
+whether mixed answer/verifier supervision improves the explicit probe. The 32B
+rows are reported as larger-backbone transfer checks, while additional
 sensitivity runs are kept in the appendix and released artifacts.
 
 \section{Experiments}
@@ -423,11 +436,15 @@ Base Instruct & 96.0 & \textbf{1.6} / 6.4 & 76.2 & \textbf{14.4} / 33.2 & 94.4 &
 \evidencedpo{} & 95.9 & 1.8 / 6.4 & 76.7 & 14.2 / 32.4 & 94.4 & \textbf{3.8} / 7.4 & 1.4 \\
 \dualonek{} & \textbf{97.0} & 1.8 / \textbf{4.2} & \textbf{77.2} & 24.2 / \textbf{21.4} & 94.9 & 5.2 / \textbf{5.0} & \textbf{19.8} \\
 \dualtwok{} & \textbf{97.0} & 1.8 / \textbf{4.2} & 77.1 & 24.4 / \textbf{21.4} & 94.9 & 5.2 / \textbf{5.0} & 19.4 \\
+\midrule
+32B Base & 95.7 & 1.4 / 7.2 & 76.6 & 15.4 / 31.4 & 93.1 & 4.4 / 9.4 & 22.6 \\
+32B \answerdpo{} & \textbf{95.9} & 1.6 / \textbf{6.6} & \textbf{76.7} & 18.4 / 28.2 & \textbf{93.8} & 4.6 / \textbf{7.8} & 24.3 \\
+32B \dualtwok{} & \textbf{95.9} & 1.6 / \textbf{6.6} & 76.6 & 19.4 / \textbf{27.4} & \textbf{93.8} & 4.6 / \textbf{7.8} & \textbf{24.7} \\
 \bottomrule
 \end{tabular}
 \caption{Short-answer transfer under the normal yes/no prompt. Values are
-percentages. BEM Rec. is recovery on the Base-error-mined set, where Base
-Instruct is 0 by construction.}
+percentages. BEM Rec. is recovery on the Base-error-mined set. The first block
+is the controlled 7B ablation; the second block is the 32B transfer check.}
 \label{tab:short}
 \end{table*}
 
@@ -444,6 +461,14 @@ errors. This is useful diagnostically: verifier-only supervision can teach the
 probe behavior discussed next, but it is not a replacement for answer
 preference tuning when the deployment prompt asks for a short answer.
 
+The 32B transfer rows are important because a larger backbone could have washed
+out the effect of small verifier data. Instead, \dualtwok{} keeps the 32B
+short-answer metrics essentially identical to 32B \answerdpo{}: COCO and Hard
+COCO are tied, GQA changes by only -0.1 points, and BEM recovery increases
+slightly from 24.3\% to 24.7\%. This makes the 32B evidence-probe comparison
+below a fairer test: any evidence gain is not bought by a visible
+short-answer collapse.
+
 \subsection{Claim-Evidence Consistency}
 
 \begin{table*}[t]
@@ -459,12 +484,17 @@ Base Instruct & 86.5 & 44.3 & 59.5 & 53.7 & 17.6 \\
 \evidencedpo{} & 87.8 & 53.0 & 77.0 & 63.8 & 16.0 \\
 \dualonek{} & 93.2 & 48.5 & 74.6 & 59.1 & 9.6 \\
 \dualtwok{} & \textbf{95.2} & \textbf{70.3} & \textbf{96.0} & \textbf{85.9} & \textbf{25.6} \\
+\midrule
+32B Base & 91.8 & 24.5 & 39.7 & 22.1 & 12.0 \\
+32B \answerdpo{} & \textbf{93.5} & 23.8 & \textbf{41.3} & 21.5 & 8.8 \\
+32B \dualtwok{} & 93.0 & \textbf{24.5} & 39.7 & \textbf{23.5} & \textbf{10.4} \\
 \bottomrule
 \end{tabular}
 \caption{\benchmark{} probe results. Supp. Acc is support accuracy on 600
 supported-evidence rows. Wrong Rej. is rejection accuracy on 400
 wrong-evidence rows; the next three columns break rejection down by base task
-type. Values are percentages.}
+type. Values are percentages. The first block is the controlled 7B ablation;
+the second block is the 32B transfer check.}
 \label{tab:probe}
 \end{table*}
 
@@ -482,6 +512,17 @@ accuracy to 93.2\%, but wrong-evidence rejection remains only 48.5\%.
 \dualtwok{} is the only main setting that clearly improves both sides of the
 probe: supported-evidence accuracy reaches 95.2\% and wrong-evidence rejection
 reaches 70.3\%.
+
+The larger 32B transfer is less dramatic but directionally useful. The 32B
+base and answer-only models already behave differently from the 7B anchors,
+with higher supported-evidence accuracy but lower wrong-evidence rejection.
+Even in this stronger-backbone regime, \dualtwok{} improves wrong-evidence
+rejection over 32B \answerdpo{} from 23.8\% to 24.5\%, and it raises the
+relation wrong-evidence slice from 8.8\% to 10.4\% while preserving the
+short-answer metrics in Table~\ref{tab:short}. The gain is small compared with
+the 7B controlled ablation, but its positive sign on a 32B model strengthens
+the interpretation that verifier preferences remain effective beyond the
+original backbone.
 
 \begin{table*}[t]
 \centering
@@ -618,6 +659,17 @@ versus 34.3\% for \answerdpo{}-6k, while COCO/GQA/Hard accuracy changes by
 artifact, although the original 8k \dualtwok{} run still combines verifier
 supervision with extra rows.
 
+\paragraph{Backbone scale matters.}
+The 32B transfer makes the evidence stronger in a different way. It does not
+replicate the large 7B margin, but it preserves the direction of the selected
+recipe on a substantially larger backbone: \dualtwok{} improves 32B
+wrong-evidence rejection over 32B \answerdpo{} by +0.8 points and improves the
+relation-stress rejection reported in the artifacts from 27.1\% to 31.7\%.
+Because larger models often absorb small preference signals into a stronger
+pretrained prior, the modest gain is still useful: the method does not collapse
+when parameter count increases, and the same answer/verifier separation remains
+measurable under a 32B backbone.
+
 \paragraph{Relation evidence is the bottleneck.}
 Object and attribute mismatches are often visible from a single label or
 attribute. Relation mismatches require comparing two entities and preserving
@@ -649,28 +701,32 @@ labels rather than newly collected human evidence labels. Textual evidence
 labels are weaker than boxes, masks, or human rationales, and the rule-based
 scorer cannot recognize every semantically valid free-form description. Some
 GQA-derived rows lack boxes, so the current probe cannot verify region
-localization. The experiment uses one 7B backbone, one LoRA-DPO recipe, and
-one deterministic decoding setup. We add a three-seed check for the central
-answer-versus-verifier comparison and a row-preserving paraphrased-probe
-check, but broader model families, human-written evidence, independent
-paraphrases, and stronger verifier data would be needed for a general
-alignment claim. Finally, the relation results show that accepting or
-rejecting textual relation evidence is still far from a robust spatial
-grounding test.
+localization. The main controlled ablation uses one 7B backbone, one LoRA-DPO
+recipe, and one deterministic decoding setup. We add a three-seed check for
+the central answer-versus-verifier comparison, a row-preserving paraphrased
+probe, and a limited 32B transfer check. The 32B result is persuasive as a
+larger-capacity sanity check, but it is still a single-seed QLoRA transfer over
+only Base, \answerdpo{}, and \dualtwok{}; broader model families,
+human-written evidence, independent paraphrases, and stronger verifier data
+would be needed for a general alignment claim. Finally, the relation results
+show that accepting or rejecting textual relation evidence is still far from a
+robust spatial grounding test.
 
 \section{Conclusion}
 
 We presented \benchmark{}, a diagnostic benchmark for claim-evidence
 consistency in VLM preference tuning. The benchmark separates ordinary
 short-answer performance from the ability to verify whether a visual claim is
-supported by the correct evidence. In a controlled five-group experiment,
+supported by the correct evidence. In a controlled five-group 7B experiment,
 \answerdpo{} improves short-answer behavior while weakening wrong-evidence
 rejection, \evidencedpo{} improves verifier behavior without improving
 short-answer transfer, and \dualtwok{} preserves answer gains while improving
-explicit evidence consistency to 70.3\% wrong-evidence rejection. The remaining
-relation failures are central to the conclusion: short-answer gains alone can
-hide persistent wrong-evidence errors, so evidence consistency should be
-measured directly.
+explicit evidence consistency to 70.3\% wrong-evidence rejection. A 32B
+transfer gives a smaller but positive version of the same story: \dualtwok{}
+keeps short-answer accuracy flat and improves wrong-evidence rejection over
+the 32B answer-only baseline. The remaining relation failures are central to
+the conclusion: short-answer gains alone can hide persistent wrong-evidence
+errors, so evidence consistency should be measured directly.
 
 {
     \small
