@@ -26,7 +26,9 @@ Current files:
 - `cvpr.sty`: official CVPR 2026 style file from `cvpr-org/author-kit`
   (<https://github.com/cvpr-org/author-kit>).
 - `ieeenat_fullname.bst`: official bibliography style from `cvpr-org/author-kit`.
-- `references.bib`: minimal bibliography entries used by the draft.
+- `references.bib`: bibliography entries used by the draft, including public
+  hallucination/evaluation benchmarks, multimodal preference-tuning work, and
+  grounding/rationale datasets relevant to CEPO-Probe.
 - `appendix.tex`: supplementary material included by `main_full.tex`,
   organized into reproducibility setup, additional quantitative checks, and
   qualitative/scoring analysis. It keeps the auxiliary CEPO-Dual-500 run out of
@@ -55,6 +57,12 @@ CEPO-Dual-2k reaches 70.3% while preserving the short-answer gains. Relation
 reversals remain the main failure slice. POPE/AMBER are reported only as
 external sanity checks: CEPO-Dual-2k stays close to CEPO Answer-DPO, so the
 paper does not claim a general hallucination-benchmark win.
+
+Related-work references were expanded on 2026-05-28 for the latest outer
+`paper/` draft. The current citation set now situates CEPO-Probe against
+CHAIR, POPE, MME, MMHal-Bench/LLaVA-RLHF, AMBER, HallusionBench,
+hallucination-aware multimodal preference optimization, RLHF-V, Silkie, Visual
+Genome, Flickr30k Entities, ReferItGame, and VQA-X.
 
 Page budget:
 

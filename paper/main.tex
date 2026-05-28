@@ -127,27 +127,36 @@ Our contributions are:
 Object hallucination has been measured by comparing generated captions or
 answers with visual annotations. CHAIR~\cite{chair} evaluates hallucinated
 objects in captions, while POPE~\cite{pope} turns hallucination detection into
-controlled yes/no polling. These benchmarks are useful for answer-level or
-caption-level behavior. \benchmark{} asks a narrower question: given a
-candidate claim and a candidate evidence item, does the model accept the
-evidence as support?
+controlled yes/no polling. Broader public evaluations such as
+MME~\cite{mme}, MMHal-Bench~\cite{llavarlhf}, AMBER~\cite{amber}, and
+HallusionBench~\cite{hallusionbench} report hallucination, perception, and
+reasoning failures across response-level or question-answer settings. These
+benchmarks are useful for answer-level or caption-level behavior.
+\benchmark{} asks a narrower question: given a candidate claim and a
+candidate evidence item, does the model accept the evidence as support?
 
 \paragraph{Preference tuning.}
 DPO~\cite{dpo} and related preference objectives align models from paired
-preferences. In VLM settings, the easiest preference pair often compares two
-final answers. Such supervision may improve the answer distribution without
-forcing the model to inspect which visual fact supports the answer. Our
-experiment keeps the optimizer and backbone fixed while changing only whether
-the preference rows supervise answer choice, evidence verification, or both.
+preferences. Recent multimodal alignment work extends this idea with
+factually augmented RLHF~\cite{llavarlhf}, hallucination-aware DPO
+preferences~\cite{hadpo}, fine-grained correctional feedback~\cite{rlhfv}, and
+preference distillation~\cite{silkie}. In VLM settings, the easiest preference
+pair often compares two final answers. Such supervision may improve the answer
+distribution without forcing the model to inspect which visual fact supports
+the answer. Our experiment keeps the optimizer and backbone fixed while
+changing only whether the preference rows supervise answer choice, evidence
+verification, or both.
 
 \paragraph{Grounding and rationales.}
 Grounded VLM training may use boxes, masks, region descriptions, or
-human-written rationales. These signals are stronger than the textual evidence
-labels used here, but they are also more expensive. \benchmark{} takes a
-lighter route: it derives object labels, attributes, and left/right relations
-from COCO and GQA annotations. This makes the benchmark easy to regenerate and
-well suited for a small diagnostic study, at the cost of not measuring precise
-region localization.
+human-written rationales, as in dense region annotation, referring-expression,
+and explanation datasets~\cite{visualgenome,flickr30kentities,referitgame,vqax}.
+These signals are stronger than the textual evidence labels used here, but
+they are also more expensive. \benchmark{} takes a lighter route: it derives
+object labels, attributes, and left/right relations from COCO and GQA
+annotations. This makes the benchmark easy to regenerate and well suited for a
+small diagnostic study, at the cost of not measuring precise region
+localization.
 
 \paragraph{Structured evaluation.}
 Many VLM failures are hidden when all outputs are reduced to a final answer.
