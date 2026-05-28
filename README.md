@@ -272,6 +272,6 @@ make pdf
 ```
 
 The current CEPO-Probe draft builds as `paper/build/main.pdf` with a 7-page
-review PDF and `paper/build/main_full.pdf` with a 10-page appendix-including
+review PDF and `paper/build/main_full.pdf` with a 9-page appendix-including
 version. It uses the five-group main comparison above and keeps the auxiliary
 CEPO-Dual-500 sensitivity result in the appendix/artifacts.

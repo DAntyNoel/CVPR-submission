@@ -28,8 +28,9 @@ Current files:
 - `ieeenat_fullname.bst`: official bibliography style from `cvpr-org/author-kit`.
 - `references.bib`: minimal bibliography entries used by the draft.
 - `appendix.tex`: supplementary material included by `main_full.tex`,
-  including the full verifier-count ablation with the auxiliary CEPO-Dual-500
-  run that is intentionally omitted from the main five-group comparison.
+  organized into reproducibility setup, additional quantitative checks, and
+  qualitative/scoring analysis. It keeps the auxiliary CEPO-Dual-500 run out of
+  the main five-group body while still documenting the full ablation.
 - `Makefile`: Tectonic-based local build entry point.
 - `rebuttal/`: simulated reviewer reports for the current PDF.
 
@@ -80,8 +81,9 @@ make full
 This writes `build/main_full.pdf`. The environment currently uses Tectonic 0.16.9
 because system-level TeX Live cannot be installed without sudo on this machine.
 The CEPO-Probe PDF builds were verified on 2026-05-28 after the five-group
-paper rewrite: `build/main.pdf` is 7 pages and `build/main_full.pdf` is 10
-pages. The remaining non-fatal warning is the upstream `lineno.sty` UTF-8
+paper rewrite and appendix layout fix: `build/main.pdf` is 7 pages and
+`build/main_full.pdf` is 9 pages. The remaining non-fatal warning is the
+upstream `lineno.sty` UTF-8
 warning from the bundled review style; there are no current overfull table
 warnings, missing-reference warnings, or missing-citation warnings.
 

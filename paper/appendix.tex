@@ -1,13 +1,24 @@
 \section{Supplementary Material}
+\captionsetup{hypcap=false}
 
-This appendix records reproducibility details for the \benchmark{} benchmark
-paper: training settings, the full verifier-count ablation kept outside the
-main five-group comparison, regeneration commands, external sanity checks, and
-qualitative probe examples.
+This appendix collects details that support the main \benchmark{} claim without
+expanding the primary review paper beyond the five-group comparison. The
+sections are organized by purpose: reproducibility setup, additional
+quantitative checks, and qualitative/scoring details. The appendix is not meant
+to introduce a second story; it records the controls behind the same bounded
+conclusion in the main paper.
 
-\subsection{Training Configuration}
+\subsection{Reproducibility Setup and Artifacts}
 
-\begin{table}[ht]
+All trained variants use the same backbone, optimizer objective, adapter
+configuration, and distributed setup. The only experimental variable is the
+composition of preference rows: answer rows, verifier rows, or their mixture.
+This control is important because the paper interprets differences between
+groups as evidence about supervision format rather than architecture,
+optimizer, or decoding changes.
+
+\begin{center}
+\begin{minipage}{0.58\linewidth}
 \centering
 \footnotesize
 \begin{tabular}{ll}
@@ -25,23 +36,54 @@ Verifier rows & 0, 500, 1{,}000, or 2{,}000 \\
 Distributed setup & ZeRO-2 \\
 \bottomrule
 \end{tabular}
-\caption{Shared training setup for the preference-tuned groups. The main
-paper reports five groups; the 500-verifier-row run is retained here as an
-auxiliary sensitivity check.}
+\captionof{table}{Shared training setup for the preference-tuned groups. The
+main paper reports five groups; the 500-verifier-row run is retained only as
+an auxiliary sensitivity check.}
 \label{tab:app_train}
-\end{table}
+\end{minipage}
+\end{center}
 
-The completed local artifacts are:
-\begin{itemize}
-    \item canonical \dataset{} JSONL: 6{,}000 rows.
-    \item \dualtwok{} DPO JSONL: 8{,}000 rows.
-    \item supported-evidence probe JSONL: 600 rows.
-    \item wrong-evidence probe JSONL: 400 rows.
-\end{itemize}
+The completed artifacts are small enough to inspect and regenerate. The
+canonical \dataset{} file contains 6{,}000 rows. The selected \dualtwok{} DPO
+export contains 8{,}000 rows: 6{,}000 answer-preference rows plus 2{,}000
+verifier rows. The evidence probes are fixed at 600 supported-evidence rows
+and 400 wrong-evidence rows. This fixed-probe design prevents the ablation from
+changing both the training data and the evaluation set at the same time.
 
-\subsection{Full Verifier-Count Ablation}
+Lightweight local regeneration covers data checking, audit-sheet completion,
+CEPO-Dual export, and LLaMA-Factory data preparation. Heavy training and full
+inference are submitted through Slurm, following the repository rule that GPU
+jobs should not be run directly in the interactive environment. The relevant
+Slurm entry points are:
+\begin{quote}
+\footnotesize
+\texttt{submit\_cepo\_dual\_pipeline.sh}\\
+\texttt{submit\_cepo\_ablation\_pipeline.sh}
+\end{quote}
+The paper numbers are then refreshed with the deterministic scoring and
+summary scripts:
+\begin{quote}
+\footnotesize
+\texttt{score\_object\_eval.py}\\
+\texttt{score\_cepo\_evidence\_probe.py}\\
+\texttt{bootstrap\_cepo\_probe\_ci.py}\\
+\texttt{summarize\_cepo\_ablation\_results.py}
+\end{quote}
 
-\begin{table*}[ht]
+\subsection{Additional Quantitative Checks}
+
+The main paper keeps the primary comparison to five groups, as required by the
+submission plan. Table~\ref{tab:app_ablation} includes the auxiliary
+CEPO-Dual-500 run that was useful during analysis but intentionally omitted
+from the main body. The table supports two readings. First, verifier-only
+supervision improves wrong-evidence rejection but does not replace answer
+preference tuning for ordinary short-answer transfer. Second, the mixed
+CEPO-Dual variants need enough verifier data before the wrong-evidence probe
+clearly improves: CEPO-Dual-500 and CEPO-Dual-1k are weaker than the selected
+CEPO-Dual-2k setting.
+
+\begin{center}
+\begin{minipage}{\linewidth}
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
@@ -57,34 +99,23 @@ CEPO-Dual-500 & 6{,}000 & 500 & 96.9 & 76.8 & 95.0 & 91.3 & 39.5 & 56.3 / 50.3 /
 \dualtwok{} & 6{,}000 & 2{,}000 & 97.0 & 77.1 & 94.9 & 95.2 & 70.3 & 96.0 / 85.9 / 25.6 & 0.0 \\
 \bottomrule
 \end{tabular}
-\caption{Full ablation table from the released artifacts. The main paper
-omits CEPO-Dual-500 to keep the primary comparison to at most five groups.}
+\captionof{table}{Full verifier-count ablation from the released artifacts.
+The main paper omits CEPO-Dual-500 to keep the primary comparison to at most
+five groups.}
 \label{tab:app_ablation}
-\end{table*}
+\end{minipage}
+\end{center}
 
-\subsection{Regeneration Commands}
+The ablation also shows why the paper does not present CEPO-Dual as a broad
+hallucination method. The largest gain is on the internal evidence probe, not
+on every external yes/no benchmark. Table~\ref{tab:app_external} therefore
+serves as a sanity check. CEPO-Dual-2k stays close to CEPO Answer-DPO on POPE
+and AMBER, which means the verifier rows do not cause an obvious collapse in
+ordinary polling behavior. The differences are small, so the external table is
+supporting evidence for stability rather than the source of the main claim.
 
-Lightweight regeneration runs the CEPO data checker, the audit-sheet
-completion script, the CEPO-Dual exporter, and the LLaMA-Factory data-prep
-wrapper. Exact commands are listed in the repository README files. Heavy
-training and inference should be submitted through Slurm:
-\begin{quote}
-\footnotesize
-\texttt{submit\_cepo\_dual\_pipeline.sh}\\
-\texttt{submit\_cepo\_ablation\_pipeline.sh}
-\end{quote}
-The final numbers in the paper were refreshed with:
-\begin{quote}
-\footnotesize
-\texttt{score\_object\_eval.py}\\
-\texttt{score\_cepo\_evidence\_probe.py}\\
-\texttt{bootstrap\_cepo\_probe\_ci.py}\\
-\texttt{summarize\_cepo\_ablation\_results.py}
-\end{quote}
-
-\subsection{External Results}
-
-\begin{table}[ht]
+\begin{center}
+\begin{minipage}{0.55\linewidth}
 \centering
 \footnotesize
 \begin{tabular}{lccc}
@@ -97,15 +128,25 @@ POPE adversarial & 86.7 & 87.1 & \textbf{87.3} \\
 AMBER discr. & 87.6 & \textbf{88.2} & \textbf{88.2} \\
 \bottomrule
 \end{tabular}
-\caption{External yes/no sanity checks. Values are accuracy percentages under
-the same deterministic parser. The paper treats these as robustness checks for
-ordinary short-answer behavior, not as the primary CEPO-Dual claim.}
+\captionof{table}{External yes/no sanity checks. Values are accuracy
+percentages under the same deterministic parser.}
 \label{tab:app_external}
-\end{table}
+\end{minipage}
+\end{center}
 
-\subsection{Qualitative Probe Examples}
+\subsection{Qualitative Analysis and Scoring Rules}
 
-\begin{table*}[ht]
+The most persistent failure mode is relation verification. Object and
+attribute evidence can often be checked by recognizing one label or property,
+but a left/right relation requires the model to preserve subject, object, and
+direction at the same time. Table~\ref{tab:app_qual} gives representative
+probe outputs. The successful wrong-relation case shows that CEPO-Dual-2k can
+learn to reject swapped evidence, while the failure case shows the remaining
+weakness: if both objects are visible, the model may still accept the swapped
+relation as supported.
+
+\begin{center}
+\begin{minipage}{\linewidth}
 \centering
 \scriptsize
 \begin{tabular}{@{}p{0.14\linewidth}p{0.34\linewidth}p{0.16\linewidth}p{0.13\linewidth}p{0.10\linewidth}@{}}
@@ -129,18 +170,21 @@ claim: man right\_of parking meter; evidence swaps subject/object &
 wrong evidence & supported & relation failure \\
 \bottomrule
 \end{tabular}
-\caption{Representative probe outputs. Examples are anonymized to local image
-references and show why relation reversals remain the hardest slice.}
+\captionof{table}{Representative probe outputs. Examples are anonymized to
+local image references and show why relation reversals remain the hardest
+slice.}
 \label{tab:app_qual}
-\end{table*}
+\end{minipage}
+\end{center}
 
-\subsection{Scoring Notes}
-
-Short-answer metrics use a deterministic yes/no parser. Outputs with explicit
-uncertainty such as ``cannot determine'' or ``not sure'' are refusals; outputs
-without a parseable yes/no decision are counted as other/invalid. The
-evidence-probe scorer first tries to parse JSON and then falls back to labeled
-fields. For wrong-evidence rows, both \texttt{wrong\_evidence} and
-\texttt{contradicted} count as rejecting the candidate evidence, because both
-labels indicate that the evidence should not be accepted as support for the
-claim.
+Scoring follows the same conservative principle. Short-answer metrics use a
+deterministic yes/no parser. Outputs with explicit uncertainty such as
+``cannot determine'' or ``not sure'' are refusals; outputs without a parseable
+yes/no decision are counted as other/invalid. The evidence-probe scorer first
+tries to parse JSON and then falls back to labeled fields. For wrong-evidence
+rows, both \texttt{wrong\_evidence} and \texttt{contradicted} count as
+rejecting the candidate evidence, because both labels indicate that the
+evidence should not be accepted as support for the claim. This scoring rule is
+why the paper reports parser quality next to the main probe metrics: an
+evidence-verification gain should not come from malformed output or a fragile
+parser recovery.

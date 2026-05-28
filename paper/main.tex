@@ -38,27 +38,26 @@
 \maketitle
 
 \begin{abstract}
-Preference tuning can improve the short answers of vision-language models
-(VLMs), but a correct answer does not guarantee that the model has verified the
-right visual evidence. We introduce \benchmark{}, a compact diagnostic
-benchmark for claim-evidence consistency. The benchmark is built from
-\dataset{}, a 6k-row annotation-derived collection with object, attribute,
-relation, and wrong-evidence preference examples from COCO and GQA. Unlike
-ordinary yes/no evaluation, \benchmark{} asks a model to judge whether a
+Preference tuning can improve the short answers of vision-language models, but
+a correct answer does not guarantee that the model has verified the right
+visual evidence. We introduce \benchmark{}, a compact diagnostic benchmark for
+claim-evidence consistency, built from \dataset{}, a 6k-row annotation-derived
+collection of object, attribute, relation, and wrong-evidence examples from
+COCO and GQA. Unlike ordinary yes/no evaluation, the benchmark asks whether a
 candidate visual claim is supported by a specific evidence label or relation,
-including same-answer cases where only the evidence is wrong. We evaluate five
-groups under the same Qwen2.5-VL-7B backbone: Base Instruct,
-\answerdpo{}, \evidencedpo{}, \dualonek{}, and \dualtwok{}. The results show a
-separation between answer preference and evidence verification. \answerdpo{}
-improves short-answer accuracy but lowers wrong-evidence rejection from
-44.3\% to 34.3\%. Direct verifier supervision recovers this behavior:
-\evidencedpo{} reaches 53.0\%, \dualonek{} reaches 48.5\%, and \dualtwok{}
-reaches 70.3\% wrong-evidence rejection while preserving the answer-level
-gains. Row-bootstrap intervals, parser audits, and slice analysis support the
-same bounded conclusion: explicit verifier preferences substantially improve
-object and attribute evidence checks, but relation reversals remain fragile.
-External POPE and AMBER checks stay close to the answer-only baseline, so the
-claim is diagnostic rather than a broad hallucination-benchmark win.
+including same-answer cases where only the evidence is wrong. Under a fixed
+Qwen2.5-VL-7B backbone, we compare a base model, an answer-only tuned model, a
+verifier-only control, and two mixed answer/verifier settings. The results show
+that answer preference and evidence verification can move in opposite
+directions: answer-only tuning improves short-answer accuracy but lowers
+wrong-evidence rejection from 44.3\% to 34.3\%. Direct verifier supervision
+recovers this behavior, reaching 53.0\% in the verifier-only control and
+70.3\% in the strongest mixed setting while preserving the answer-level gains.
+Row-bootstrap intervals, parser audits, and slice analysis support a bounded
+conclusion: explicit verifier preferences substantially improve object and
+attribute evidence checks, but relation reversals remain fragile. External POPE
+and AMBER checks stay close to the answer-only baseline, so the claim is
+diagnostic rather than a broad hallucination-benchmark win.
 \end{abstract}
 
 \section{Introduction}
@@ -644,6 +643,7 @@ measured directly.
 % to include the appendix without changing the main review PDF.
 \ifdefined\cvprincludeappendix
   \clearpage
+  \onecolumn
   \appendix
   \input{appendix}
 \fi
