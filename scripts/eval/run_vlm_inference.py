@@ -57,6 +57,18 @@ MODEL_REGISTRY = {
         "method": "CEPO-Dual DPO",
         "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_cepo_dual_dpo_zero2",
     },
+    "cepo_evidence_only_dpo": {
+        "method": "CEPO Evidence-DPO Only",
+        "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_cepo_evidence_only_dpo_zero2",
+    },
+    "cepo_dual500_dpo": {
+        "method": "CEPO-Dual-500 DPO",
+        "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_cepo_dual500_dpo_zero2",
+    },
+    "cepo_dual1k_dpo": {
+        "method": "CEPO-Dual-1k DPO",
+        "adapter_name_or_path": "outputs/llamafactory/qwen25vl7b_cepo_dual1k_dpo_zero2",
+    },
 }
 
 

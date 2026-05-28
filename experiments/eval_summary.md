@@ -37,6 +37,50 @@ AMBER discriminative. The final paper reading is diagnostic: CEPO-Dual improves
 explicit evidence verification, but relation wrong-evidence rejection remains
 weak.
 
+### Review-Driven CI and Ablation
+
+Updated: 2026-05-28
+
+The CEPO-Probe confidence intervals and parser audit were generated from the
+existing locked generation files with `scripts/eval/bootstrap_cepo_probe_ci.py`.
+Paper-facing tables are in:
+
+```text
+cepo-probe-benchmark-improve/artifacts/table3_ci.md
+cepo-probe-benchmark-improve/artifacts/slice_ci.md
+cepo-probe-benchmark-improve/artifacts/parser_audit.md
+```
+
+Headline 95% bootstrap CIs:
+
+| Model | Supported N | Supported Acc | Wrong N | Wrong Rej |
+| --- | ---: | ---: | ---: | ---: |
+| Base Instruct | 600 | 86.5 [83.7, 89.2] | 400 | 44.3 [39.5, 49.0] |
+| CEPO Answer-DPO | 600 | 90.7 [88.3, 93.0] | 400 | 34.3 [29.8, 39.0] |
+| CEPO-Dual-2k | 600 | 95.2 [93.3, 96.8] | 400 | 70.3 [65.8, 74.8] |
+
+All current probe generations are strict JSON valid and scored; parse-failure
+rate is 0.0 for the three main groups.
+
+The verifier-count ablation ran through Slurm jobs 64635-64652. Full table:
+
+```text
+cepo-probe-benchmark-improve/artifacts/ablation_results.md
+```
+
+| Setting | COCO Acc | GQA Acc | Hard Acc | Supp Acc | Wrong Rej | Object Wrong | Attr Wrong | Rel Wrong | Parse Fail |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| CEPO Answer-DPO | 97.0 | 76.8 | 95.0 | 90.7 | 34.3 | 45.2 | 45.0 | 10.4 | 0.0 |
+| Evidence-DPO only | 95.9 | 76.7 | 94.4 | 87.8 | 53.0 | 77.0 | 63.8 | 16.0 | 0.0 |
+| CEPO-Dual-500 | 96.9 | 76.8 | 95.0 | 91.3 | 39.5 | 56.3 | 50.3 | 9.6 | 0.0 |
+| CEPO-Dual-1k | 97.0 | 77.2 | 94.9 | 93.2 | 48.5 | 74.6 | 59.1 | 9.6 | 0.0 |
+| CEPO-Dual-2k | 97.0 | 77.1 | 94.9 | 95.2 | 70.3 | 96.0 | 85.9 | 25.6 | 0.0 |
+
+Conclusion: short-answer transfer is stable across the compact ablation, while
+supported accuracy and wrong-evidence rejection improve as verifier rows
+increase. CEPO-Dual-2k is therefore the right selected evidence-aware baseline.
+Relation wrong-evidence remains weak even in the selected model.
+
 ## Overall Reading
 
 The completed 5k mixed results support the Plan B / diagnostic interpretation.

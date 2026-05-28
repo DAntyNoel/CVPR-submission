@@ -28,6 +28,12 @@ through Slurm. CEPO-Latent did not beat Answer-DPO on the primary short-answer
 metrics, but the CEPO-Dual follow-up is complete and is now the selected third
 main group for the benchmark paper.
 
+The review-driven improvement pass under `cepo-probe-benchmark-improve/` is
+also complete. It adds bootstrap CIs, parser audit tables, relation failure
+samples, and a Slurm-only verifier-count ablation. The ablation supports using
+CEPO-Dual-2k: CEPO-Dual-500/1k/2k reach 39.5 / 48.5 / 70.3 wrong-evidence
+rejection while keeping COCO/GQA/Hard short-answer accuracy essentially flat.
+
 The generated sidecar artifacts live under:
 
 ```text
@@ -91,6 +97,8 @@ Review-driven next-step plan based on `official-review/20260528.md`. It keeps
 the main paper benchmark-first while planning confidence intervals, parser/BEM
 clarification, CEPO-Dual verifier-count ablations, and relation-failure
 analysis needed to strengthen the draft toward a 6-page CVPR-style submission.
+The generated `artifacts/` directory now contains the completed CI, parser,
+relation, and ablation tables for paper editing.
 
 ```text
 futurework-grounded-preference-vlm/
@@ -187,6 +195,18 @@ but weakens wrong-evidence rejection, while CEPO-Dual improves explicit
 evidence consistency without resolving relation reversals.
 ```
 
+The completed verifier-count ablation refines the CEPO-Dual choice:
+
+| Setting | COCO | GQA | Hard | Supported | Wrong Rej. | Rel. Wrong |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| CEPO-Dual-500 | 96.9 | 76.8 | 95.0 | 91.3 | 39.5 | 9.6 |
+| CEPO-Dual-1k | 97.0 | 77.2 | 94.9 | 93.2 | 48.5 | 9.6 |
+| CEPO-Dual-2k | 97.0 | 77.1 | 94.9 | 95.2 | 70.3 | 25.6 |
+
+Evidence-DPO-only is useful as a control: it keeps short-answer transfer near
+the main rows but reaches only 87.8 supported accuracy and 53.0 wrong-evidence
+rejection, so verifier supervision alone is not the selected main setting.
+
 The main launch point for rerunning the CEPO-Dual matrix is:
 
 ```bash
@@ -203,6 +223,13 @@ job plus fixed eval matrix:
 python scripts/data/14_export_cepo_dual_dpo.py
 python scripts/experiments/prepare_llamafactory_data_cepo_dual.py
 bash experiments/slurm/submit_cepo_dual_pipeline.sh
+```
+
+To rerun the verifier-count ablation:
+
+```bash
+bash experiments/slurm/submit_cepo_ablation_pipeline.sh
+python scripts/eval/summarize_cepo_ablation_results.py
 ```
 
 See:

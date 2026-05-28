@@ -126,9 +126,13 @@ def parse_generation(text: str) -> dict[str, Any]:
         if value:
             parsed[key] = value
 
+    inferred_support = False
     if "support" not in parsed:
         parsed["support"] = infer_support(lowered)
-    if not any(key in parsed for key in ("answer", "claim", "evidence_label", "evidence", "support")):
+        inferred_support = True
+    useful_support = not (inferred_support and parsed.get("support") == "unknown")
+    useful_fields = any(key in parsed for key in ("answer", "claim", "evidence_label", "evidence")) or useful_support
+    if not useful_fields:
         parsed["_parse_failed"] = True
     return parsed
 

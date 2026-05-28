@@ -1,0 +1,13 @@
+{
+  "cvpr_cepo_dual_dpo": {
+    "file_name": "cvpr_cepo_dual_dpo.json",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "images": "images"
+    }
+  }
+}

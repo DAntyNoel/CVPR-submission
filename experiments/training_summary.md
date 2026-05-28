@@ -30,6 +30,43 @@ CEPO-Dual is used in the main benchmark paper because it keeps short-answer
 performance near CEPO Answer-DPO while improving wrong-evidence rejection from
 0.343 to 0.702.
 
+### CEPO Verifier-Count Ablation
+
+Updated: 2026-05-28
+
+The review-driven ablation was submitted with
+`experiments/slurm/submit_cepo_ablation_pipeline.sh`. It used the same
+Qwen2.5-VL-7B LoRA-DPO recipe, ZeRO-2, one epoch, `pref_beta = 0.1`, and LoRA
+rank 16 as the selected CEPO-Dual run.
+
+Completed jobs:
+
+| Variant | Train Job | Eval Jobs | State | Notes |
+| --- | ---: | --- | --- | --- |
+| Evidence-DPO only | 64635 | 64636-64640 | COMPLETED 0:0 | 0 answer rows + 2k verifier rows. |
+| CEPO-Dual-500 | 64641 | 64642-64646 | COMPLETED 0:0 | 6k answer rows + 500 verifier rows. |
+| CEPO-Dual-1k | 64647 | 64648-64652 | COMPLETED 0:0 | 6k answer rows + 1k verifier rows. |
+
+Output adapters:
+
+```text
+outputs/llamafactory/qwen25vl7b_cepo_evidence_only_dpo_zero2/
+outputs/llamafactory/qwen25vl7b_cepo_dual500_dpo_zero2/
+outputs/llamafactory/qwen25vl7b_cepo_dual1k_dpo_zero2/
+```
+
+Training metrics:
+
+| Method | Epoch | Train Loss | Runtime (s) | Samples/sec | Steps/sec |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Evidence-DPO only | 1.0 | 0.6371 | 347.8352 | 5.750 | 0.181 |
+| CEPO-Dual-500 | 1.0 | 0.3472 | 1242.2931 | 5.232 | 0.164 |
+| CEPO-Dual-1k | 1.0 | 0.3532 | 1290.5462 | 5.424 | 0.170 |
+
+The ablation does not replace the main three-group table. It supports the
+selected CEPO-Dual-2k setting: verifier counts of 500 and 1k preserve
+short-answer transfer but are much weaker on wrong-evidence rejection than 2k.
+
 ### Balanced Hard Input-Side Evidence DPO
 
 This run follows `tasks/input-side-evidence-main-method/README.md` and is the

@@ -10,6 +10,9 @@ evidence_hint_dpo
 cepo_answer_dpo
 cepo_latent_dpo
 cepo_dual_dpo
+cepo_evidence_only_dpo
+cepo_dual500_dpo
+cepo_dual1k_dpo
 ```
 
 The scripts are intentionally split into cheap data/metric steps and GPU
@@ -47,11 +50,50 @@ bash experiments/slurm/submit_cepo_dual_pipeline.sh
 The evidence-probe Slurm entrypoint asks for JSON with `answer`, `claim`,
 `evidence_label`, and `support`, then scores answer accuracy, support accuracy,
 evidence-label match, relation-direction accuracy, wrong-evidence rejection,
-and invalid JSON rate:
+strict JSON validity, scored-output rate, and parse-failure rate:
 
 ```bash
 python scripts/eval/score_cepo_evidence_probe.py \
   --input results/eval/generations/cepo_evidence_probe/cepo_evidence_probe/base.jsonl
+```
+
+For the review-driven CI and parser audit tables, run:
+
+```bash
+python scripts/eval/bootstrap_cepo_probe_ci.py
+```
+
+This writes JSON/scored-row dumps under:
+
+```text
+results/eval/metrics/cepo_probe_ci/
+```
+
+and paper-facing Markdown tables under:
+
+```text
+cepo-probe-benchmark-improve/artifacts/table3_ci.md
+cepo-probe-benchmark-improve/artifacts/slice_ci.md
+cepo-probe-benchmark-improve/artifacts/parser_audit.md
+```
+
+Relation wrong-evidence examples are sampled with:
+
+```bash
+python scripts/eval/sample_cepo_relation_failures.py
+```
+
+The completed verifier-count ablation is summarized with:
+
+```bash
+python scripts/eval/summarize_cepo_ablation_results.py
+```
+
+It writes:
+
+```text
+cepo-probe-benchmark-improve/artifacts/ablation_results.md
+results/eval/metrics/cepo_probe_ci/ablation_results.json
 ```
 
 ## COCO Held-Out Eval

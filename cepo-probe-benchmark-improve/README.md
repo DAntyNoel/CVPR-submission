@@ -36,8 +36,47 @@ artifacts, and stop conditions.
 artifacts/
 ```
 
-Placeholder for generated lightweight tables and qualitative samples from the
-improvement pass.
+Generated lightweight tables and qualitative samples from the improvement
+pass.
+
+Key artifacts now present:
+
+```text
+artifacts/table3_ci.md
+artifacts/slice_ci.md
+artifacts/parser_audit.md
+artifacts/relation_failure_cases.md
+artifacts/ablation_results.md
+```
+
+## Completed Improvement Pass
+
+Updated: 2026-05-28
+
+The review-driven local and Slurm experiments have completed.
+
+- Probe CI: Base / CEPO Answer-DPO / CEPO-Dual-2k were re-scored and
+  bootstrapped with 10,000 row resamples. Table 3 now has N and 95% CI:
+  supported accuracy is 86.5 / 90.7 / 95.2, and wrong-evidence rejection is
+  44.3 / 34.3 / 70.3.
+- Parser audit: all 1,000 current probe generations per model are strict JSON
+  valid and scored; parse-failure rate is 0.0.
+- Relation analysis: sampled relation wrong-evidence cases show the dominant
+  failure mode is accepting subject/object-swapped evidence.
+- Verifier-count ablation: Slurm jobs 64635-64652 completed with exit code 0.
+  Short-answer transfer stays stable, supported accuracy rises with verifier
+  rows, and wrong-evidence rejection is monotonic for CEPO-Dual-500/1k/2k:
+  39.5 / 48.5 / 70.3.
+
+Conclusion for the paper:
+
+```text
+CEPO-Probe exposes a real separation between answer-level preference tuning and
+claim-evidence verification. Answer-DPO improves supported claims but weakens
+wrong-evidence rejection; adding verifier rows restores evidence checking, and
+2k verifier rows are materially stronger than 500 or 1k. Relation reversals
+remain the main unsolved slice.
+```
 
 ## Working Decision
 
