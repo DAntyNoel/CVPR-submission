@@ -10,11 +10,12 @@ ablation at or below five groups while adding a larger-backbone sanity check.
 Current files:
 
 - `main.tex`: paper body with final CEPO-Probe benchmark framing, first-use
-  CEPO acronym expansion, Figure 1 claim-evidence overview, ClaimEvidence-6K
-  data description, preference-format setup, five-group short-answer transfer
-  results, evidence-probe results with 32B transfer rows, confidence intervals,
-  parser-audit note, seed stability summary, paraphrased-probe diagnostic,
-  relation error analysis, external sanity checks, limitations, and conclusion.
+  CEPO acronym expansion, vector Figure 1 claim-evidence overview,
+  ClaimEvidence-6K data description, preference-format setup, five-group
+  short-answer transfer results, evidence-probe results with carefully bounded
+  32B transfer rows, confidence intervals, parser-audit note, seed stability
+  summary, paraphrased-probe diagnostic, relation error analysis, external
+  sanity checks, limitations, and conclusion.
 - `main_full.tex`: standalone entry point that enables the appendix and writes
   `build/main_full.pdf`.
 - `preamble.tex`: CVPR author-kit preamble helper, kept aligned with the
@@ -67,10 +68,11 @@ swap rejection and 100% left/right reversal rejection. POPE/AMBER are reported
 only as external sanity checks: CEPO-Dual-2k stays close to CEPO Answer-DPO, so
 the paper does not claim a general hallucination-benchmark win.
 
-The Qwen2.5-VL-32B transfer check is now integrated into the main result
-tables as larger-backbone evidence. The gain is modest but positive:
-CEPO-Dual-2k improves wrong-evidence rejection over 32B CEPO Answer-DPO from
-23.8% to 24.5% while preserving COCO/GQA/Hard short-answer accuracy. The
+The Qwen2.5-VL-32B transfer check is integrated into the main result tables as
+a limited larger-backbone sanity check. CEPO-Dual-2k recovers the small
+wrong-evidence drop of 32B CEPO Answer-DPO, moving from 23.8% to 24.5%, while
+matching the 32B base and preserving COCO/GQA/Hard short-answer accuracy. The
+paper now explicitly avoids presenting this as a large scaling gain. The
 appendix records the 32B training ladder: ZeRO-2 OOM on 4090/L40S preflights,
 BF16 ZeRO-3 fitting on 8xADA6000 but projecting too slowly, and the final
 4-bit QLoRA + ZeRO-2 setting used for the reported 32B rows.
@@ -80,12 +82,15 @@ CEPO Answer-DPO, and CEPO-Dual-2k. It keeps the same 600 supported and 400
 wrong-evidence rows and labels while rewriting the prompt/evidence wording.
 CEPO-Dual-2k keeps a wrong-evidence rejection advantage over CEPO Answer-DPO
 under this wording shift: 73.2% vs 61.8%, with both at 90.0% supported
-accuracy and 0.0 parse failures. This is treated as template-robustness
-evidence, not as a human-written evidence benchmark.
+accuracy and 0.0 parse failures. The main text now states that the absolute
+paraphrased numbers are not directly comparable to the original prompt; only
+the within-probe ordering is used as template-robustness evidence.
 
 Constant parser-audit columns such as JSON-object rate and parse failure are
 kept in released metrics but omitted from paper tables because all reported
-paper rows are 100.0% parseable with 0.0% parse failure.
+paper rows are 100.0% parseable with 0.0% parse failure. The main text now
+clarifies that decoding is unconstrained and the JSON reliability comes from
+the prompt plus deterministic parser audit, not constrained decoding.
 
 The fixed-budget row-count control requested after the 2026-05-30 review is
 complete under `v2/tasks/fixed-budget-control-experiments/`. Dual-2k-fixed6k
@@ -124,10 +129,11 @@ make full
 
 This writes `build/main_full.pdf`. The environment currently uses Tectonic 0.16.9
 because system-level TeX Live cannot be installed without sudo on this machine.
-The CEPO-Probe PDF builds were verified on 2026-05-28 after the second-review
-polish, seed-stability integration, paraphrased-probe integration,
-fixed-budget control integration, appendix compaction, and relation-stress
-update: `build/main.pdf` is 8 pages and `build/main_full.pdf` is 10 pages. The
+The CEPO-Probe PDF builds were verified on 2026-05-28 after the AC-facing
+polish, vector overview figure, seed-stability integration, paraphrased-probe
+integration, fixed-budget control integration, appendix compaction, and
+relation-stress update: `build/main.pdf` is 8 pages and `build/main_full.pdf`
+is 10 pages. The
 remaining non-fatal warning is the upstream `lineno.sty` UTF-8 warning from
 the bundled review style; there are no current overfull table warnings,
 missing-reference warnings, or missing-citation warnings.
