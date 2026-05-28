@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from typing import Any
@@ -109,6 +110,11 @@ def main() -> int:
     parser.add_argument("--device-map", default="auto")
     parser.add_argument("--torch-dtype", default="bfloat16", choices=("auto", "float16", "bfloat16", "float32"))
     parser.add_argument(
+        "--enable-generate-compile",
+        action="store_true",
+        help="Allow Transformers generate() to auto-compile the forward pass.",
+    )
+    parser.add_argument(
         "--instruction-suffix",
         default="Answer with a short yes/no sentence only.",
         help="Suffix appended to every evaluation question.",
@@ -124,6 +130,9 @@ def main() -> int:
         help="Validate files, adapter wiring, and output paths without loading the model.",
     )
     args = parser.parse_args()
+    if not args.enable_generate_compile:
+        os.environ.setdefault("TORCH_COMPILE_DISABLE", "1")
+        os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
 
     eval_path = repo_path(args.eval)
     model_path = repo_path(args.model_name_or_path)
@@ -181,6 +190,7 @@ def main() -> int:
             out["generation_index"] = idx
             f.write(json.dumps(out, ensure_ascii=False, sort_keys=True))
             f.write("\n")
+            f.flush()
 
     metadata["finished_at"] = now_iso()
     write_json(metadata_path, metadata)
@@ -240,6 +250,8 @@ def load_model_and_processor(args: argparse.Namespace, model_path: Any, adapter_
         model = PeftModel.from_pretrained(model, str(repo_path(adapter_path)), is_trainable=False)
         if not getattr(model, "peft_config", None):
             raise RuntimeError("LoRA adapter did not attach; refusing to continue.")
+    if not args.enable_generate_compile and hasattr(model, "generation_config"):
+        model.generation_config.disable_compile = True
     processor = AutoProcessor.from_pretrained(str(model_path), trust_remote_code=True)
     model.eval()
     return model, processor
@@ -250,6 +262,9 @@ def generate_one(model: Any, processor: Any, record: dict[str, Any], args: argpa
     from qwen_vl_utils import process_vision_info
 
     image_path = str(repo_path(record["image"]))
+    if not args.enable_generate_compile:
+        os.environ.setdefault("TORCH_COMPILE_DISABLE", "1")
+        os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
     image_content: dict[str, Any] = {"type": "image", "image": image_path}
     if args.image_min_pixels is not None:
         image_content["min_pixels"] = args.image_min_pixels
@@ -279,6 +294,7 @@ def generate_one(model: Any, processor: Any, record: dict[str, Any], args: argpa
         "do_sample": args.temperature > 0,
         "temperature": args.temperature if args.temperature > 0 else None,
         "top_p": args.top_p,
+        "disable_compile": not args.enable_generate_compile,
     }
     generation_kwargs = {key: value for key, value in generation_kwargs.items() if value is not None}
     with torch.inference_mode():
@@ -323,6 +339,7 @@ def build_metadata(
         "max_new_tokens": args.max_new_tokens,
         "temperature": args.temperature,
         "top_p": args.top_p,
+        "enable_generate_compile": args.enable_generate_compile,
         "image_min_pixels": args.image_min_pixels,
         "image_max_pixels": args.image_max_pixels,
         "instruction_suffix": args.instruction_suffix,
