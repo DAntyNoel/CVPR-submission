@@ -112,8 +112,9 @@ make full
 This writes `build/main_full.pdf`. The environment currently uses Tectonic 0.16.9
 because system-level TeX Live cannot be installed without sudo on this machine.
 The CEPO-Probe PDF builds were verified on 2026-05-28 after the second-review
-polish, seed-stability integration, appendix compaction, and relation-stress
-update: `build/main.pdf` is 8 pages and `build/main_full.pdf` is 10 pages. The
+polish, seed-stability integration, paraphrased-probe integration, appendix
+compaction, and relation-stress update: `build/main.pdf` is 8 pages and
+`build/main_full.pdf` is 10 pages. The
 remaining non-fatal warning is the upstream `lineno.sty` UTF-8 warning from
 the bundled review style; there are no current overfull table warnings,
 missing-reference warnings, or missing-citation warnings.
