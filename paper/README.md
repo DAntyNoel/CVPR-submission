@@ -10,7 +10,8 @@ ablation at or below five groups while adding a larger-backbone sanity check.
 Current files:
 
 - `main.tex`: paper body with final CEPO-Probe benchmark framing, first-use
-  CEPO acronym expansion, vector Figure 1 claim-evidence overview,
+  CEPO acronym expansion, polished two-panel Figure 1 contrasting ordinary
+  yes/no evaluation with CEPO-Probe claim-evidence scoring,
   ClaimEvidence-6K data description, preference-format setup, five-group
   short-answer transfer results, evidence-probe results with deliberately
   bounded same-family 32B QLoRA rows, confidence intervals, parser-audit note,
@@ -75,8 +76,11 @@ CEPO-Dual-2k recovers the small wrong-evidence drop of 32B CEPO Answer-DPO,
 moving from 23.8% to 24.5%, while matching the 32B base and preserving
 COCO/GQA/Hard short-answer accuracy. The paper now treats this as a negative
 scaling signal: larger in-family capacity does not automatically solve
-evidence rejection. The appendix records the 32B training ladder: ZeRO-2 OOM on
-4090/L40S preflights, BF16 ZeRO-3 fitting on 8xADA6000 but projecting too
+evidence rejection. The main text also states a hypothesis that the 32B
+instruction-tuned model may rationalize plausible provided evidence more
+readily, helping supported-evidence accuracy while hurting rejection of
+mismatched evidence. The appendix records the 32B training ladder: ZeRO-2 OOM
+on 4090/L40S preflights, BF16 ZeRO-3 fitting on 8xADA6000 but projecting too
 slowly, and the final 4-bit QLoRA + ZeRO-2 setting used for the reported 32B
 rows.
 
@@ -135,8 +139,9 @@ make full
 This writes `build/main_full.pdf`. The environment currently uses Tectonic 0.16.9
 because system-level TeX Live cannot be installed without sudo on this machine.
 The CEPO-Probe PDF builds were verified on 2026-05-29 after the third-review
-polish, including the tightened abstract, bounded 32B interpretation,
-main-text relation-stress table, raw parser examples, and appendix compaction:
+polish, then updated with final-review edits tightening the abstract's 7B
+scope, polishing Figure 1, adding the 32B rationalization hypothesis, and
+standardizing JSON-object audit terminology:
 `build/main.pdf` is 8 pages and `build/main_full.pdf` is 10 pages. The
 remaining non-fatal warning is the upstream `lineno.sty` UTF-8 warning from
 the bundled review style; there are no current overfull table warnings,

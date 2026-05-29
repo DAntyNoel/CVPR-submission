@@ -12,6 +12,11 @@
 \input{local_xetex_fonts}
 
 \definecolor{cvprblue}{rgb}{0.21,0.49,0.74}
+\definecolor{ceposupport}{rgb}{0.10,0.46,0.22}
+\definecolor{ceposupportbg}{rgb}{0.90,0.97,0.92}
+\definecolor{cepowrong}{rgb}{0.72,0.16,0.16}
+\definecolor{cepowrongbg}{rgb}{1.00,0.92,0.90}
+\definecolor{cepopanel}{rgb}{0.78,0.82,0.86}
 \usepackage[pagebackref,breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
 
 %%%%%%%%% PAPER ID  - PLEASE UPDATE
@@ -56,7 +61,8 @@ CEPO-Dual-2k only recovers the answer-only drop back to the 32B base level
 automatically solve evidence rejection. With bootstrap intervals, seed and
 fixed-budget controls, paraphrased prompts, parser audits, and slice analysis,
 \benchmark{} supports a bounded claim: explicit verifier preferences improve a
-measured claim-evidence consistency skill, but do not solve visual grounding.
+measured claim-evidence consistency skill in the controlled 7B setting, but do
+not solve visual grounding.
 \end{abstract}
 
 \section{Introduction}
@@ -195,31 +201,33 @@ evaluation.
 \begin{figure}[t]
 \centering
 \footnotesize
-\setlength{\unitlength}{1pt}
-\begin{picture}(236,118)
-\put(0,88){\framebox(48,20){\shortstack{image\\question}}}
-\put(54,98){\vector(1,0){18}}
-\put(78,88){\framebox(48,20){\shortstack{short\\answer}}}
-\put(132,98){\vector(1,0){18}}
-\put(156,88){\framebox(72,20){\shortstack{answer\\accuracy}}}
-\put(0,68){\makebox(236,0)[l]{\textbf{Ordinary yes/no evaluation}}}
-
-\put(0,38){\framebox(42,20){\shortstack{image\\question}}}
-\put(47,48){\vector(1,0){12}}
-\put(64,38){\framebox(38,20){claim}}
-\put(107,48){\vector(1,0){12}}
-\put(124,38){\framebox(42,20){evidence}}
-\put(171,48){\vector(1,0){12}}
-\put(188,38){\framebox(45,20){support}}
-\put(0,18){\makebox(236,0)[l]{\textbf{\benchmark{}: score the claim-evidence link}}}
-
-\put(64,1){\makebox(38,12){\shortstack{\scriptsize sink\\[-1pt]\scriptsize visible}}}
-\put(124,1){\makebox(42,12){\shortstack{\scriptsize label=sink\\[-1pt]\scriptsize or plant}}}
-\put(188,1){\makebox(45,12){\shortstack{\scriptsize accept\\[-1pt]\scriptsize reject}}}
-\end{picture}
-\caption{\benchmark{} overview. Ordinary evaluation scores a final answer;
-\benchmark{} scores whether a candidate evidence item supports a candidate
-claim, including same-answer wrong-evidence cases.}
+\setlength{\fboxsep}{3pt}
+\begin{tabular}{@{}c@{\hspace{4pt}}c@{}}
+\fcolorbox{cepopanel}{white}{%
+\begin{minipage}[t][95pt][t]{0.42\linewidth}
+\centering
+\textbf{Ordinary yes/no}\\[3pt]
+\fbox{\shortstack{image\\question}}\\[-1pt]
+$\downarrow$\\[-2pt]
+\fbox{\shortstack{answer\\\textcolor{ceposupport}{yes}}}\\[-1pt]
+$\downarrow$\\[-2pt]
+\fbox{\shortstack{answer\\accuracy}}\\[3pt]
+{\scriptsize \textcolor{cepowrong}{evidence is untested}}
+\end{minipage}} &
+\fcolorbox{cepopanel}{white}{%
+\begin{minipage}[t][95pt][t]{0.42\linewidth}
+\centering
+\textbf{\benchmark{}}\\[3pt]
+\fbox{\shortstack{image, question\\claim: sink visible}}\\[2pt]
+\fcolorbox{ceposupport}{ceposupportbg}{\shortstack{\textcolor{ceposupport}{supported evidence}\\label=sink}}\\[2pt]
+\fcolorbox{cepowrong}{cepowrongbg}{\shortstack{\textcolor{cepowrong}{wrong evidence}\\label=plant}}\\[2pt]
+\fbox{\shortstack{support\\accept/reject}}\\[3pt]
+{\scriptsize \textcolor{cepowrong}{same answer, wrong evidence}}
+\end{minipage}}
+\end{tabular}
+\caption{\benchmark{} overview. Ordinary yes/no evaluation scores only the
+final answer. \benchmark{} scores the claim-evidence link, marking supported
+evidence in green and same-answer wrong evidence in red.}
 \label{fig:overview}
 \end{figure}
 
@@ -530,14 +538,17 @@ reaches 70.3\%.
 
 The 32B rows are more cautionary than supportive. The 32B base and answer-only
 models already behave differently from the 7B anchors, with higher
-supported-evidence accuracy but lower wrong-evidence rejection. \dualtwok{}
-recovers the small 32B answer-only drop in wrong-evidence rejection (23.8\% to
-24.5\%) and raises the relation wrong-evidence slice from 8.8\% to 10.4\% while
-preserving the short-answer metrics in Table~\ref{tab:short}. However, 24.5\%
-only matches the 32B base. This is evidence that the mixed recipe is not
-obviously harmful at 32B, but it is also a negative scaling signal: within this
-Qwen2.5-VL family, larger capacity does not automatically solve
-wrong-evidence rejection.
+supported-evidence accuracy but lower wrong-evidence rejection. One possible
+interpretation is that the larger instruction-tuned model is more willing to
+rationalize a provided candidate evidence item once the relevant objects are
+plausible, which raises supported-evidence accuracy but depresses rejection of
+mismatched evidence. \dualtwok{} recovers the small 32B answer-only drop in
+wrong-evidence rejection (23.8\% to 24.5\%) and raises the relation
+wrong-evidence slice from 8.8\% to 10.4\% while preserving the short-answer
+metrics in Table~\ref{tab:short}. However, 24.5\% only matches the 32B base.
+This is evidence that the mixed recipe is not obviously harmful at 32B, but it
+is also a negative scaling signal: within this Qwen2.5-VL family, larger
+capacity does not automatically solve wrong-evidence rejection.
 
 \begin{table*}[t]
 \centering
@@ -566,7 +577,7 @@ wrong-evidence rejection over \answerdpo{} by +35.2 to +38.8 points, averaging
 70.2$\pm$1.3 versus 33.5$\pm$0.5, while COCO, GQA, and Hard COCO accuracy stay
 within 0.3 points. Parser quality is not a confound: decoding is unconstrained
 but the prompt asks for JSON, every anchor probe output contains a parseable
-JSON object, scored output is 100\%, and parse failure is 0\%.
+JSON object, fallback scoring was never needed, and parse failure is 0\%.
 
 \subsection{Slice and Error Analysis}
 

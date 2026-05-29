@@ -29,9 +29,10 @@ metrics, and the completed CEPO-Dual/evidence-control follow-up is now the
 main benchmark-paper comparison.
 
 The review-driven improvement pass under `cepo-probe-benchmark-improve/` is
-also complete. It adds a first-use CEPO acronym expansion, a Figure 1
-claim-evidence overview, bootstrap CIs, parser audit metrics, relation failure
-samples, and a Slurm-only verifier-count ablation. The ablation supports using
+also complete. It adds a first-use CEPO acronym expansion, a polished Figure 1
+ordinary yes/no versus CEPO-Probe overview, bootstrap CIs, parser audit
+metrics, relation failure samples, and a Slurm-only verifier-count ablation.
+The ablation supports using
 CEPO-Dual-2k: the main paper now reports five groups at most (Base,
 Answer-DPO, Evidence-DPO-only, CEPO-Dual-1k, CEPO-Dual-2k), while the
 auxiliary CEPO-Dual-500 run stays in the appendix/artifacts. CEPO-Dual-500/1k/2k
@@ -85,7 +86,10 @@ but gives only a very small evidence-probe recovery: CEPO-Dual-2k moves from
 23.8% to 24.5% wrong-evidence rejection on 32B, matching the 32B base while
 COCO/GQA/Hard accuracy remains flat. The paper now treats this as a bounded
 same-family QLoRA sanity check and a negative scaling signal, not as
-cross-family transfer evidence.
+cross-family transfer evidence; the final text also gives a hypothesis that
+the larger instruction-tuned model may rationalize plausible candidate evidence
+more readily, improving supported-evidence accuracy while depressing rejection
+of mismatched evidence.
 
 The row-count confound raised after the 2026-05-30 review is resolved as a
 separate Slurm-only fixed-budget control task:

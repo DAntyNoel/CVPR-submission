@@ -225,14 +225,14 @@ not come from malformed output or fragile parser recovery.
 \paragraph{Raw parser examples.}
 The JSON-object audit checks whether the raw generation contains a substring
 that can be loaded as a JSON object. Markdown fences or short trailing text do
-not count as parse failures if the object itself is valid; fallback field
-recovery is tracked separately as scored output and was not needed for the
-reported anchor rows. For example, raw outputs include Markdown-fenced objects
+not count as parse failures if the object itself is valid; fallback scoring is
+tracked separately and was not needed for the reported anchor rows. For example,
+raw outputs include Markdown-fenced objects
 such as \texttt{\{"answer":"supported", "claim":"window is glass",
 "evidence\_label":"label=window; attribute=glass", "support":"supported"\}}.
 They also include valid objects followed by brief text, e.g.,
 \texttt{\{"answer":"supported", "claim":"giraffe visible",
 "evidence\_label":"label=person", "support":"wrong\_evidence"\}} followed by
 an explanation that the evidence names a person rather than a giraffe. Both
-examples are audited as \texttt{json\_object=true},
-\texttt{scored=true}, and \texttt{parse\_failed=false}.
+examples are audited as \texttt{json\_object=true}, with fallback scoring not
+needed and \texttt{parse\_failed=false}.
