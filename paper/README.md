@@ -30,8 +30,9 @@ Current files:
   (<https://github.com/cvpr-org/author-kit>).
 - `ieeenat_fullname.bst`: official bibliography style from `cvpr-org/author-kit`.
 - `references.bib`: bibliography entries used by the draft, including public
-  hallucination/evaluation benchmarks, multimodal preference-tuning work, and
-  grounding/rationale datasets relevant to CEPO-Probe.
+  hallucination/evaluation benchmarks, multimodal preference-tuning work,
+  grounding/rationale datasets, model documentation, and training-method
+  references relevant to CEPO-Probe.
 - `appendix.tex`: supplementary material included by `main_full.tex`,
   organized into reproducibility setup, additional quantitative checks, and
   qualitative/scoring analysis. It keeps the auxiliary CEPO-Dual-500 run out of
@@ -108,11 +109,12 @@ while COCO/GQA/Hard accuracy changes by only -0.1/+0.1/+0.1 points. The result
 is integrated as appendix/control evidence; the main 7B ablation remains the
 five-group comparison.
 
-Related-work references were expanded on 2026-05-28 for the latest outer
-`paper/` draft. The current citation set now situates CEPO-Probe against
-CHAIR, POPE, MME, MMHal-Bench/LLaVA-RLHF, AMBER, HallusionBench,
+Related-work and method references were expanded through 2026-05-29 for the
+latest outer `paper/` draft. The current citation set now situates CEPO-Probe
+against CHAIR, POPE, MME, MMHal-Bench/LLaVA-RLHF, AMBER, HallusionBench,
 hallucination-aware multimodal preference optimization, RLHF-V, Silkie, Visual
-Genome, Flickr30k Entities, ReferItGame, and VQA-X.
+Genome, Flickr30k Entities, ReferItGame, VQA-X, Qwen2.5-VL model
+documentation, LoRA, QLoRA, and ZeRO.
 
 Page budget:
 

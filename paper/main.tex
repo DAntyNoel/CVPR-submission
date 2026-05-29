@@ -155,7 +155,7 @@ changing only whether the preference rows supervise answer choice, evidence
 verification, or both.
 
 \paragraph{Grounding and rationales.}
-Grounded VLM training may use boxes, masks, region descriptions, or
+Grounded VLM training may use boxes, region descriptions, or
 human-written rationales, as in dense region annotation, referring-expression,
 and explanation datasets~\cite{visualgenome,flickr30kentities,referitgame,vqax}.
 These signals are stronger than the textual evidence labels used here, but
@@ -298,21 +298,22 @@ and left/right relation claims.
 \subsection{Training Groups}
 
 The main controlled variants use Qwen2.5-VL-7B-Instruct~\cite{qwen25vl} as the
-backbone, LoRA rank 16, one training epoch, DPO $\beta=0.1$, and a ZeRO-2
-distributed setup. The comparison changes only the preference rows. Table
-\ref{tab:groups} lists the five groups used for the main ablation. An
+backbone, LoRA~\cite{lora} rank 16, one training epoch, DPO $\beta=0.1$, and a
+ZeRO-2~\cite{zero} distributed setup. The comparison changes only the
+preference rows. Table \ref{tab:groups} lists the five groups used for the
+main ablation. An
 auxiliary 500-verifier-row run is kept in the released experiment artifacts,
 but it is not part of the main comparison so that the 7B ablation stays within
 five primary groups.
 
-We also run a minimal Qwen2.5-VL-32B-Instruct check: Base Instruct,
-\answerdpo{}, and \dualtwok{} with seed 42. This is not a second controlled
-ablation. It uses the same model family and, for resource reasons, the reported
-tuned rows use a 4-bit QLoRA path rather than the full 7B LoRA recipe. We use
-these rows only to ask whether a larger in-family backbone automatically fixes
-evidence rejection or whether the selected mixed verifier recipe causes
-short-answer collapse. The 32B training setup and ZeRO-3 preflight are
-documented in the appendix.
+We also run a minimal Qwen2.5-VL-32B-Instruct~\cite{qwen25vl32b} check: Base
+Instruct, \answerdpo{}, and \dualtwok{} with seed 42. This is not a second
+controlled ablation. It uses the same model family and, for resource reasons,
+the reported tuned rows use a 4-bit QLoRA~\cite{qlora} path rather than the
+full 7B LoRA recipe. We use these rows only to ask whether a larger in-family
+backbone automatically fixes evidence rejection or whether the selected mixed
+verifier recipe causes short-answer collapse. The 32B training setup and
+ZeRO-3 preflight are documented in the appendix.
 
 \begin{table*}[t]
 \centering
