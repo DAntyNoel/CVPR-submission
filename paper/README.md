@@ -122,6 +122,9 @@ Page budget:
 - References plus optional appendix: keep within 10 pages.
 - The normal review PDF excludes the appendix; the independent full-paper build
   includes it for internal review and supplementary inspection.
+- The current main-paper layout pass keeps Table 6 as a single-column table and
+  tightens float, caption, and bibliography spacing without changing reported
+  metrics.
 
 Build locally on the current machine with the user-level conda environment:
 
@@ -141,9 +144,10 @@ make full
 This writes `build/main_full.pdf`. The environment currently uses Tectonic 0.16.9
 because system-level TeX Live cannot be installed without sudo on this machine.
 The CEPO-Probe PDF builds were verified on 2026-05-29 after the third-review
-polish, then updated with final-review edits tightening the abstract's 7B
-scope, polishing Figure 1, adding the 32B rationalization hypothesis, and
-standardizing JSON-object audit terminology:
+polish, then updated with final-review and layout edits tightening the
+abstract's 7B scope, polishing Figure 1, adding the 32B rationalization
+hypothesis, standardizing JSON-object audit terminology, and fitting the main
+review PDF into 8 pages:
 `build/main.pdf` is 8 pages and `build/main_full.pdf` is 10 pages. The
 remaining non-fatal warning is the upstream `lineno.sty` UTF-8 warning from
 the bundled review style; there are no current overfull table warnings,
