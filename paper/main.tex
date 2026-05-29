@@ -206,31 +206,33 @@ evaluation.
 
 \begin{figure}[t]
 \centering
-\footnotesize
-\setlength{\fboxsep}{3pt}
-\begin{tabular}{@{}c@{\hspace{4pt}}c@{}}
+\scriptsize
+\setlength{\fboxsep}{2pt}
+\newcommand{\figstep}[1]{\fbox{\begin{minipage}{0.78\linewidth}\centering #1\end{minipage}}}
+\newcommand{\figgood}[1]{\fcolorbox{ceposupport}{ceposupportbg}{\begin{minipage}{0.78\linewidth}\centering\textcolor{ceposupport}{#1}\end{minipage}}}
+\newcommand{\figbad}[1]{\fcolorbox{cepowrong}{cepowrongbg}{\begin{minipage}{0.78\linewidth}\centering\textcolor{cepowrong}{#1}\end{minipage}}}
 \fcolorbox{cepopanel}{white}{%
-\begin{minipage}[t][95pt][t]{0.42\linewidth}
+\begin{minipage}[t]{0.42\linewidth}
 \centering
-\textbf{Ordinary yes/no}\\[3pt]
-\fbox{\shortstack{image\\question}}\\[-1pt]
-$\downarrow$\\[-2pt]
-\fbox{\shortstack{answer\\\textcolor{ceposupport}{yes}}}\\[-1pt]
-$\downarrow$\\[-2pt]
-\fbox{\shortstack{answer\\accuracy}}\\[3pt]
-{\scriptsize \textcolor{cepowrong}{evidence is untested}}
-\end{minipage}} &
+\textbf{Ordinary yes/no}\par\vspace{2pt}
+\figstep{image\\question}\par\vspace{1pt}
+$\downarrow$\par\vspace{1pt}
+\figstep{answer\\\textcolor{ceposupport}{yes}}\par\vspace{1pt}
+$\downarrow$\par\vspace{1pt}
+\figstep{answer\\accuracy}\par\vspace{2pt}
+{\tiny\textcolor{cepowrong}{evidence untested}}
+\end{minipage}}%
+\hfill
 \fcolorbox{cepopanel}{white}{%
-\begin{minipage}[t][95pt][t]{0.42\linewidth}
+\begin{minipage}[t]{0.42\linewidth}
 \centering
-\textbf{\benchmark{}}\\[3pt]
-\fbox{\shortstack{image, question\\claim: sink visible}}\\[2pt]
-\fcolorbox{ceposupport}{ceposupportbg}{\shortstack{\textcolor{ceposupport}{supported evidence}\\label=sink}}\\[2pt]
-\fcolorbox{cepowrong}{cepowrongbg}{\shortstack{\textcolor{cepowrong}{wrong evidence}\\label=plant}}\\[2pt]
-\fbox{\shortstack{support\\accept/reject}}\\[3pt]
-{\scriptsize \textcolor{cepowrong}{same answer, wrong evidence}}
+\textbf{\benchmark{}}\par\vspace{2pt}
+\figstep{image + question\\claim: sink}\par\vspace{1pt}
+\figgood{evidence: sink}\par\vspace{1pt}
+\figbad{evidence: plant}\par\vspace{1pt}
+\figstep{support\\accept/reject}\par\vspace{2pt}
+{\tiny\textcolor{cepowrong}{same answer, wrong evidence}}
 \end{minipage}}
-\end{tabular}
 \caption{\benchmark{} overview. Ordinary yes/no evaluation scores only the
 final answer. \benchmark{} scores the claim-evidence link, marking supported
 evidence in green and same-answer wrong evidence in red.}
