@@ -79,13 +79,13 @@ cannot load the 32B model even on 48GB-class GPUs, use `_z3_` profiles for
 stronger sharding; if BF16 ZeRO-3 fits but is too slow, use `_qlora4_`
 profiles. The fixed 32B transfer setting selected on 2026-05-28 is
 `PROFILE=ada6000_qlora4_8` with eval jobs restricted to `A100,L40S,ADA6000`.
-The completed 32B transfer finished the full T0/T1/T2 matrix on 2026-05-28 by
+The completed 32B check finished the full T0/T1/T2 matrix on 2026-05-28 by
 19:55 CST, inside the two-day constraint. It preserves short-answer accuracy
-and gives a smaller but positive larger-backbone gain: CEPO-Dual-2k improves
-wrong-evidence rejection over CEPO Answer-DPO by +0.8 points on 32B
-(24.5% vs 23.8%), while COCO/GQA/Hard accuracy remains flat. The paper now
-uses this as larger-backbone transfer evidence, with the caveat that the 32B
-margin is much smaller than the controlled 7B margin.
+but gives only a very small evidence-probe recovery: CEPO-Dual-2k moves from
+23.8% to 24.5% wrong-evidence rejection on 32B, matching the 32B base while
+COCO/GQA/Hard accuracy remains flat. The paper now treats this as a bounded
+same-family QLoRA sanity check and a negative scaling signal, not as
+cross-family transfer evidence.
 
 The row-count confound raised after the 2026-05-30 review is resolved as a
 separate Slurm-only fixed-budget control task:
@@ -410,7 +410,8 @@ The current CEPO-Probe draft builds as `paper/build/main.pdf` with an 8-page
 review PDF and `paper/build/main_full.pdf` with a 10-page appendix-including
 version. It uses the five-group main comparison above, keeps the auxiliary
 CEPO-Dual-500 sensitivity result in the appendix/artifacts, and now documents
-three-seed stability, the row-preserving paraphrased probe, and the locked
-relation-stress probe. The latest outer `paper/` draft also has an expanded
-related-work bibliography covering public hallucination/evaluation benchmarks,
-multimodal preference-tuning work, and grounding/rationale datasets.
+three-seed stability, the row-preserving paraphrased probe, a main-text
+relation-stress table, and raw parser examples for the 100% JSON-object audit.
+The latest outer `paper/` draft also has an expanded related-work bibliography
+covering public hallucination/evaluation benchmarks, multimodal
+preference-tuning work, and grounding/rationale datasets.

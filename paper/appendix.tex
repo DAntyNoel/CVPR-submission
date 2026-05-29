@@ -14,7 +14,7 @@ composition of preference rows: answer rows, verifier rows, or their mixture.
 This control is important because the paper interprets differences between
 groups as evidence about supervision format rather than architecture,
 optimizer, or decoding changes. The 32B rows in the main tables are a separate
-larger-backbone transfer check and use the same selected Answer-DPO and
+same-family capacity check and use the same selected Answer-DPO and
 CEPO-Dual-2k recipes where feasible.
 
 \begin{center}
@@ -44,7 +44,7 @@ an auxiliary sensitivity check.}
 \end{minipage}
 \end{center}
 
-\paragraph{32B transfer setup.}
+\paragraph{32B same-family capacity-check setup.}
 The larger-backbone rows use Qwen2.5-VL-32B-Instruct with seed 42 for
 \answerdpo{} and \dualtwok{}. We kept the optimizer recipe aligned with the 7B
 runs where feasible: DPO, LoRA rank 16 targeting all layers, $\beta=0.1$,
@@ -200,27 +200,6 @@ AMBER only as sanity checks: CEPO-Dual-2k stays close to CEPO Answer-DPO, so
 the verifier rows do not cause an obvious collapse in ordinary polling
 behavior, but they are not the source of the main claim.
 
-\begin{center}
-\begin{minipage}{0.74\linewidth}
-\centering
-\footnotesize
-\begin{tabular}{lrrrr}
-\toprule
-Model & Overall & Swap & L/R reversal & False accept \\
-\midrule
-Base Instruct & 60.8 & 21.7 & 100.0 & 39.2 \\
-\answerdpo{} & 55.4 & 10.8 & 100.0 & 44.6 \\
-\dualtwok{} & \textbf{71.3} & \textbf{42.5} & 100.0 & \textbf{28.8} \\
-\bottomrule
-\end{tabular}
-\captionof{table}{Locked relation-stress probe. It contains 240 held-out GQA
-relation rows split evenly between subject/object swaps and left/right
-reversals. The residual weakness is role swapping, not simple left/right
-lexical reversal.}
-\label{tab:app_relation_stress}
-\end{minipage}
-\end{center}
-
 \subsection{Scoring Rules and Qualitative Reading}
 
 The most persistent failure mode is relation verification. Object and
@@ -242,3 +221,18 @@ evidence should not be accepted as support for the claim. This scoring rule is
 why the released metrics retain parser-audit fields even though the paper
 tables omit the constant parser columns: an evidence-verification gain should
 not come from malformed output or fragile parser recovery.
+
+\paragraph{Raw parser examples.}
+The JSON-object audit checks whether the raw generation contains a substring
+that can be loaded as a JSON object. Markdown fences or short trailing text do
+not count as parse failures if the object itself is valid; fallback field
+recovery is tracked separately as scored output and was not needed for the
+reported anchor rows. For example, raw outputs include Markdown-fenced objects
+such as \texttt{\{"answer":"supported", "claim":"window is glass",
+"evidence\_label":"label=window; attribute=glass", "support":"supported"\}}.
+They also include valid objects followed by brief text, e.g.,
+\texttt{\{"answer":"supported", "claim":"giraffe visible",
+"evidence\_label":"label=person", "support":"wrong\_evidence"\}} followed by
+an explanation that the evidence names a person rather than a giraffe. Both
+examples are audited as \texttt{json\_object=true},
+\texttt{scored=true}, and \texttt{parse\_failed=false}.

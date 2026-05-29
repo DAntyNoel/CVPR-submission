@@ -38,30 +38,25 @@
 \maketitle
 
 \begin{abstract}
-Preference tuning can improve the short answers of vision-language models, but
-a correct answer does not guarantee that the model has verified the right
-visual evidence. We introduce \emph{Claim-Evidence Preference Optimization}
-Probe (\benchmark{}), a controlled diagnostic benchmark for claim-evidence
-consistency, built from \dataset{}, a 6k-row annotation-derived collection of
-object, attribute, relation, and wrong-evidence examples from COCO and GQA.
-Unlike ordinary yes/no evaluation, the benchmark asks whether a candidate
-visual claim is supported by a specific evidence label or relation, including
-same-answer cases where only the evidence is wrong. In a controlled
-Qwen2.5-VL-7B study, we compare a base model, an answer-only tuned model, a
-verifier-only control, and two mixed answer/verifier settings. The results show
-that answer preference and evidence verification can move in opposite
-directions: answer-only tuning improves short-answer accuracy but lowers
-wrong-evidence rejection from 44.3\% to 34.3\%. Direct verifier supervision
-recovers this behavior, reaching 53.0\% in the verifier-only control and
-70.3\% in the strongest mixed setting while preserving the answer-level gains.
-We further repeat the anchor comparison on a larger Qwen2.5-VL-32B backbone as
-a limited transfer check: CEPO-Dual-2k recovers the small Answer-DPO drop in
-wrong-evidence rejection (24.5\% vs. 23.8\%) while matching the 32B base and
-keeping short-answer accuracy flat. Row-bootstrap intervals, parser audits,
-seed stability, fixed-budget controls, paraphrased prompts, larger-backbone
-transfer, and slice analysis support a bounded conclusion: explicit verifier
-preferences improve evidence checks, with the largest gains on object and
-attribute evidence and persistent fragility on subject/object role swaps.
+Preference tuning can make vision-language models better short-answerers
+without making them better evidence checkers. We introduce \emph{Claim-Evidence
+Preference Optimization} Probe (\benchmark{}), a diagnostic benchmark that
+pairs each image question with a candidate claim and a candidate evidence item.
+The task is to decide whether the evidence supports the claim, including
+same-answer cases where the final answer remains plausible but the evidence is
+wrong. In a controlled Qwen2.5-VL-7B DPO study, answer-only tuning improves
+ordinary yes/no accuracy but lowers wrong-evidence rejection from 44.3\% to
+34.3\%. Direct verifier preferences reverse this failure mode: a verifier-only
+control reaches 53.0\%, and the strongest mixed answer/verifier recipe reaches
+70.3\% while preserving the short-answer gains. The improvement is uneven:
+object and attribute evidence benefit most, while relation role swaps remain
+fragile. A same-family 32B QLoRA check serves as a boundary condition:
+CEPO-Dual-2k only recovers the answer-only drop back to the 32B base level
+(24.5\% vs. 23.8\%), showing that scaling within this family does not
+automatically solve evidence rejection. With bootstrap intervals, seed and
+fixed-budget controls, paraphrased prompts, parser audits, and slice analysis,
+\benchmark{} supports a bounded claim: explicit verifier preferences improve a
+measured claim-evidence consistency skill, but do not solve visual grounding.
 \end{abstract}
 
 \section{Introduction}
@@ -123,8 +118,8 @@ Our contributions are:
     wrong-evidence rejection, while direct verifier preferences improve the
     explicit probe and reveal relation role swaps as the main bottleneck.
     \item We add fixed-budget, paraphrased-prompt, seed-stability, and
-    Qwen2.5-VL-32B checks that bound the interpretation without turning the
-    diagnostic into a broad hallucination benchmark.
+    same-family 32B checks that bound the interpretation, showing both the
+    evidence-verifier gain and the limits of scaling and template robustness.
 \end{itemize}
 
 \section{Related Work}
@@ -302,13 +297,14 @@ auxiliary 500-verifier-row run is kept in the released experiment artifacts,
 but it is not part of the main comparison so that the 7B ablation stays within
 five primary groups.
 
-To check whether the effect survives a stronger backbone, we also run a
-minimal Qwen2.5-VL-32B-Instruct transfer: Base Instruct, \answerdpo{}, and
-\dualtwok{} with seed 42. This larger-backbone check does not replace the
-controlled 7B study; it asks whether the selected mixed verifier recipe avoids
-short-answer collapse and recovers the answer-only evidence drop when model
-capacity increases. The 32B training setup and ZeRO-3 preflight are documented
-in the appendix.
+We also run a minimal Qwen2.5-VL-32B-Instruct check: Base Instruct,
+\answerdpo{}, and \dualtwok{} with seed 42. This is not a second controlled
+ablation. It uses the same model family and, for resource reasons, the reported
+tuned rows use a 4-bit QLoRA path rather than the full 7B LoRA recipe. We use
+these rows only to ask whether a larger in-family backbone automatically fixes
+evidence rejection or whether the selected mixed verifier recipe causes
+short-answer collapse. The 32B training setup and ZeRO-3 preflight are
+documented in the appendix.
 
 \begin{table*}[t]
 \centering
@@ -403,9 +399,12 @@ probe and wrong-evidence rejection on the 400-row wrong-evidence probe. The
 wrong-evidence probe is further broken into object, attribute, and relation
 slices. The evidence probe uses ordinary deterministic decoding rather than
 constrained decoding; parser quality is audited separately in the released
-metrics. Because every paper-row evidence-probe output is parseable, the
-tables omit the constant parser columns. For the primary anchor comparison, we
-compute row-bootstrap 95\% confidence intervals with 10{,}000 resamples.
+metrics. The audit reports whether the raw generation contains a parseable JSON
+object, whether deterministic fallback scoring was needed, and whether parsing
+failed. Because every paper-row evidence-probe output contains a parseable JSON
+object and has 0.0\% parse failure, the tables omit these constant columns. For
+the primary anchor comparison, we compute row-bootstrap 95\% confidence
+intervals with 10{,}000 resamples.
 
 \subsection{Controls and Reporting Discipline}
 
@@ -433,7 +432,7 @@ reporting choice rather than an optimization claim. It keeps the paper focused
 on the minimal scientific questions: whether answer-only DPO transfers to
 evidence verification, whether verifier-only supervision is sufficient, and
 whether mixed answer/verifier supervision improves the explicit probe. The 32B
-rows are reported as larger-backbone transfer checks, while additional
+rows are reported only as same-family capacity checks, while additional
 sensitivity runs are kept in the appendix and released artifacts.
 
 \section{Experiments}
@@ -478,13 +477,12 @@ errors. This is useful diagnostically: verifier-only supervision can teach the
 probe behavior discussed next, but it is not a replacement for answer
 preference tuning when the deployment prompt asks for a short answer.
 
-The 32B transfer rows are important because a larger backbone could have washed
-out the effect of small verifier data. Instead, \dualtwok{} keeps the 32B
-short-answer metrics essentially identical to 32B \answerdpo{}: COCO and Hard
-COCO are tied, GQA changes by only -0.1 points, and BEM recovery increases
-slightly from 24.3\% to 24.7\%. This makes the 32B evidence-probe comparison
-below a fairer test: any evidence gain is not bought by a visible
-short-answer collapse.
+The 32B rows are a limited in-family sanity check rather than transfer
+evidence across model families. They show that adding the verifier rows does
+not visibly damage the larger model's short-answer behavior: relative to 32B
+\answerdpo{}, COCO and Hard COCO are tied, GQA changes by -0.1 points, and BEM
+recovery changes from 24.3\% to 24.7\%. This lets the evidence-probe result
+below be read as a weak scaling diagnostic instead of a short-answer trade-off.
 
 \subsection{Claim-Evidence Consistency}
 
@@ -530,14 +528,16 @@ accuracy to 93.2\%, but wrong-evidence rejection remains only 48.5\%.
 probe: supported-evidence accuracy reaches 95.2\% and wrong-evidence rejection
 reaches 70.3\%.
 
-The larger 32B transfer is deliberately interpreted more narrowly. The 32B
-base and answer-only models already behave differently from the 7B anchors,
-with higher supported-evidence accuracy but lower wrong-evidence rejection.
-\dualtwok{} recovers the small 32B answer-only drop in wrong-evidence rejection
-(23.8\% to 24.5\%) and raises the relation wrong-evidence slice from 8.8\% to
-10.4\% while preserving the short-answer metrics in Table~\ref{tab:short}.
-Because 24.5\% matches the 32B base rather than exceeding it, we treat this as
-a limited transfer sanity check, not as evidence of a large scaling gain.
+The 32B rows are more cautionary than supportive. The 32B base and answer-only
+models already behave differently from the 7B anchors, with higher
+supported-evidence accuracy but lower wrong-evidence rejection. \dualtwok{}
+recovers the small 32B answer-only drop in wrong-evidence rejection (23.8\% to
+24.5\%) and raises the relation wrong-evidence slice from 8.8\% to 10.4\% while
+preserving the short-answer metrics in Table~\ref{tab:short}. However, 24.5\%
+only matches the 32B base. This is evidence that the mixed recipe is not
+obviously harmful at 32B, but it is also a negative scaling signal: within this
+Qwen2.5-VL family, larger capacity does not automatically solve
+wrong-evidence rejection.
 
 \begin{table*}[t]
 \centering
@@ -577,49 +577,37 @@ wrong-evidence rejection reaches only 25.6\%, even though this is higher than
 the base and answer-only rows. Row-bootstrap slice intervals for the three
 anchor models are: object 96.0 [92.1, 99.2], attribute 85.9 [79.9, 91.3], and
 relation 25.6 [18.4, 32.8] for \dualtwok{}. The relation interval remains low,
-so the failure is not a small-sample artifact. A locked relation-stress probe
-reaches 71.25\% overall rejection for \dualtwok{}, but separates easy
-left/right reversals (100.0\%) from weak subject/object swaps (42.5\%).
+so the failure is not a small-sample artifact.
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{@{}p{0.15\linewidth}p{0.25\linewidth}p{0.27\linewidth}p{0.25\linewidth}@{}}
+\begin{tabular}{@{}lrrrr@{}}
 \toprule
-Case & Claim & Candidate evidence & Model behavior \\
+Model & Overall & Swap & L/R rev. & False acc. \\
 \midrule
-Dual succeeds &
-pepper left\_of bottle &
-subject=bottle; object=pepper; relation=left\_of &
-Base and \answerdpo{} accept; \dualtwok{} rejects as contradicted \\
-Dual succeeds &
-shirt left\_of hose &
-subject=hose; object=shirt; relation=left\_of &
-Base and \answerdpo{} accept; \dualtwok{} rejects as contradicted \\
-All fail &
-tree right\_of bus &
-subject=bus; object=tree; relation=right\_of &
-All three anchor models accept as supported \\
-All fail &
-mouse pad right\_of keyboard &
-subject=keyboard; object=mouse pad; relation=right\_of &
-All three anchor models accept as supported \\
+Base & 60.8 & 21.7 & 100.0 & 39.2 \\
+\answerdpo{} & 55.4 & 10.8 & 100.0 & 44.6 \\
+\dualtwok{} & \textbf{71.3} & \textbf{42.5} & 100.0 & \textbf{28.8} \\
 \bottomrule
 \end{tabular}
-\caption{Representative relation wrong-evidence cases. The examples use
-subject/object swaps; they illustrate why relation verification remains the
-hardest slice even after direct verifier supervision.}
-\label{tab:relation_examples}
-\end{table*}
+\caption{Locked relation-stress probe on 240 held-out GQA relation rows, split
+evenly between subject/object swaps and left/right reversals. Values are
+percentages; higher is better except False acc.}
+\label{tab:relation_stress}
+\end{table}
 
-Table~\ref{tab:relation_examples} illustrates the remaining failure mode. In
-successful cases, \dualtwok{} learns to reject swapped subject/object evidence
-that both Base Instruct and \answerdpo{} accept. In many other cases, all
-models still accept the swapped relation. The stress probe suggests that the
-problem is role preservation more than the lexical left/right flip itself.
-A stronger relation probe likely needs region-aware evidence, explicit object
-localization, or harder contrastive relation pairs.
+The locked stress probe in Table~\ref{tab:relation_stress} clarifies the
+failure. All three anchor models reject the simple left/right reversal rows,
+so the residual problem is not the lexical direction token alone. The hard
+case is role preservation: \dualtwok{} raises subject/object swap rejection
+from 10.8\% for \answerdpo{} to 42.5\%, but most swapped-role cases are still
+accepted. Representative examples have the right objects and relation word but
+swapped roles, such as a claim ``tree right\_of bus'' paired with evidence
+``subject=bus; object=tree; relation=right\_of''. A stronger relation probe
+likely needs region-aware evidence, explicit object localization, or harder
+contrastive relation pairs.
 
 \subsection{External Sanity Checks}
 
@@ -676,15 +664,15 @@ artifact, although the original 8k \dualtwok{} run still combines verifier
 supervision with extra rows.
 
 \paragraph{Backbone scale matters.}
-The 32B transfer is a capacity sanity check rather than a second full ablation.
+The 32B check is a capacity sanity check rather than a second full ablation.
 It does not replicate the large 7B margin, and \dualtwok{} only recovers the
-32B answer-only wrong-evidence drop back to the 32B base level. Still, the
-selected recipe preserves short-answer behavior, improves over the 32B
-\answerdpo{} row by +0.7 points, and improves the relation-stress rejection
-reported in the artifacts from 27.1\% to 31.7\%. This supports a modest
-reading: the answer/verifier separation remains measurable under a larger
-backbone, but broader model-family evidence would be needed for a scaling
-claim.
+32B answer-only wrong-evidence drop back to the 32B base level. Because the run
+is same-family, single-seed, and uses QLoRA for resource reasons, it should not
+be read as a clean capacity comparison. Its value is narrower and more
+cautionary: the answer/verifier separation remains measurable under a larger
+Qwen2.5-VL backbone, but scaling within this family does not by itself produce
+robust evidence rejection. Cross-family base inference and, ideally,
+cross-family tuning would be needed for a model-family generalization claim.
 
 \paragraph{Relation evidence is the bottleneck.}
 Object and attribute mismatches are often visible from a single label or
@@ -725,11 +713,13 @@ the central answer-versus-verifier comparison, a fixed-budget row-count control,
 a row-preserving paraphrased probe, and a limited 32B transfer check. The 32B
 result is useful as a larger-capacity sanity check, but it is still a
 single-seed QLoRA transfer over only Base, \answerdpo{}, and \dualtwok{};
-broader model families,
-human-written evidence, independent paraphrases, and stronger verifier data
-would be needed for a general alignment claim. Finally, the relation results
-show that accepting or rejecting textual relation evidence is still far from a
-robust spatial grounding test.
+it does not establish cross-family portability. We also do not include an
+independently human-written evidence mini-probe, so the paraphrased probe
+should be read as a wording check rather than a real distribution-shift test.
+Broader model families, human-written evidence, independent paraphrases, and
+stronger verifier data would be needed for a general alignment claim. Finally,
+the relation results show that accepting or rejecting textual relation evidence
+is still far from a robust spatial grounding test.
 
 \section{Conclusion}
 
@@ -740,12 +730,12 @@ supported by the correct evidence. In a controlled five-group 7B experiment,
 \answerdpo{} improves short-answer behavior while weakening wrong-evidence
 rejection, \evidencedpo{} improves verifier behavior without improving
 short-answer transfer, and \dualtwok{} preserves answer gains while improving
-explicit evidence consistency to 70.3\% wrong-evidence rejection. A limited 32B
-transfer recovers the small answer-only drop in wrong-evidence rejection without
-hurting short-answer accuracy, but does not show a large scaling gain. The
-remaining relation failures are central to the conclusion: short-answer gains
-alone can hide persistent wrong-evidence errors, so evidence consistency should
-be measured directly.
+explicit evidence consistency to 70.3\% wrong-evidence rejection. A same-family
+32B QLoRA check recovers the small answer-only drop without hurting
+short-answer accuracy, but also shows that larger capacity does not
+automatically fix evidence rejection. The remaining relation failures are
+central to the conclusion: short-answer gains alone can hide persistent
+wrong-evidence errors, so evidence consistency should be measured directly.
 
 {
     \small
